@@ -105,3 +105,6 @@ export function _resetOnboardingForTests(): void {
   }
   _instance = undefined
 }
+
+// Re-export legacy discovery service so existing importers (SettingsEditorProvider) keep working
+export { OnboardingDiscoveryService } from "./OnboardingDiscoveryService"

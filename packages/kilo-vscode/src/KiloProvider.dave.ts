@@ -35,7 +35,7 @@ import { handleMemoryRealWebviewMessage } from "./kilo-provider/handlers/memory-
 import { handleRoutingRealWebviewMessage } from "./kilo-provider/handlers/routing-webview"
 import { handleZeroClawRealWebviewMessage } from "./kilo-provider/handlers/zeroclaw-webview"
 import { handleGovernanceRealWebviewMessage } from "./kilo-provider/handlers/governance-webview"
-import { handleTrainingRealWebviewMessage } from "./kilo-provider/handlers/training-webview"
+import { handleTrainingWebviewMessage as handleTrainingRealWebviewMessage } from "./kilo-provider/handlers/training-webview"
 
 export class DaveProviderExtensions {
   // V4 subsystem services — set via setV4Services() after construction.
@@ -200,9 +200,14 @@ export class DaveProviderExtensions {
     // in-process service switch. Each returns true if it consumed the
     // message; we return immediately to avoid double-processing.
     const realCtx = {
-      extensionContext: this.provider.context,
+      extensionContext: (this.provider as unknown as { extensionContext?: vscode.ExtensionContext }).extensionContext,
       postMessage: (m: unknown) => this.postMessage(m as never),
     }
+    // Cast to permissive shape for the legacy switch below (pre-existing
+    // pattern; the original KiloProvider.ts inline version did the same
+    // implicitly via the switch context).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const m = message as any
     try {
       if (await handleHermesRealWebviewMessage(message, realCtx as never)) return true
       if (await handleMemoryRealWebviewMessage(message, realCtx as never)) return true
@@ -242,60 +247,60 @@ export class DaveProviderExtensions {
           if (this.sshService) this.postMessage({ type: "sshSessionsUpdated", sessions: this.sshService.getSessionSnapshots() } as never)
           break
         case "sshProfileSave":
-          await this.sshService?.saveProfile(message.profile)
+          await this.sshService?.saveProfile(m.profile)
           if (this.sshService) this.postMessage({ type: "sshProfilesLoaded", profiles: this.sshService.getProfiles() } as never)
           break
         case "sshProfileDelete":
-          await this.sshService?.deleteProfile(message.profileName)
+          await this.sshService?.deleteProfile(m.profileName)
           if (this.sshService) this.postMessage({ type: "sshProfilesLoaded", profiles: this.sshService.getProfiles() } as never)
           break
         case "sshConnect":
-          await this.sshService?.connect(message.profileName)
+          await this.sshService?.connect(m.profileName)
           if (this.sshService) this.postMessage({ type: "sshSessionsUpdated", sessions: this.sshService.getSessionSnapshots() } as never)
           break
         case "sshDisconnect":
-          this.sshService?.disconnect(message.profileName)
+          this.sshService?.disconnect(m.profileName)
           if (this.sshService) this.postMessage({ type: "sshSessionsUpdated", sessions: this.sshService.getSessionSnapshots() } as never)
           break
         case "sshOpenTerminal":
-          await this.sshService?.openTerminal(message.profileName)
+          await this.sshService?.openTerminal(m.profileName)
           break
         case "sshBrowseFiles":
           // listFiles() returns void and emits a "filesListed" event, which is
           // forwarded to the webview by the SSH event relay in setV4Services().
           // No manual postMessage needed here — the event bridge handles it.
-          await this.sshService?.listFiles(message.profileName, message.path ?? "/")
+          await this.sshService?.listFiles(m.profileName, m.path ?? "/")
           break
         case "sshFileOpen":
-          await this.sshService?.openRemoteFile(message.profileName, message.remotePath)
+          await this.sshService?.openRemoteFile(m.profileName, m.remotePath)
           break
         case "sshFileDownload":
-          await this.sshService?.downloadFile(message.profileName, message.remotePath)
+          await this.sshService?.downloadFile(m.profileName, m.remotePath)
           break
         case "sshFileUpload":
-          await this.sshService?.uploadFile(message.profileName, message.remotePath)
+          await this.sshService?.uploadFile(m.profileName, m.remotePath)
           break
         case "sshFilePreview":
           if (this.sshService) {
-            const preview = await this.sshService.getFilePreview(message.profileName, message.remotePath)
-            this.postMessage({ type: "sshFilePreviewResult", profileName: message.profileName, remotePath: message.remotePath, content: preview } as never)
+            const preview = await this.sshService.getFilePreview(m.profileName, m.remotePath)
+            this.postMessage({ type: "sshFilePreviewResult", profileName: m.profileName, remotePath: m.remotePath, content: preview } as never)
           }
           break
         case "sshFileDiff":
-          await this.sshService?.diffRemoteFile(message.profileName, message.localPath, message.remotePath)
+          await this.sshService?.diffRemoteFile(m.profileName, m.localPath, m.remotePath)
           break
         case "sshFileSaveRemote":
-          await this.sshService?.saveRemoteFile(message.profileName, message.localPath, message.remotePath, message.confirmAndUpload ?? false)
+          await this.sshService?.saveRemoteFile(m.profileName, m.localPath, m.remotePath, m.confirmAndUpload ?? false)
           break
         case "sshGetErrors":
           if (this.sshService) {
-            const errors = this.sshService.getLastErrors(message.profileName)
+            const errors = this.sshService.getLastErrors(m.profileName)
             this.postMessage({ type: "sshErrors", errors: errors.map((e: { message: string; code: string; profileName: string; timestamp: number }) => ({ message: e.message, code: e.code, profileName: e.profileName, timestamp: e.timestamp })) } as never)
           }
           break
         case "sshTailLogs":
-          if (message.action === "stop") this.sshService?.stopLogTail(message.profileName)
-          else this.sshService?.startLogTail(message.profileName, message.service)
+          if (m.action === "stop") this.sshService?.stopLogTail(m.profileName)
+          else this.sshService?.startLogTail(m.profileName, m.service)
           break
         case "sshImportConfig":
           if (this.sshService) {
@@ -332,14 +337,14 @@ export class DaveProviderExtensions {
           if (this.zeroClawService) {
             try {
               // Tab sends fields at top level (description, projectPath, riskLevel, etc.)
-              const submission = message.task ?? {
-                description: message.description,
-                projectPath: message.projectPath,
-                riskLevel: message.riskLevel,
-                workspaceScope: message.workspaceScope,
-                networkPolicy: message.networkPolicy,
-                writePolicy: message.writePolicy,
-                limits: message.limits,
+              const submission = m.task ?? {
+                description: m.description,
+                projectPath: m.projectPath,
+                riskLevel: m.riskLevel,
+                workspaceScope: m.workspaceScope,
+                networkPolicy: m.networkPolicy,
+                writePolicy: m.writePolicy,
+                limits: m.limits,
               }
               const submitted = this.zeroClawService.submit(submission)
               this.postMessage({ type: "zeroClawTasksLoaded", tasks: this.zeroClawService.getAllTasks() } as never)
@@ -350,13 +355,13 @@ export class DaveProviderExtensions {
           }
           break
         case "zeroClawCancelTask":
-          this.zeroClawService?.cancel(message.taskId)
+          this.zeroClawService?.cancel(m.taskId)
           if (this.zeroClawService) this.postMessage({ type: "zeroClawTasksLoaded", tasks: this.zeroClawService.getAllTasks() } as never)
           break
         case "zeroClawRetryTask":
           if (this.zeroClawService) {
             try {
-              const retried = this.zeroClawService.retry(message.taskId)
+              const retried = this.zeroClawService.retry(m.taskId)
               this.postMessage({ type: "zeroClawTasksLoaded", tasks: this.zeroClawService.getAllTasks() } as never)
               if (retried) {
                 this.postMessage({ type: "zeroClawTaskRetried", newTask: retried } as never)
@@ -369,11 +374,11 @@ export class DaveProviderExtensions {
           }
           break
         case "zeroClawApproveTask":
-          this.zeroClawService?.approve(message.taskId, message.approver ?? "operator")
+          this.zeroClawService?.approve(m.taskId, m.approver ?? "operator")
           if (this.zeroClawService) this.postMessage({ type: "zeroClawTasksLoaded", tasks: this.zeroClawService.getAllTasks() } as never)
           break
         case "zeroClawRejectTask":
-          this.zeroClawService?.reject(message.taskId, message.reason ?? "rejected")
+          this.zeroClawService?.reject(m.taskId, m.reason ?? "rejected")
           if (this.zeroClawService) this.postMessage({ type: "zeroClawTasksLoaded", tasks: this.zeroClawService.getAllTasks() } as never)
           break
         case "zeroClawGetHistory":
@@ -391,13 +396,13 @@ export class DaveProviderExtensions {
           break
         case "zeroClawGetTaskResult":
           if (this.zeroClawService) {
-            const result = this.zeroClawService.getTaskResult(message.taskId)
+            const result = this.zeroClawService.getTaskResult(m.taskId)
             this.postMessage({ type: "zeroClawTaskResult", result } as never)
           }
           break
         case "zeroClawCollectArtifacts":
           if (this.zeroClawService) {
-            const artifacts = await this.zeroClawService.collectArtifacts(message.taskId)
+            const artifacts = await this.zeroClawService.collectArtifacts(m.taskId)
             this.postMessage({ type: "zeroClawArtifacts", artifacts } as never)
           }
           break
@@ -424,8 +429,8 @@ export class DaveProviderExtensions {
           break
         case "routingTestProvider":
           if (this.routingService) {
-            const testSuccess = await this.routingService.testProvider(message.providerId)
-            this.postMessage({ type: "routingTestResult", providerId: message.providerId, success: !!testSuccess } as never)
+            const testSuccess = await this.routingService.testProvider(m.providerId)
+            this.postMessage({ type: "routingTestResult", providerId: m.providerId, success: !!testSuccess } as never)
             this.postMessage({ type: "routingProvidersLoaded", providers: this.routingService.getProviders() } as never)
             this.postMessage({ type: "routingHealthLoaded", health: this.routingService.getHealthSummary(), providers: this.routingService.getProviders() } as never)
           }
@@ -433,26 +438,26 @@ export class DaveProviderExtensions {
         case "routingConfigureKey":
           if (this.routingService) {
             // Pass the actual API key string to SecretStorage — not just a boolean
-            await this.routingService.configureApiKey(message.providerId, message.apiKey ?? undefined)
-            this.postMessage({ type: "routingKeyConfigured", providerId: message.providerId, configured: !!message.apiKey } as never)
+            await this.routingService.configureApiKey(m.providerId, m.apiKey ?? undefined)
+            this.postMessage({ type: "routingKeyConfigured", providerId: m.providerId, configured: !!m.apiKey } as never)
             this.postMessage({ type: "routingProvidersLoaded", providers: this.routingService.getProviders() } as never)
           }
           break
         case "routingSetRole":
-          this.routingService?.setRole(message.providerId, message.role, message.enabled)
+          this.routingService?.setRole(m.providerId, m.role, m.enabled)
           if (this.routingService) this.postMessage({ type: "routingProvidersLoaded", providers: this.routingService.getProviders() } as never)
           break
         case "routingSetMode":
           // This message type is overloaded: it can carry mode, privacyMode, or costThreshold
           if (this.routingService) {
-            if (message.mode) this.routingService.setMode(message.mode)
-            if (message.privacyMode) this.routingService.setPrivacyMode(message.privacyMode)
-            if (message.costThreshold !== undefined) this.routingService.setCostThreshold(message.costThreshold)
+            if (m.mode) this.routingService.setMode(m.mode)
+            if (m.privacyMode) this.routingService.setPrivacyMode(m.privacyMode)
+            if (m.costThreshold !== undefined) this.routingService.setCostThreshold(m.costThreshold)
             this.postMessage({ type: "routingConfigLoaded", config: this.routingService.getConfig() } as never)
           }
           break
         case "routingSetFallbackOrder":
-          this.routingService?.setFallbackOrder(message.order)
+          this.routingService?.setFallbackOrder(m.order)
           if (this.routingService) this.postMessage({ type: "routingConfigLoaded", config: this.routingService.getConfig() } as never)
           break
         case "routingGetTraces":
@@ -469,11 +474,11 @@ export class DaveProviderExtensions {
         case "memoryRecall":
           if (this.memoryService) {
             try {
-              const recallResult = this.memoryService.recall(message.query, { project: message.project })
+              const recallResult = this.memoryService.recall(m.query, { project: m.project })
               // Tab expects flat properties: results (array), status, query — not nested RecallResult
               this.postMessage({ type: "memoryRecallResult", results: recallResult.results, status: recallResult.status, query: recallResult.query, project: recallResult.project, timestamp: recallResult.timestamp } as never)
             } catch (err) {
-              this.postMessage({ type: "memoryRecallResult", results: [], status: "failed", query: message.query ?? "", project: message.project, timestamp: Date.now() } as never)
+              this.postMessage({ type: "memoryRecallResult", results: [], status: "failed", query: m.query ?? "", project: m.project, timestamp: Date.now() } as never)
             }
           }
           break
@@ -481,12 +486,12 @@ export class DaveProviderExtensions {
           if (this.memoryService) {
             try {
               // Tab sends individual fields (summary, content, factType, scope, project)
-              const writeEntry = message.entry ?? {
-                summary: message.summary,
-                content: message.content,
-                factType: message.factType,
-                scope: message.scope,
-                project: message.project,
+              const writeEntry = m.entry ?? {
+                summary: m.summary,
+                content: m.content,
+                factType: m.factType,
+                scope: m.scope,
+                project: m.project,
               }
               this.memoryService.writeMemory(writeEntry)
               this.postMessage({ type: "memoryWriteResult", success: true } as never)
@@ -510,9 +515,9 @@ export class DaveProviderExtensions {
           break
         case "memorySetPermission":
           if (this.memoryService) {
-            const updatedPerm = this.memoryService.setPermission(message.agentId, message.scope, message.allowed)
+            const updatedPerm = this.memoryService.setPermission(m.agentId, m.scope, m.allowed)
             // Tab expects full AgentPermission with { agentId, scopes: { global, project, task } }
-            this.postMessage({ type: "memoryPermissionChanged", permission: updatedPerm ?? { agentId: message.agentId, scopes: { global: message.scope === "global" ? message.allowed : false, project: message.scope === "project" ? message.allowed : false, task: message.scope === "task" ? message.allowed : false } } } as never)
+            this.postMessage({ type: "memoryPermissionChanged", permission: updatedPerm ?? { agentId: m.agentId, scopes: { global: m.scope === "global" ? m.allowed : false, project: m.scope === "project" ? m.allowed : false, task: m.scope === "task" ? m.allowed : false } } } as never)
           }
           break
         case "memoryRunDiagnostics":
@@ -551,7 +556,7 @@ export class DaveProviderExtensions {
           break
         case "trainingRegisterDataset":
           if (this.trainingService) {
-            this.trainingService.registerDataset(message.name, message.sourcePath, message.format)
+            this.trainingService.registerDataset(m.name, m.sourcePath, m.format)
             const allDs = this.trainingService.getDatasets()
             const newDs = allDs[allDs.length - 1]
             // Tab expects trainingDatasetRegistered to clear the form
@@ -561,8 +566,8 @@ export class DaveProviderExtensions {
           break
         case "trainingValidateDataset":
           if (this.trainingService) {
-            await this.trainingService.validateDataset(message.datasetId)
-            const validated = this.trainingService.getDatasets().find(d => d.id === message.datasetId)
+            await this.trainingService.validateDataset(m.datasetId)
+            const validated = this.trainingService.getDatasets().find(d => d.id === m.datasetId)
             // Tab expects trainingDatasetValidated to clear the validating spinner
             if (validated) this.postMessage({ type: "trainingDatasetValidated", dataset: validated } as never)
             this.postMessage({ type: "trainingState", datasets: this.trainingService.getDatasets(), jobs: this.trainingService.getJobs(), gpus: this.trainingService.getCachedGPUs() } as never)
@@ -571,14 +576,14 @@ export class DaveProviderExtensions {
         case "trainingLaunchJob":
           if (this.trainingService) {
             try {
-              // Tab sends individual fields (name, preset, datasetId, etc.), not message.config
-              const jobConfig = message.config ?? {
-                name: message.name,
-                preset: message.preset,
-                datasetId: message.datasetId,
-                target: message.target,
-                hyperparams: message.hyperparams,
-                resourceLimits: message.resourceLimits,
+              // Tab sends individual fields (name, preset, datasetId, etc.), not m.config
+              const jobConfig = m.config ?? {
+                name: m.name,
+                preset: m.preset,
+                datasetId: m.datasetId,
+                target: m.target,
+                hyperparams: m.hyperparams,
+                resourceLimits: m.resourceLimits,
               }
               this.trainingService.launchJob(jobConfig)
               const launched = this.trainingService.getJobs().at(-1)
@@ -590,13 +595,13 @@ export class DaveProviderExtensions {
           }
           break
         case "trainingPauseJob":
-          this.trainingService?.pauseJob(message.jobId)
+          this.trainingService?.pauseJob(m.jobId)
           if (this.trainingService) this.postMessage({ type: "trainingState", datasets: this.trainingService.getDatasets(), jobs: this.trainingService.getJobs(), gpus: this.trainingService.getCachedGPUs() } as never)
           break
         case "trainingResumeJob":
           if (this.trainingService) {
             try {
-              this.trainingService.resumeJob(message.jobId)
+              this.trainingService.resumeJob(m.jobId)
               this.postMessage({ type: "trainingState", datasets: this.trainingService.getDatasets(), jobs: this.trainingService.getJobs(), gpus: this.trainingService.getCachedGPUs() } as never)
             } catch (err) {
               this.postMessage({ type: "trainingError", error: err instanceof Error ? err.message : "Resume failed" } as never)
@@ -606,7 +611,7 @@ export class DaveProviderExtensions {
         case "trainingCancelJob":
           if (this.trainingService) {
             try {
-              this.trainingService.cancelJob(message.jobId)
+              this.trainingService.cancelJob(m.jobId)
               this.postMessage({ type: "trainingState", datasets: this.trainingService.getDatasets(), jobs: this.trainingService.getJobs(), gpus: this.trainingService.getCachedGPUs() } as never)
             } catch (err) {
               this.postMessage({ type: "trainingError", error: err instanceof Error ? err.message : "Cancel failed" } as never)
@@ -615,7 +620,7 @@ export class DaveProviderExtensions {
           break
         case "trainingRemoveDataset":
           if (this.trainingService) {
-            this.trainingService.removeDataset(message.datasetId)
+            this.trainingService.removeDataset(m.datasetId)
             this.postMessage({ type: "trainingState", datasets: this.trainingService.getDatasets(), jobs: this.trainingService.getJobs(), gpus: this.trainingService.getCachedGPUs() } as never)
           }
           break
@@ -628,7 +633,7 @@ export class DaveProviderExtensions {
         case "trainingResumeCheckpoint":
           if (this.trainingService) {
             try {
-              this.trainingService.resumeFromCheckpoint(message.jobId, message.checkpointId)
+              this.trainingService.resumeFromCheckpoint(m.jobId, m.checkpointId)
               this.postMessage({ type: "trainingState", datasets: this.trainingService.getDatasets(), jobs: this.trainingService.getJobs(), gpus: this.trainingService.getCachedGPUs() } as never)
             } catch (err) {
               this.postMessage({ type: "trainingError", error: err instanceof Error ? err.message : "Checkpoint resume failed" } as never)
@@ -639,8 +644,8 @@ export class DaveProviderExtensions {
           if (this.trainingService) {
             try {
               // Tab sends { jobIdA, jobIdB } as individual fields
-              const idA = message.jobIdA ?? message.jobIds?.[0]
-              const idB = message.jobIdB ?? message.jobIds?.[1]
+              const idA = m.jobIdA ?? m.jobIds?.[0]
+              const idB = m.jobIdB ?? m.jobIds?.[1]
               const comparison = this.trainingService.compareRuns(idA, idB)
               this.postMessage({ type: "trainingCompareResult", comparison } as never)
             } catch (err) {
@@ -652,15 +657,15 @@ export class DaveProviderExtensions {
           if (this.trainingService) {
             try {
               // Tab sends { jobId, format } as individual fields
-              const exportOpts = message.exportOptions ?? {
-                jobId: message.jobId,
-                format: message.format,
-                quantization: message.quantization,
-                outputPath: message.outputPath,
-                includeTokenizer: message.includeTokenizer ?? true,
-                includeConfig: message.includeConfig ?? true,
-                includeReadme: message.includeReadme ?? true,
-                mergeAdapter: message.mergeAdapter ?? false,
+              const exportOpts = m.exportOptions ?? {
+                jobId: m.jobId,
+                format: m.format,
+                quantization: m.quantization,
+                outputPath: m.outputPath,
+                includeTokenizer: m.includeTokenizer ?? true,
+                includeConfig: m.includeConfig ?? true,
+                includeReadme: m.includeReadme ?? true,
+                mergeAdapter: m.mergeAdapter ?? false,
               }
               const exportResult = await this.trainingService.exportModel(exportOpts)
               this.postMessage({ type: "trainingExportComplete", exportResult } as never)
@@ -698,53 +703,53 @@ export class DaveProviderExtensions {
           break
         case "governanceSetTier": {
           const validTiers = ["observer", "operator", "admin", "superadmin"]
-          if (!validTiers.includes(message.tier)) {
-            this.postMessage({ type: "governanceError", error: `Invalid tier: "${message.tier}". Must be one of: ${validTiers.join(", ")}` } as never)
+          if (!validTiers.includes(m.tier)) {
+            this.postMessage({ type: "governanceError", error: `Invalid tier: "${m.tier}". Must be one of: ${validTiers.join(", ")}` } as never)
             break
           }
           // Tab sends { user }, not { userId }
-          const userId = message.userId ?? message.user
-          this.governanceService?.setUserTier(userId, message.tier, message.assignedBy ?? "operator")
+          const userId = m.userId ?? m.user
+          this.governanceService?.setUserTier(userId, m.tier, m.assignedBy ?? "operator")
           this.sendGovernanceState()
           break
         }
         case "governanceApproveAction":
           // Tab sends { approvalId, approvedBy }, not { actionId, approver }
           this.governanceService?.approveAction(
-            message.actionId ?? message.approvalId,
-            message.approver ?? message.approvedBy ?? "operator",
-            message.reason,
+            m.actionId ?? m.approvalId,
+            m.approver ?? m.approvedBy ?? "operator",
+            m.reason,
           )
           this.sendGovernanceState()
           break
         case "governanceRejectAction":
           // Tab sends { approvalId, rejectedBy }, not { actionId, approver }
           this.governanceService?.rejectAction(
-            message.actionId ?? message.approvalId,
-            message.approver ?? message.rejectedBy ?? "operator",
-            message.reason,
+            m.actionId ?? m.approvalId,
+            m.approver ?? m.rejectedBy ?? "operator",
+            m.reason,
           )
           this.sendGovernanceState()
           break
         case "governanceAddDangerousAction":
-          // Tab sends individual fields (name, description, minimumTier, requiresApproval), not message.action
-          this.governanceService?.addDangerousAction(message.action ?? {
-            name: message.name,
-            description: message.description,
-            severity: message.severity ?? "warning",
-            minimumTier: message.minimumTier,
-            requiresApproval: message.requiresApproval ?? true,
-            blocked: message.blocked ?? false,
+          // Tab sends individual fields (name, description, minimumTier, requiresApproval), not m.action
+          this.governanceService?.addDangerousAction(m.action ?? {
+            name: m.name,
+            description: m.description,
+            severity: m.severity ?? "warning",
+            minimumTier: m.minimumTier,
+            requiresApproval: m.requiresApproval ?? true,
+            blocked: m.blocked ?? false,
           })
           this.sendGovernanceState()
           break
         case "governanceToggleBlock":
-          this.governanceService?.toggleActionBlock(message.actionId, message.blocked)
+          this.governanceService?.toggleActionBlock(m.actionId, m.blocked)
           this.sendGovernanceState()
           break
         case "governanceCreateVerdict":
           if (this.governanceService) {
-            this.governanceService.createReleaseVerdict(message.scope, message.criticalDefects ?? 0, message.highDefects ?? 0, message.riskSummary ?? "", message.rollbackPlan ?? "", message.decision ?? "pass")
+            this.governanceService.createReleaseVerdict(m.scope, m.criticalDefects ?? 0, m.highDefects ?? 0, m.riskSummary ?? "", m.rollbackPlan ?? "", m.decision ?? "pass")
             this.sendGovernanceState()
           }
           break
@@ -773,13 +778,13 @@ export class DaveProviderExtensions {
           if (this.workstationProfile) this.postMessage({ type: "workstationRoutingPrefs", prefs: this.workstationProfile.getRoutingPreferences() } as never)
           break
         case "workstationShouldPreferLocal":
-          if (this.workstationProfile) this.postMessage({ type: "workstationLocalPref", prefer: this.workstationProfile.shouldPreferLocal(message.taskType as string) } as never)
+          if (this.workstationProfile) this.postMessage({ type: "workstationLocalPref", prefer: this.workstationProfile.shouldPreferLocal(m.taskType as string) } as never)
           break
         case "workstationGetModelLibrary":
           if (this.workstationProfile) this.postMessage({ type: "workstationModelLibrary", library: this.workstationProfile.getModelLibrary() } as never)
           break
         case "workstationGetModelsByCategory":
-          if (this.workstationProfile) this.postMessage({ type: "workstationModelsForCategory", models: this.workstationProfile.getModelsByCategory(message.category as never) } as never)
+          if (this.workstationProfile) this.postMessage({ type: "workstationModelsForCategory", models: this.workstationProfile.getModelsByCategory(m.category as never) } as never)
           break
         case "workstationHasLoRAs":
           if (this.workstationProfile) this.postMessage({ type: "workstationLoRAStatus", available: this.workstationProfile.hasLoRAs() } as never)
@@ -829,8 +834,8 @@ export class DaveProviderExtensions {
           break
         case "hermesSetApiKey": {
           const { saveKey } = await import("./services/hermes")
-          if (this.extensionContext && typeof message.key === "string") {
-            await saveKey(this.extensionContext, message.key)
+          if (this.extensionContext && typeof m.key === "string") {
+            await saveKey(this.extensionContext, m.key)
             await this.handleHermesStatusRequest()
           }
           break
@@ -844,10 +849,10 @@ export class DaveProviderExtensions {
           break
         }
         case "hermesUpdateConfig": {
-          if (this.hermesStatusSvc && typeof message.key === "string") {
+          if (this.hermesStatusSvc && typeof m.key === "string") {
             const section = "kilo-code.new.hermes"
             const cfg = vscode.workspace.getConfiguration(section)
-            await cfg.update(message.key as string, message.value, vscode.ConfigurationTarget.Global)
+            await cfg.update(m.key as string, m.value, vscode.ConfigurationTarget.Global)
             await this.handleHermesStatusRequest()
           }
           break
@@ -859,9 +864,9 @@ export class DaveProviderExtensions {
           await this.handleHermesSubmitTask(message)
           break
         case "hermesApproveTask":
-          if (this.hermesClientSvc && typeof message.taskId === "string") {
+          if (this.hermesClientSvc && typeof m.taskId === "string") {
             try {
-              const result = await this.hermesClientSvc.approve(message.taskId)
+              const result = await this.hermesClientSvc.approve(m.taskId)
               this.postMessage({ type: "hermesTaskApproved", task: result } as never)
               await this.handleHermesTasksRequest()
             } catch (err) {
@@ -870,9 +875,9 @@ export class DaveProviderExtensions {
           }
           break
         case "hermesCancelTask":
-          if (this.hermesClientSvc && typeof message.taskId === "string") {
+          if (this.hermesClientSvc && typeof m.taskId === "string") {
             try {
-              const result = await this.hermesClientSvc.cancel(message.taskId)
+              const result = await this.hermesClientSvc.cancel(m.taskId)
               this.postMessage({ type: "hermesTaskCancelled", task: result } as never)
               await this.handleHermesTasksRequest()
             } catch (err) {

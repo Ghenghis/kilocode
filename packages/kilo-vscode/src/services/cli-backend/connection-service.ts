@@ -482,6 +482,7 @@ export class KiloConnectionService {
     this.eventListeners.clear()
     this.stateListeners.clear()
     this.notificationDismissListeners.clear()
+    this.languageChangeListeners.clear()
     this.profileChangeListeners.clear()
     this.migrationCompleteListeners.clear()
     this.favoritesChangeListeners.clear()

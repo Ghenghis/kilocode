@@ -29,7 +29,8 @@ export const registerAutocompleteProvider = (
   )
   context.subscriptions.push(
     vscode.commands.registerCommand("kilo-code.new.autocomplete.generateSuggestions", async () => {
-      autocompleteManager.codeSuggestion()
+      // kilocode_change: was missing await — async edit() rejection became unhandled
+      await autocompleteManager.codeSuggestion()
     }),
   )
   context.subscriptions.push(

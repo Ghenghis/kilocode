@@ -771,10 +771,11 @@ export class ZeroClawService implements vscode.Disposable {
 
 		for (const filePath of task.changedFiles) {
 			try {
-				// Use git checkout to restore the file to its last committed state
-				// Escape the file path for shell safety
-				const safePath = filePath.replace(/"/g, '\\"')
-				execSync(`git checkout -- "${safePath}"`, { cwd, timeout: 10000, stdio: "pipe" })
+				// kilocode_change: shell-quoting filePath was insufficient — backticks /
+				// $() / non-ASCII could still break out. Switched to execFileSync which
+				// passes args directly to the OS exec call without shell interpolation.
+				const { execFileSync } = require("child_process") as typeof import("child_process")
+				execFileSync("git", ["checkout", "--", filePath], { cwd, timeout: 10000, stdio: "pipe" })
 				restoredCount++
 				this.log.info("File restored during rollback", { taskId, filePath })
 				this.appendLog(taskId, `[ZeroClaw] Restored: ${filePath}`)

@@ -119,7 +119,12 @@ export class HermesClient {
    */
   subscribe(id: string, onEvent: (e: TaskEvent) => void): () => void {
     const ctl = new AbortController()
-    void this.stream(id, ctl, onEvent)
+    // kilocode_change: was using void, which discards the Promise — any rejection
+    // from headers()/getReader() before the inner .catch surfaced as an unhandled
+    // promise rejection, crashing the extension host. Now caught + logged.
+    this.stream(id, ctl, onEvent).catch((err: unknown) => {
+      console.warn("[Kilo Hermes] SSE stream rejected:", err)
+    })
     return () => ctl.abort()
   }
 

@@ -218,22 +218,54 @@ export class AutoUpdateService implements vscode.Disposable {
       } finally { clearTimeout(t) }
     }
 
-    return new Promise<string | null>((resolve, reject) => {
-      const u = new URL(url)
-      const lib = u.protocol === "https:" ? https : http
-      const req = lib.get(url, { headers, timeout: HTTP_TIMEOUT_MS }, (res) => {
-        const status = res.statusCode ?? 0
-        if (status < 200 || status >= 300) {
-          reject(new Error(`HTTP ${status} on ${url}`)); res.resume(); return
+    // kilocode_change: was missing 3xx redirect handling (so manifest URLs behind
+     // CloudFront/S3 redirects returned redirect HTML and JSON.parse failed downstream).
+     // Also `req.on("timeout")` could fire AFTER response started, so error+end could
+     // double-fire resolve/reject. `done` flag now prevents that.
+    const MAX_HOPS = 5
+    const doGet = (target: string, hops: number): Promise<string | null> =>
+      new Promise<string | null>((resolve, reject) => {
+        let done = false
+        const settle = (fn: () => void): void => {
+          if (!done) {
+            done = true
+            fn()
+          }
         }
-        let buf = ""
-        res.setEncoding("utf8")
-        res.on("data", (c) => (buf += c))
-        res.on("end", () => resolve(buf))
+        const u = new URL(target)
+        const lib = u.protocol === "https:" ? https : http
+        const req = lib.get(target, { headers, timeout: HTTP_TIMEOUT_MS }, (res) => {
+          const status = res.statusCode ?? 0
+          if (status >= 300 && status < 400 && res.headers.location) {
+            res.resume()
+            if (hops >= MAX_HOPS) {
+              settle(() => reject(new Error(`Too many redirects (${MAX_HOPS}) on ${target}`)))
+              return
+            }
+            const next = new URL(res.headers.location as string, target).toString()
+            doGet(next, hops + 1).then(
+              (v) => settle(() => resolve(v)),
+              (e) => settle(() => reject(e)),
+            )
+            return
+          }
+          if (status < 200 || status >= 300) {
+            res.resume()
+            settle(() => reject(new Error(`HTTP ${status} on ${target}`)))
+            return
+          }
+          let buf = ""
+          res.setEncoding("utf8")
+          res.on("data", (c) => (buf += c))
+          res.on("end", () => settle(() => resolve(buf)))
+          res.on("error", (e) => settle(() => reject(e)))
+        })
+        req.on("timeout", () => {
+          req.destroy(new Error("timeout"))
+        })
+        req.on("error", (e) => settle(() => reject(e)))
       })
-      req.on("timeout", () => req.destroy(new Error("timeout")))
-      req.on("error", reject)
-    })
+    return doGet(url, 0)
   }
 
   private async download(url: string, target: string, hops = 0): Promise<void> {

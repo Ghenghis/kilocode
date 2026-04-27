@@ -185,7 +185,7 @@ export class RoutingService implements vscode.Disposable {
       {
         id: "siliconflow",
         name: "SiliconFlow",
-        apiBase: "https://api.siliconflow.com/v1", // Dashboard at cloud.siliconflow.com/me/account/ak
+        apiBase: "https://api.siliconflow.cn/v1", // Dashboard at cloud.siliconflow.com/me/account/ak
         roles: [ROLE_FALLBACK],
       },
       {
@@ -723,7 +723,7 @@ export class RoutingService implements vscode.Disposable {
           }
           break
         case "siliconflow":
-          url = `${apiBase ?? "https://api.siliconflow.com/v1"}/models`
+          url = `${apiBase ?? "https://api.siliconflow.cn/v1"}/models`
           headers = {
             "Authorization": `Bearer ${apiKey}`,
           }

@@ -48,6 +48,21 @@ const Settings: Component<SettingsProps> = (props) => {
   const session = useSession()
   const [active, setActive] = createSignal(props.tab ?? "models")
   const [errorExpanded, setErrorExpanded] = createSignal(false)
+  // kilocode_change: real tab search filter — applies via DOM walker so we don't have to
+  // wrap each of 24 tab triggers in <Show>. Trigger element is queried via the .label child.
+  const [tabFilter, setTabFilter] = createSignal("")
+  let tabsListRef: HTMLElement | undefined
+  createEffect(() => {
+    const q = tabFilter().trim().toLowerCase()
+    const root = tabsListRef
+    if (!root) return
+    const triggers = root.querySelectorAll<HTMLElement>("[role='tab'], button[data-value], button[role='tab']")
+    triggers.forEach((trigger) => {
+      const label = trigger.querySelector(".label")?.textContent?.toLowerCase() ?? ""
+      const match = !q || label.includes(q)
+      trigger.style.display = match ? "" : "none"
+    })
+  })
 
   const busyCount = () => Object.values(session.allStatusMap()).filter((s) => s.type === "busy").length
 
@@ -100,6 +115,26 @@ const Settings: Component<SettingsProps> = (props) => {
         <h2 style={{ "font-size": "16px", "font-weight": "600", margin: 0 }}>{language.t("sidebar.settings")}</h2>
       </div>
 
+      {/* kilocode_change: tab filter — fuzzy substring search hides non-matching triggers */}
+      <div style={{ padding: "6px 8px", "border-bottom": "1px solid var(--vscode-widget-border)" }}>
+        <input
+          type="text"
+          value={tabFilter()}
+          onInput={(e) => setTabFilter(e.currentTarget.value)}
+          placeholder="Filter settings tabs… (24 tabs available)"
+          aria-label="Filter settings tabs"
+          style={{
+            width: "100%",
+            padding: "4px 8px",
+            "font-size": "12px",
+            background: "var(--vscode-input-background)",
+            color: "var(--vscode-input-foreground)",
+            border: "1px solid var(--vscode-input-border)",
+            "border-radius": "3px",
+          }}
+        />
+      </div>
+
       {/* Settings tabs */}
       <Tabs
         orientation="vertical"
@@ -108,7 +143,7 @@ const Settings: Component<SettingsProps> = (props) => {
         onChange={onTabChange}
         style={{ flex: 1, "min-height": 0, overflow: "hidden" }}
       >
-        <Tabs.List>
+        <Tabs.List ref={(el: HTMLElement | undefined) => (tabsListRef = el)}>
           <Tabs.Trigger value="models">
             <Icon name="models" />
             <span class="label">{language.t("settings.models.title")}</span>

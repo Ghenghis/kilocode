@@ -185,6 +185,34 @@ const AboutKiloCodeTab: Component<AboutKiloCodeTabProps> = (props) => {
           <span style={labelStyle}>Agents</span>
           <span style={{ ...valueStyle, color: "#4ECDC4" }}>20 KiloCode Default Agents (kc-01 … kc-20)</span>
         </div>
+        {/* kilocode_change: copy a paste-ready system info markdown table for bug reports */}
+        <div style={{ "margin-top": "10px" }}>
+          <Button
+            variant="ghost"
+            size="small"
+            onClick={() => {
+              const cliState = props.connectionState
+              const md = [
+                "| Field | Value |",
+                "| --- | --- |",
+                `| Kilo | \`${props.extensionVersion ?? "unknown"}\` |`,
+                `| Edition | \`MAOS\` |`,
+                `| Platform | \`${navigator.platform}\` |`,
+                `| User agent | \`${navigator.userAgent}\` |`,
+                `| Language | \`${navigator.language}\` |`,
+                `| CLI port | \`${props.port ?? "-"}\` |`,
+                `| CLI state | \`${cliState}\` |`,
+                `| Captured | \`${new Date().toISOString()}\` |`,
+              ].join("\n")
+              navigator.clipboard
+                .writeText(md)
+                .then(() => showToast({ variant: "success", title: "System info copied (markdown table)" }))
+                .catch(() => showToast({ variant: "error", title: "Clipboard unavailable" }))
+            }}
+          >
+            Copy system info
+          </Button>
+        </div>
       </div>
 
       {/* Community & Support */}

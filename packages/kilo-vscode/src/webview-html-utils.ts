@@ -29,6 +29,12 @@ export function buildCspString(cspSource: string, nonce: string, port?: number):
     `font-src ${cspSource}`,
     `connect-src ${cspSource} ${connectSrc} https://*.tts.speech.microsoft.com https://texttospeech.googleapis.com https://api.openai.com https://api.elevenlabs.io https://polly.*.amazonaws.com`,
     `img-src ${cspSource} data: https:`,
+    // Allow VS Code's own internal service worker (registered by the webview preloader
+    // at vscode-webview://<id>/service-worker.js) to operate after our HTML is injected.
+    // Without this explicit worker-src, default-src 'none' would block the SW fetch
+    // interceptor and trigger "Failed to register a ServiceWorker: document is in an
+    // invalid state" on VS Code 1.90+ with module-type service workers.
+    `worker-src ${cspSource} blob:`,
   ]
   return joinCspDirectives(directives)
 }

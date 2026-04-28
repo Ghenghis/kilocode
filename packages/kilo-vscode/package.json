@@ -17,6 +17,10 @@
   "engines": {
     "vscode": "^1.105.1"
   },
+  "extensionKind": [
+    "ui",
+    "workspace"
+  ],
   "license": "MIT",
   "author": {
     "name": "KiloCode MAOS Edition"

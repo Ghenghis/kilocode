@@ -138,11 +138,19 @@ const mapAgent = (a: Agent) => ({
   model: a.model,
 })
 
+/**
+ * If the webview does not send "webviewReady" within this window, VS Code's
+ * internal service-worker likely failed to register (stale SW cache after a
+ * VS Code update). Show an actionable error instead of leaving a blank panel.
+ */
+const WEBVIEW_READY_TIMEOUT_MS = 30_000
+
 export class KiloProvider implements vscode.WebviewViewProvider, TelemetryPropertiesProvider {
   public static readonly viewType = "kilo-code.SidebarProvider"
   private readonly instanceId = crypto.randomUUID()
 
   private webview: vscode.Webview | null = null
+  private _webviewReadyTimer: ReturnType<typeof setTimeout> | null = null
   private currentSession: Session | null = null
   /** Remembers the last selected session so /new can stay in the same worktree after clearSession. */
   private contextSessionID: string | undefined
@@ -414,6 +422,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
 
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview)
     this.setupWebviewMessageHandler(webviewView.webview)
+    this._scheduleWebviewReadyCheck(WEBVIEW_READY_TIMEOUT_MS)
 
     vscode.commands.executeCommand("setContext", "kilo-code.new.sidebarVisible", webviewView.visible)
     this.visibilityDisposable?.dispose()
@@ -586,6 +595,11 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       switch (message.type) {
         case "webviewReady":
           console.log("[Kilo New] KiloProvider: ✅ webviewReady received")
+          // Cancel stale-SW diagnostic timer — webview loaded successfully.
+          if (this._webviewReadyTimer !== null) {
+            clearTimeout(this._webviewReadyTimer)
+            this._webviewReadyTimer = null
+          }
           this.isWebviewReady = true
           await this.syncWebviewState("webviewReady")
           this.flushPendingReviewComments()
@@ -3466,6 +3480,49 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
 
   private getProjectDirectory(sessionId?: string): string | undefined {
     return resolveProjectDirectory(this.projectDirectory, () => this.getWorkspaceDirectory(sessionId))
+  }
+
+  /**
+   * Schedule a one-shot diagnostic if the webview hasn't become ready within
+   * `timeoutMs`. The most common cause is VS Code's internal service-worker
+   * failing to register after a VS Code update (stale SW ScriptCache). We
+   * surface a clear, actionable error instead of leaving a blank panel.
+   */
+  private _scheduleWebviewReadyCheck(timeoutMs: number): void {
+    if (this._webviewReadyTimer !== null) {
+      clearTimeout(this._webviewReadyTimer)
+    }
+    this._webviewReadyTimer = setTimeout(() => {
+      this._webviewReadyTimer = null
+      if (this.isWebviewReady) return // loaded fine — ignore
+
+      const swCachePath =
+        process.platform === "win32"
+          ? "%APPDATA%\\Code\\Service Worker"
+          : "~/.config/Code/Service Worker"
+
+      vscode.window
+        .showErrorMessage(
+          "KiloCode: webview failed to load (VS Code service-worker issue). " +
+            "This usually means VS Code's internal service-worker cache is stale after a VS Code update.",
+          "Fix: How to clear SW cache",
+          "Reload Window",
+        )
+        .then((choice) => {
+          if (choice === "Fix: How to clear SW cache") {
+            vscode.window.showInformationMessage(
+              `1. Close VS Code completely.\n` +
+                `2. Delete the folder: ${swCachePath}\\ScriptCache\n` +
+                `3. Delete the folder: ${swCachePath}\\Database\n` +
+                `4. Restart VS Code.\n` +
+                `If the problem persists, run VS Code with --reset-forced-extensions.`,
+              { modal: true },
+            )
+          } else if (choice === "Reload Window") {
+            vscode.commands.executeCommand("workbench.action.reloadWindow")
+          }
+        })
+    }, timeoutMs)
   }
 
   private _getHtmlForWebview(webview: vscode.Webview): string {

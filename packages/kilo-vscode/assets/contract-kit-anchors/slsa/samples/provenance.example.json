@@ -1,0 +1,60 @@
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "name": "kilo-code-7.2.21.vsix",
+      "digest": {
+        "sha256": "9b8d2a1c4f3e6d5a8b7c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a"
+      }
+    }
+  ],
+  "predicateType": "https://slsa.dev/provenance/v1",
+  "predicate": {
+    "buildDefinition": {
+      "buildType": "https://slsa-framework.github.io/github-actions-buildtypes/workflow/v1",
+      "externalParameters": {
+        "workflow": {
+          "ref": "refs/tags/v7.2.21",
+          "repository": "https://github.com/Kilo-Org/kilocode",
+          "path": ".github/workflows/release-vsix.yml"
+        }
+      },
+      "internalParameters": {
+        "github": {
+          "event_name": "push",
+          "repository_id": "739845231",
+          "repository_owner_id": "138747984",
+          "runner_environment": "github-hosted"
+        }
+      },
+      "resolvedDependencies": [
+        {
+          "uri": "git+https://github.com/Kilo-Org/kilocode@refs/tags/v7.2.21",
+          "digest": {
+            "gitCommit": "bc8ed1f9a7e3d5c2b1a0f9e8d7c6b5a4f3e2d1c0"
+          }
+        }
+      ]
+    },
+    "runDetails": {
+      "builder": {
+        "id": "https://github.com/slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@refs/tags/v2.0.0",
+        "version": {
+          "github-actions": "1.0.0",
+          "slsa-github-generator": "v2.0.0"
+        }
+      },
+      "metadata": {
+        "invocationId": "https://github.com/Kilo-Org/kilocode/actions/runs/10456789012/attempts/1",
+        "startedOn": "2026-04-28T09:14:22Z",
+        "finishedOn": "2026-04-28T09:18:47Z"
+      },
+      "byproducts": [
+        {
+          "name": "provenance.intoto.jsonl",
+          "uri": "https://github.com/Kilo-Org/kilocode/releases/download/v7.2.21/provenance.intoto.jsonl"
+        }
+      ]
+    }
+  }
+}

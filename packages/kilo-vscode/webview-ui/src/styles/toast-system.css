@@ -1,0 +1,158 @@
+/* ============================================================
+   ToastSystem — slide-in toasts from bottom-right
+   ============================================================ */
+
+/* Region: fixed anchor bottom-right */
+.kc-toast-region {
+  position: fixed;
+  bottom: 20px;
+  right: 16px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column-reverse; /* newest on top */
+  gap: 8px;
+  max-width: 360px;
+  width: calc(100vw - 32px);
+  pointer-events: none;
+}
+
+/* ── Base toast card ── */
+.kc-toast {
+  display: grid;
+  grid-template-columns: 18px 1fr auto auto;
+  align-items: start;
+  gap: 6px;
+  padding: 10px 10px 0 10px;
+  border-radius: 6px;
+  background: var(--vscode-editorWidget-background, #252526);
+  border: 1px solid var(--vscode-editorWidget-border, #454545);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  font-size: 12px;
+  line-height: 1.4;
+  pointer-events: all;
+  position: relative;
+  overflow: hidden;
+
+  /* Slide-in from right */
+  transform: translateX(0);
+  opacity: 1;
+  animation: kc-toast-enter 0.28s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+}
+
+.kc-toast--leaving {
+  animation: kc-toast-leave 0.30s ease-in forwards;
+}
+
+@keyframes kc-toast-enter {
+  from {
+    transform: translateX(110%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes kc-toast-leave {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+    max-height: 120px;
+    margin-bottom: 0;
+  }
+  to {
+    transform: translateX(110%);
+    opacity: 0;
+    max-height: 0;
+    margin-bottom: -8px;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+
+/* ── Type colour tokens ── */
+.kc-toast--success {
+  border-left: 3px solid var(--vscode-testing-iconPassed, #4caf50);
+}
+.kc-toast--info {
+  border-left: 3px solid var(--vscode-textLink-foreground, #3794ff);
+}
+.kc-toast--warning {
+  border-left: 3px solid var(--vscode-editorWarning-foreground, #cca700);
+}
+.kc-toast--error {
+  border-left: 3px solid var(--vscode-inputValidation-errorBorder, #f14c4c);
+}
+
+/* ── Icon ── */
+.kc-toast-icon {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.kc-toast--success .kc-toast-icon { color: var(--vscode-testing-iconPassed, #4caf50); }
+.kc-toast--info    .kc-toast-icon { color: var(--vscode-textLink-foreground, #3794ff); }
+.kc-toast--warning .kc-toast-icon { color: var(--vscode-editorWarning-foreground, #cca700); }
+.kc-toast--error   .kc-toast-icon { color: var(--vscode-inputValidation-errorBorder, #f14c4c); }
+
+/* ── Message ── */
+.kc-toast-message {
+  color: var(--vscode-foreground);
+  word-break: break-word;
+  padding-bottom: 10px;
+}
+
+/* ── Action button ── */
+.kc-toast-action {
+  background: none;
+  border: none;
+  padding: 0 4px;
+  margin: 0;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--vscode-textLink-foreground, #3794ff);
+  white-space: nowrap;
+  line-height: 1.4;
+}
+.kc-toast-action:hover {
+  text-decoration: underline;
+}
+
+/* ── Close button ── */
+.kc-toast-close {
+  background: none;
+  border: none;
+  padding: 0 2px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--vscode-descriptionForeground);
+  opacity: 0.6;
+  align-self: start;
+  margin-top: -1px;
+}
+.kc-toast-close:hover {
+  opacity: 1;
+}
+
+/* ── Progress bar (spans full card width) ── */
+.kc-toast-progress-track {
+  grid-column: 1 / -1;
+  height: 2px;
+  background: var(--vscode-editorWidget-border, #454545);
+  border-radius: 0 0 6px 6px;
+  overflow: hidden;
+  margin: 0 -10px;
+}
+
+.kc-toast-progress-bar {
+  height: 100%;
+  border-radius: inherit;
+  width: 100%;
+}
+.kc-toast--success .kc-toast-progress-bar { background: var(--vscode-testing-iconPassed, #4caf50); }
+.kc-toast--info    .kc-toast-progress-bar { background: var(--vscode-textLink-foreground, #3794ff); }
+.kc-toast--warning .kc-toast-progress-bar { background: var(--vscode-editorWarning-foreground, #cca700); }
+.kc-toast--error   .kc-toast-progress-bar { background: var(--vscode-inputValidation-errorBorder, #f14c4c); }

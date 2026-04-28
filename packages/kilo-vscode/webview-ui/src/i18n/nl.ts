@@ -1101,6 +1101,7 @@ export const dict = {
   "settings.notifications.errorSound.description": "Geluid om af te spelen bij fouten",
   "settings.notifications.sound.default": "Standaard",
   "settings.notifications.sound.none": "Geen",
+  "settings.notifications.quietHours": "Quiet hours",
 
   "settings.experimental.share.title": "Deelmodus",
   "settings.experimental.share.description": "Hoe sessiedelen zich gedraagt",
@@ -1133,6 +1134,7 @@ export const dict = {
   "settings.experimental.remote.hint": "Gebruik /remote in de chat om te schakelen",
   "settings.experimental.toolToggles": "Tool Schakelaars",
 
+  "settings.agentBehaviour.color": "UI accent color",
   "settings.agentBehaviour.defaultAgent.title": "Standaard Agent",
   "settings.agentBehaviour.defaultAgent.description": "Agent om te gebruiken wanneer er geen is opgegeven",
   "settings.agentBehaviour.availableAgents": "Beschikbare Agents",
@@ -1268,6 +1270,13 @@ export const dict = {
   "settings.context.prune.description": "Verwijder oude tool uitvoer tijdens compactie",
   "settings.context.watcherPatterns": "File Watcher Negeer Patronen",
   "settings.context.watcherPatterns.description": "Glob-patronen voor bestanden die de watcher moet negeren",
+  "settings.context.contextWindow": "Context window",
+  "settings.context.contextWindowHint": "Tokens kept in context for the model",
+  "settings.context.fileLimits": "File size & count limits",
+  "settings.context.rulesFiles": "Rules files",
+  "settings.context.createRulesFile": "Create rules file",
+  "settings.context.mentionCheatsheet": "@mention cheatsheet",
+  "settings.context.systemPromptPreview": "Preview system prompt",
 
   "settings.commitMessage.title": "Commit Message",
   "settings.commitMessage.override.title": "Aangepaste prompt gebruiken",

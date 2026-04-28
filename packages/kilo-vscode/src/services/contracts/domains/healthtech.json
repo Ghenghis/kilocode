@@ -1,0 +1,19 @@
+{
+  "id": "healthtech",
+  "name": "Healthtech",
+  "keywords": ["health", "hipaa", "clinical", "patient", "medical", "phi", "ehr"],
+  "commonNFRs": [
+    "PHI encrypted at rest + in transit",
+    "Access logged with patient + actor + reason",
+    "Break-the-glass with mandatory review",
+    "Data retention per jurisdiction"
+  ],
+  "regulations": ["HIPAA", "HITECH", "FDA Software-as-a-Medical-Device (if diagnostic)", "GDPR (EU)"],
+  "antipatterns": [
+    "Mixing PHI and analytics in one warehouse",
+    "Email-based PHI exchange",
+    "Skipping a Business Associate Agreement (BAA)",
+    "No de-identification step before ML training"
+  ],
+  "suggestedTemplates": ["compliance-prd"]
+}

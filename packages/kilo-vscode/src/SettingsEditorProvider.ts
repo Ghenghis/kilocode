@@ -9,6 +9,7 @@ import type { VPSService } from "./services/vps"
 import type { ZeroClawService } from "./services/zeroclaw"
 import type { RoutingService } from "./services/routing"
 import type { MemoryService } from "./services/memory"
+import type { AutoApproveService } from "./services/autoApprove"
 import type { TrainingService } from "./services/training"
 import type { GovernanceService } from "./services/governance"
 import type { WorkstationProfileService } from "./services/workstation"
@@ -22,6 +23,7 @@ export interface V4Services {
   zeroClaw: ZeroClawService
   routing: RoutingService
   memory: MemoryService
+  autoApprove: AutoApproveService
   training: TrainingService
   governance: GovernanceService
   workstation: WorkstationProfileService

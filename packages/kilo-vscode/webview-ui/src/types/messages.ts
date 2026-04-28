@@ -1676,6 +1676,11 @@ export type ExtensionMessage =
   | FavoritesLoadedMessage
   | ModelSelectionsLoadedMessage
   | LanguageChangedMessage
+  | PreviewFileEditsMessage
+  | MentionSuggestionsMessage
+  | BrowserStatusMessage
+  | VoiceInputResultMessage
+  | VSCodeLanguageDetectedMessage
   | ContinueInWorktreeProgressMessage
   | WorktreeStatsLoadedMessage
   | McpStatusLoadedMessage
@@ -1684,6 +1689,9 @@ export type ExtensionMessage =
   | RemoteStatusMessage
   | SpeechSettingsLoadedMessage
   | AzureKeyValidationResultMessage
+  | McpToolTestResultMessage
+  | TestNotificationResultMessage
+  | TestProviderKeyResultMessage
   // V4 subsystem messages (SSH, VPS, ZeroClaw, Routing, Memory, Training, Governance)
   | V4SubsystemMessage
 
@@ -1694,8 +1702,11 @@ export interface V4SubsystemMessage {
     | "sshProfilesLoaded" | "sshSessionsUpdated"
     | "sshConnectionStatus" | "sshFilesListed" | "sshLogOutput" | "sshLogTailingStopped"
     | "sshFilePreviewResult" | "sshErrors" | "sshError"
+    | "sshKeyGenerated" | "sshKnownHostsLoaded" | "sshKeyFingerprint"
+    | "sshTestConnectionResult" | "sshConnectionHistoryLoaded"
     // VPS
     | "vpsServersLoaded" | "vpsServerAdded" | "vpsServerUpdated" | "vpsServerRemoved"
+    | "vpsServerPingResult"
     | "vpsMetricsLoaded" | "vpsServicesLoaded"
     | "vpsContainersLoaded" | "vpsDeployHistoryLoaded"
     | "vpsBackupStatus" | "vpsReverseProxyConfigsLoaded" | "vpsReverseProxyTestResult"
@@ -1707,6 +1718,7 @@ export interface V4SubsystemMessage {
     // Routing
     | "routingProvidersLoaded" | "routingTracesLoaded" | "routingHealthLoaded"
     | "routingConfigLoaded" | "routingTestResult" | "routingKeyConfigured"
+    | "routingPrivacyUpdated" | "routingRuleTestResult"
     // Memory
     | "memoryStatusLoaded" | "memoryRecallResult"
     | "memoryWriteResult" | "memoryHistoryLoaded"
@@ -1730,6 +1742,18 @@ export interface V4SubsystemMessage {
     | "hermesStatusUpdate" | "hermesTasksUpdate"
     | "hermesAgentAssistResult" | "hermesError"
     | "hermesTaskSubmitted" | "hermesTaskApproved" | "hermesTaskCancelled"
+    // Auto-approve
+    | "autoApproveConditions" | "autoApproveRateLimits" | "autoApproveLog" | "autoApproveResult"
+    // VPS extra responses
+    | "vpsServerPingResult" | "vpsActionResult" | "vpsDeployResult" | "vpsBackupResult" | "vpsError"
+    // Contract Markdowns Studio (Sprint 1) — extension → webview responses
+    | "contract:list:result" | "contract:open:result" | "contract:save:result"
+    | "contract:enhancePrompt:result" | "contract:generate:delta" | "contract:generate:done"
+    | "contract:section:delta" | "contract:inline:delta"
+    | "contract:diagram:result" | "contract:research:result"
+    | "contract:templates:result" | "contract:templates:installed"
+    | "contract:rubric:result" | "contract:scaffold:delta"
+    | "contract:audienceRender:result" | "contract:error"
   [key: string]: unknown
 }
 
@@ -2076,6 +2100,184 @@ export interface RequestNotificationSettingsMessage {
 
 export interface ResetAllSettingsRequest {
   type: "resetAllSettings"
+}
+
+// ── Chat-feature messages (canary.10 catch-up) ──────────────────────────────
+
+export interface PreviewFileEdit {
+  /** Relative or absolute file path. */
+  file: string
+  /** Lines added in this edit. */
+  additions?: number
+  /** Lines deleted in this edit. */
+  deletions?: number
+  /** Total lines changed (additions + deletions if separate). */
+  linesChanged?: number
+  /** Optional content snippets for inline rendering. */
+  oldContent?: string
+  newContent?: string
+  /** Optional summary or label. */
+  summary?: string
+}
+
+/** Extension → webview: ask user to confirm a multi-file edit batch. */
+export interface PreviewFileEditsMessage {
+  type: "previewFileEdits"
+  files: PreviewFileEdit[]
+  requestId?: string
+}
+
+/** Webview → extension: user response to a previewFileEdits prompt. */
+export interface PreviewFileEditsResponseMessage {
+  type: "previewFileEditsResponse"
+  response: "applyAll" | "reviewEach" | "cancel"
+  requestId?: string
+}
+
+export interface SelectImagesMessage {
+  type: "selectImages"
+  /** Optional message id this image batch is associated with. */
+  messageId?: string
+}
+
+export interface CaptureEditorScreenshotMessage {
+  type: "captureEditorScreenshot"
+}
+
+export interface ExportConversationMessage {
+  type: "exportConversation"
+  format?: "markdown" | "json" | "html"
+}
+
+export interface OpenInTabMessage {
+  type: "openInTab"
+}
+
+export interface ReloadWindowRequestMessage {
+  type: "reloadWindowRequest"
+}
+
+export interface RefreshContextMessage {
+  type: "refreshContext"
+}
+
+export interface ResumeStreamRequestMessage {
+  type: "resumeStreamRequest"
+}
+
+export interface RetryLastRequestMessage {
+  type: "retryLastRequest"
+}
+
+export interface SelectModelMessage {
+  type: "selectModel"
+  /** Model id. Both casings accepted by callers. */
+  modelId?: string
+  modelID?: string
+  /** Provider id when needed to disambiguate. */
+  providerID?: string
+  /** Optional alias also accepted. */
+  provider?: string
+}
+
+/** Webview → extension: open a path in the active editor (file or virtual code). */
+export interface OpenInEditorRequestMessage {
+  type: "openInEditorRequest"
+  /** Optional file path; when omitted, `code` + `language` open an untitled doc. */
+  filePath?: string
+  /** Inline code/text to drop into a new untitled buffer. */
+  code?: string
+  /** Optional language id for the untitled buffer. */
+  language?: string
+  line?: number
+  column?: number
+}
+
+/** Webview → extension: open the VS Code diff viewer for a file (left vs right). */
+export interface OpenDiffForFileMessage {
+  type: "openDiffForFile"
+  /** Absolute or workspace-relative file path. */
+  filePath: string
+  /** Optional left-side content; defaults to the on-disk version of `filePath`. */
+  leftContent?: string
+  /** Right-side content (the proposed/changed text). */
+  rightContent?: string
+  /** Tab title shown in the diff editor. */
+  title?: string
+}
+
+/** Webview → extension: retry the last tool call by part id. */
+export interface RetryToolRequestMessage {
+  type: "retryToolRequest"
+  partId: string
+  sessionID?: string
+}
+
+/** Webview → extension: navigate from the settings panel back to the chat. */
+export interface SettingsBackMessage {
+  type: "settingsBack"
+}
+
+/** Webview → extension: ask for fuzzy-match `@mention` suggestions. */
+export interface GetMentionSuggestionsRequestMessage {
+  type: "getMentionSuggestionsRequest"
+  query: string
+  requestId: string
+  /** Limit returned items (default 10). */
+  limit?: number
+}
+
+/** Extension → webview: response to getMentionSuggestionsRequest. */
+export interface MentionSuggestionsMessage {
+  type: "mentionSuggestions"
+  requestId: string
+  items: Array<{ label: string; path?: string; description?: string }>
+}
+
+/** Webview → extension: ask whether the Browser tab is enabled/configured. */
+export interface RequestBrowserStatusMessage {
+  type: "requestBrowserStatus"
+}
+
+/** Extension → webview: browser status response. */
+export interface BrowserStatusMessage {
+  type: "browserStatus"
+  enabled: boolean
+  configured: boolean
+  useSystemChrome?: boolean
+  headless?: boolean
+}
+
+/** Webview → extension: start voice recording / dictation. */
+export interface RequestVoiceInputMessage {
+  type: "requestVoiceInput"
+  action: "start" | "stop" | "cancel"
+}
+
+/** Extension → webview: result of voice input (final transcript or status). */
+export interface VoiceInputResultMessage {
+  type: "voiceInputResult"
+  status: "started" | "stopped" | "cancelled" | "error" | "unavailable"
+  transcript?: string
+  error?: string
+}
+
+/** Webview → extension: ask for the current VS Code display language. */
+export interface RequestVSCodeLanguageMessage {
+  type: "requestVSCodeLanguage"
+}
+
+/** Extension → webview: VS Code display language. */
+export interface VSCodeLanguageDetectedMessage {
+  type: "vscodeLanguageDetected"
+  language: string
+}
+
+/** Generic action message — already used loosely; declared for typing. */
+export interface GenericActionMessage {
+  type: "action"
+  action: string
+  payload?: unknown
 }
 
 export interface SettingsTabChangedMessage {
@@ -2426,6 +2628,15 @@ export interface EnhancePromptRequest {
   requestId: string
 }
 
+// Preview the rendered system prompt (webview → extension).
+// Triggered by the "Preview" button in the settings → Context tab. The
+// extension reads the current system-prompt template, interpolates known
+// variables (model name, session id, workspace, OS), and replies with a
+// `systemPromptPreview` message containing the rendered text.
+export interface PreviewSystemPromptRequest {
+  type: "previewSystemPrompt"
+}
+
 // Open the standalone changes viewer tab from the sidebar
 export interface OpenChangesRequest {
   type: "openChanges"
@@ -2656,6 +2867,56 @@ export interface AzureKeyValidationResultMessage {
 	error?: string
 }
 
+// Diagnostic / test messages (canary.10) — webview → extension
+export interface TestMcpToolMessage {
+	type: "testMcpTool"
+	serverName: string
+	toolName?: string
+	args?: Record<string, unknown>
+}
+
+export type TestNotificationChannel = "popup" | "log" | "system"
+
+export interface TestNotificationMessage {
+	type: "testNotification"
+	channel?: TestNotificationChannel
+	message?: string
+}
+
+export interface TestProviderKeyMessage {
+	type: "testProviderKey"
+	providerID: string
+	apiKey?: string
+	baseUrl?: string
+}
+
+// Diagnostic / test messages (canary.10) — extension → webview
+export interface McpToolTestResultMessage {
+	type: "mcpToolTestResult"
+	serverName: string
+	toolName?: string
+	ok: boolean
+	latencyMs: number
+	response?: unknown
+	error?: string
+}
+
+export interface TestNotificationResultMessage {
+	type: "testNotificationResult"
+	ok: boolean
+	channel: TestNotificationChannel
+	error?: string
+}
+
+export interface TestProviderKeyResultMessage {
+	type: "testProviderKeyResult"
+	providerID: string
+	ok: boolean
+	latencyMs: number
+	modelCount?: number
+	error?: string
+}
+
 export type WebviewMessage =
   | SendMessageRequest
   | AbortRequest
@@ -2713,6 +2974,25 @@ export type WebviewMessage =
   | UpdateConfigMessage
   | RequestNotificationSettingsMessage
   | ResetAllSettingsRequest
+  | PreviewFileEditsResponseMessage
+  | SelectImagesMessage
+  | CaptureEditorScreenshotMessage
+  | ExportConversationMessage
+  | OpenInTabMessage
+  | ReloadWindowRequestMessage
+  | RefreshContextMessage
+  | ResumeStreamRequestMessage
+  | RetryLastRequestMessage
+  | SelectModelMessage
+  | OpenInEditorRequestMessage
+  | OpenDiffForFileMessage
+  | RetryToolRequestMessage
+  | SettingsBackMessage
+  | GetMentionSuggestionsRequestMessage
+  | RequestBrowserStatusMessage
+  | RequestVoiceInputMessage
+  | RequestVSCodeLanguageMessage
+  | GenericActionMessage
   | SettingsTabChangedMessage
   | SyncSessionRequest
   | CreateWorktreeSessionRequest
@@ -2774,6 +3054,7 @@ export type WebviewMessage =
   | ApplyWorktreeDiffMessage
   | RevertWorktreeFileMessage
   | EnhancePromptRequest
+  | PreviewSystemPromptRequest
   | OpenChangesRequest
   | OpenDiffVirtualRequest
   | RetryConnectionRequest
@@ -2811,6 +3092,9 @@ export type WebviewMessage =
   | MoveSectionRequest
   | RequestSpeechSettingsMessage
   | ValidateAzureKeyMessage
+  | TestMcpToolMessage
+  | TestNotificationMessage
+  | TestProviderKeyMessage
   // V4 subsystem messages (SSH, VPS, ZeroClaw, Routing, Memory, Training, Governance)
   | V4SubsystemRequest
   | AgentManagerTerminalCreateRequest
@@ -2825,7 +3109,7 @@ export interface V4SubsystemRequest {
     | "sshOpenTerminal" | "sshBrowseFiles" | "sshFileOpen" | "sshFileDownload" | "sshFileUpload" | "sshTailLogs"
     | "sshFilePreview" | "sshGetErrors" | "sshClearErrors" | "sshFileDiff" | "sshFileSaveRemote"
     | "requestVPSServers" | "requestVpsServers"
-    | "vpsServerAdd" | "vpsServerRemove" | "vpsRefreshMetrics"
+    | "vpsServerAdd" | "vpsServerUpdate" | "vpsServerRemove" | "vpsServerPing" | "vpsRefreshMetrics"
     | "vpsServiceAction" | "vpsDockerAction" | "vpsDeploy" | "vpsRollback" | "vpsBackup"
     | "vpsGetReverseProxyConfigs" | "vpsAddReverseProxyConfig" | "vpsRemoveReverseProxyConfig" | "vpsTestReverseProxyConfig"
     | "requestZeroClawTasks"
@@ -2834,7 +3118,7 @@ export interface V4SubsystemRequest {
     | "zeroClawGetTaskResult" | "zeroClawCollectArtifacts"
     | "requestRoutingState"
     | "routingTestProvider" | "routingConfigureKey" | "routingSetRole"
-    | "routingSetMode" | "routingSetFallbackOrder" | "routingGetTraces" | "routingGetHealth"
+    | "routingSetMode" | "routingSetPrivacy" | "routingSetFallbackOrder" | "routingTestRule" | "routingGetTraces" | "routingGetHealth"
     | "memoryGetStatus" | "memoryRecall" | "memoryWrite" | "memoryReconnect" | "memoryGetHistory" | "memorySetPermission"
     | "memoryRunDiagnostics" | "memoryGetRecallTraces"
     | "requestTrainingState" | "trainingGetJobs"
@@ -2858,6 +3142,14 @@ export interface V4SubsystemRequest {
     | "hermesSetApiKey" | "hermesClearApiKey" | "hermesUpdateConfig"
     | "hermesAgentAssist" | "hermesSubmitTask"
     | "requestHermesTasks" | "hermesApproveTask" | "hermesCancelTask"
+    // Contract Markdowns Studio (Sprint 1) — webview → extension requests
+    | "contract:list" | "contract:open" | "contract:save"
+    | "contract:enhancePrompt" | "contract:generate"
+    | "contract:regenerateSection" | "contract:rewriteInline"
+    | "contract:diagram" | "contract:research"
+    | "contract:templates:list" | "contract:templates:install"
+    | "contract:rubric:score" | "contract:scaffold"
+    | "contract:audienceRender"
   [key: string]: unknown
 }
 

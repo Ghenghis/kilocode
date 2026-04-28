@@ -1,0 +1,19 @@
+{
+  "id": "internal-tool",
+  "name": "Internal Tool",
+  "keywords": ["internal", "admin", "back-office", "operations", "ops"],
+  "commonNFRs": [
+    "SSO via the corporate IdP",
+    "Role-based access with break-glass audit",
+    "Read replicas for reporting",
+    "Self-serve runbook for ops team"
+  ],
+  "regulations": ["Internal data-classification policy"],
+  "antipatterns": [
+    "Direct prod-DB access for ops",
+    "Hand-rolled auth instead of SSO",
+    "No usage telemetry (can't justify maintenance)",
+    "Building it in two technologies for the same team"
+  ],
+  "suggestedTemplates": ["design-doc", "rfc"]
+}

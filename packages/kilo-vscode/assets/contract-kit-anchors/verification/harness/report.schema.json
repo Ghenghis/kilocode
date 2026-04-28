@@ -1,0 +1,49 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://kilo.code/contract-kit/verification-report.schema.json",
+	"title": "Verification Report",
+	"description": "Aggregated result of running every verification case. Consumed by the SWE-bench gate validators and CI badge generators.",
+	"type": "object",
+	"required": ["totalCases", "passed", "failed", "skipped", "durationMs", "cases"],
+	"additionalProperties": false,
+	"properties": {
+		"totalCases": { "type": "integer", "minimum": 0 },
+		"passed": { "type": "integer", "minimum": 0 },
+		"failed": { "type": "integer", "minimum": 0 },
+		"skipped": { "type": "integer", "minimum": 0 },
+		"durationMs": { "type": "number", "minimum": 0 },
+		"generatedAt": {
+			"type": "string",
+			"format": "date-time",
+			"description": "ISO timestamp when this report was emitted."
+		},
+		"cases": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"required": ["id", "status", "durationMs", "evidencePaths"],
+				"additionalProperties": false,
+				"properties": {
+					"id": { "type": "string" },
+					"status": {
+						"type": "string",
+						"enum": ["passed", "failed", "skipped"]
+					},
+					"durationMs": { "type": "number", "minimum": 0 },
+					"errorMessage": { "type": "string" },
+					"evidencePaths": {
+						"type": "array",
+						"items": { "type": "string" }
+					},
+					"mapsTo": {
+						"type": "object",
+						"properties": {
+							"reqId": { "type": "string" },
+							"storyId": { "type": "string" }
+						}
+					}
+				}
+			}
+		}
+	}
+}

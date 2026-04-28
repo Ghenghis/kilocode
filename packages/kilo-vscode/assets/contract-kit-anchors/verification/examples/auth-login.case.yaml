@@ -1,0 +1,15 @@
+id: CASE-AUTH-001
+title: User can sign in with valid credentials
+given: a registered user with verified email
+when: they submit the sign-in form with the correct password
+then: they are redirected to the dashboard and a session cookie is set
+run:
+  kind: playwright
+  spec: verification/e2e/auth-login.spec.ts
+  evidencePaths:
+    - verification/e2e/_traces/auth-login/trace.zip
+    - verification/e2e/_traces/auth-login/video.webm
+    - verification/e2e/_traces/auth-login/screenshot-final.png
+mapsTo:
+  storyId: "1.1"
+  reqId: F-1

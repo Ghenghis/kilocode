@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kilocode.ai/schemas/contract-kit-anchors/agentic/agent-spec.schema.json",
+  "title": "Contract Kit Agent Spec",
+  "description": "Machine-readable contract a Contract Kit emits so that any agentic system (Claude Code, Cursor, Devin, OpenAI Codex CLI, Copilot Workspace) can pick up the project context, requirements, decisions, and risks without re-reading prose docs. Anchor 1 of CONTRACT_KIT_CREATOR_ANCHORS.md.",
+  "type": "object",
+  "required": ["version", "intent", "domain", "audience", "capabilities"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "SemVer of this agent-spec document. Bump on breaking shape changes.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+    },
+    "intent": {
+      "type": "string",
+      "description": "Raw, untransformed user idea — the original sentence(s) the non-coder typed. Must be preserved verbatim so agents can detect drift.",
+      "minLength": 1
+    },
+    "domain": {
+      "type": "string",
+      "description": "Domain pack id (e.g. 'marketplace', 'b2b-saas', 'fintech'). Drives NFR templates, anti-patterns, and risk register seed.",
+      "minLength": 1
+    },
+    "audience": {
+      "type": "array",
+      "description": "Audiences that consume artifacts derived from this kit. Each entry should be one of 'eng', 'exec', 'legal', 'design', 'ops', 'support', or a free-form custom audience.",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "capabilities": {
+      "type": "array",
+      "description": "Top-level capabilities the system must provide. Each capability has a stable id (REQ-XXX), a description, a priority, and at least one acceptance criterion. Agents can reverse-map work to these ids.",
+      "items": { "$ref": "#/$defs/capability" },
+      "minItems": 1
+    },
+    "constraints": {
+      "type": "array",
+      "description": "Non-functional constraints (performance, privacy, regulatory, budget, tech-stack lock-in). Free-form prose strings; richer modeling lives in the PRD.",
+      "items": { "type": "string", "minLength": 1 },
+      "default": []
+    },
+    "decisions": {
+      "type": "array",
+      "description": "Architectural decisions cited by id (ADR-XXXX). Each entry references the actual ADR markdown file so agents can drill in.",
+      "items": { "$ref": "#/$defs/decision" },
+      "default": []
+    },
+    "risks": {
+      "type": "array",
+      "description": "Risk register entries (RISK-XXX). Mapped to OWASP LLM Top 10 categories where relevant (Anchor 4).",
+      "items": { "$ref": "#/$defs/risk" },
+      "default": []
+    }
+  },
+  "$defs": {
+    "capability": {
+      "type": "object",
+      "required": ["id", "description", "priority", "acceptanceCriteria"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable identifier of the form REQ-XXX (zero-padded 3-digit suffix recommended).",
+          "pattern": "^REQ-[A-Z0-9]+$"
+        },
+        "description": {
+          "type": "string",
+          "description": "One- or two-sentence summary of what the capability does and who it serves.",
+          "minLength": 1
+        },
+        "priority": {
+          "type": "string",
+          "description": "MoSCoW priority used to drive task-graph ordering and gate severity.",
+          "enum": ["must", "should", "could", "wont"]
+        },
+        "acceptanceCriteria": {
+          "type": "array",
+          "description": "Given/When/Then or RFC 2119 style criteria that define done. Every leaf task in task-graph.yaml that claims to satisfy this capability must cite at least one of these.",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "required": ["id", "title", "status", "adrPath"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Architectural decision id of the form ADR-XXXX (zero-padded 4-digit suffix recommended).",
+          "pattern": "^ADR-[A-Z0-9]+$"
+        },
+        "title": {
+          "type": "string",
+          "description": "Short headline for the decision.",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "description": "Lifecycle of the decision.",
+          "enum": ["proposed", "accepted", "deprecated", "superseded", "rejected"]
+        },
+        "adrPath": {
+          "type": "string",
+          "description": "Workspace-relative path to the ADR markdown file (e.g. .kilo/contracts/adr/ADR-0007-d2-over-mermaid.md).",
+          "minLength": 1
+        }
+      }
+    },
+    "risk": {
+      "type": "object",
+      "required": ["id", "likelihood", "impact", "mitigation", "owner"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Risk id of the form RISK-XXX (zero-padded 3-digit suffix recommended).",
+          "pattern": "^RISK-[A-Z0-9]+$"
+        },
+        "likelihood": {
+          "type": "string",
+          "description": "Likelihood band used by the risk register.",
+          "enum": ["low", "medium", "high"]
+        },
+        "impact": {
+          "type": "string",
+          "description": "Impact band used by the risk register.",
+          "enum": ["low", "medium", "high", "critical"]
+        },
+        "mitigation": {
+          "type": "string",
+          "description": "Plain-English mitigation summary. Reference compensating controls, gates, or tests where applicable.",
+          "minLength": 1
+        },
+        "owner": {
+          "type": "string",
+          "description": "Human or role accountable for the residual risk (e.g. 'eng-lead', 'security@example.com').",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

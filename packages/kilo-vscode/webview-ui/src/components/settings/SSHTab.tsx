@@ -50,6 +50,35 @@ interface SSHErrorEntry {
   timestamp: number
 }
 
+// kilocode_change (canary.11): types for the new SSH plumbing.
+interface KnownHostEntry {
+  host: string
+  keyType: string
+  fingerprint: string
+}
+
+interface ConnectionHistoryEntry {
+  profileName?: string
+  status?: string
+  timestamp?: number
+  error?: string
+}
+
+interface GeneratedKeyResult {
+  ok: boolean
+  name?: string
+  publicKey?: string
+  publicPath?: string
+  privatePath?: string
+  error?: string
+}
+
+interface TestConnectionResult {
+  profileName: string
+  ok: boolean
+  error?: string
+}
+
 // ─── Defaults ───────────────────────────────────────────
 
 const EMPTY_PROFILE: SSHProfile = {
@@ -189,6 +218,21 @@ const SSHTab: Component = () => {
   const [sshErrors, setSSHErrors] = createSignal<SSHErrorEntry[]>([])
   const [errorsOpen, setErrorsOpen] = createSignal(false)
 
+  // --- canary.11: keygen / known hosts / fingerprint / test / history ---
+  const [keyGenName, setKeyGenName] = createSignal("")
+  const [keyGenResult, setKeyGenResult] = createSignal<GeneratedKeyResult | null>(null)
+  const [keyGenBusy, setKeyGenBusy] = createSignal(false)
+  const [keyGenCopied, setKeyGenCopied] = createSignal(false)
+  const [keysOpen, setKeysOpen] = createSignal(false)
+  const [knownHosts, setKnownHosts] = createSignal<KnownHostEntry[]>([])
+  const [knownHostsError, setKnownHostsError] = createSignal<string | undefined>(undefined)
+  const [knownHostsOpen, setKnownHostsOpen] = createSignal(false)
+  const [knownHostsLoaded, setKnownHostsLoaded] = createSignal(false)
+  const [keyFingerprints, setKeyFingerprints] = createSignal<Record<string, string>>({})
+  const [testResults, setTestResults] = createSignal<Record<string, TestConnectionResult>>({})
+  const [connectionHistory, setConnectionHistory] = createSignal<ConnectionHistoryEntry[]>([])
+  const [historyProfile, setHistoryProfile] = createSignal<string | null>(null)
+
   // --- Remote logs ---
   const [logProfile, setLogProfile] = createSignal<string | null>(null)
   const [logService, setLogService] = createSignal("")
@@ -255,6 +299,42 @@ const SSHTab: Component = () => {
           const combined = [...prev, data.error]
           return combined.length > 50 ? combined.slice(combined.length - 50) : combined
         })
+        break
+      }
+      // ── canary.11 messages ──
+      case "sshKeyGenerated": {
+        const data = msg as unknown as GeneratedKeyResult
+        setKeyGenResult(data)
+        setKeyGenBusy(false)
+        setKeyGenCopied(false)
+        break
+      }
+      case "sshKnownHostsLoaded": {
+        const data = msg as unknown as { entries: KnownHostEntry[]; error?: string }
+        setKnownHosts(data.entries ?? [])
+        setKnownHostsError(data.error)
+        setKnownHostsLoaded(true)
+        break
+      }
+      case "sshKeyFingerprint": {
+        const data = msg as unknown as { keyPath: string; fingerprint: string | null; error?: string }
+        if (data.keyPath) {
+          setKeyFingerprints((prev) => ({
+            ...prev,
+            [data.keyPath]: data.fingerprint ?? (data.error ? `error: ${data.error}` : ""),
+          }))
+        }
+        break
+      }
+      case "sshTestConnectionResult": {
+        const data = msg as unknown as TestConnectionResult
+        setTestResults((prev) => ({ ...prev, [data.profileName]: data }))
+        break
+      }
+      case "sshConnectionHistoryLoaded": {
+        const data = msg as unknown as { profileName?: string; history: ConnectionHistoryEntry[] }
+        setConnectionHistory(data.history ?? [])
+        setHistoryProfile(data.profileName ?? null)
         break
       }
     }
@@ -442,6 +522,50 @@ const SSHTab: Component = () => {
     setSSHErrors([])
   }
 
+  // --- canary.11 dispatchers ---
+  const generateKey = () => {
+    const n = keyGenName().trim()
+    if (!n) return
+    setKeyGenBusy(true)
+    setKeyGenResult(null)
+    setKeyGenCopied(false)
+    vscode.postMessage({ type: "generateSshKey", name: n } as never)
+  }
+
+  const copyPublicKey = async () => {
+    const k = keyGenResult()?.publicKey
+    if (!k) return
+    try {
+      await navigator.clipboard.writeText(k)
+      setKeyGenCopied(true)
+      setTimeout(() => setKeyGenCopied(false), 2000)
+    } catch {
+      // Clipboard may be unavailable in webview; the key is still visible to copy manually.
+    }
+  }
+
+  const refreshKnownHosts = () => {
+    vscode.postMessage({ type: "listKnownHosts" } as never)
+  }
+
+  const removeKnownHost = (host: string) => {
+    vscode.postMessage({ type: "removeKnownHost", host } as never)
+  }
+
+  const requestKeyFingerprint = (keyPath: string) => {
+    if (!keyPath) return
+    vscode.postMessage({ type: "sshGetKeyFingerprint", keyPath } as never)
+  }
+
+  const testConnection = (profileName: string) => {
+    setTestResults((prev) => ({ ...prev, [profileName]: { profileName, ok: false, error: "Testing..." } }))
+    vscode.postMessage({ type: "sshTestConnection", profileName } as never)
+  }
+
+  const requestConnectionHistory = (profileName?: string) => {
+    vscode.postMessage({ type: "requestSSHConnectionHistory", profileName } as never)
+  }
+
   // --- Logs ---
   const startTailLogs = () => {
     const profile = logProfile()
@@ -598,6 +722,23 @@ const SSHTab: Component = () => {
                           >
                             Edit
                           </Button>
+                          {/* canary.11: Test Connection */}
+                          <Button
+                            variant="secondary"
+                            size="small"
+                            onClick={(e: MouseEvent) => {
+                              e.stopPropagation()
+                              testConnection(profile.name)
+                            }}
+                            title={testResults()[profile.name]?.error}
+                          >
+                            {(() => {
+                              const r = testResults()[profile.name]
+                              if (!r) return "Test"
+                              if (r.error === "Testing...") return "Testing..."
+                              return r.ok ? "Test ✓" : "Test ✗"
+                            })()}
+                          </Button>
                           <Show when={deleteConfirmName() === profile.name}>
                             <Button
                               variant="primary"
@@ -644,7 +785,57 @@ const SSHTab: Component = () => {
               <Button variant="secondary" size="small" onClick={startNewProfile}>
                 Add Profile
               </Button>
+              {/* canary.11: Connection History */}
+              <Button variant="secondary" size="small" onClick={() => requestConnectionHistory(undefined)}>
+                Connection History
+              </Button>
             </div>
+
+            {/* canary.11: Connection history result */}
+            <Show when={connectionHistory().length > 0}>
+              <div
+                style={{
+                  "margin-top": "8px",
+                  border: "1px solid var(--vscode-panel-border)",
+                  "border-radius": "4px",
+                  "max-height": "180px",
+                  overflow: "auto",
+                }}
+              >
+                <div
+                  style={{
+                    padding: "4px 8px",
+                    "font-size": "11px",
+                    color: "var(--vscode-descriptionForeground)",
+                    "border-bottom": "1px solid var(--vscode-panel-border)",
+                  }}
+                >
+                  History {historyProfile() ? `for ${historyProfile()}` : "(all profiles)"} —{" "}
+                  {connectionHistory().length} entr{connectionHistory().length === 1 ? "y" : "ies"}
+                </div>
+                <For each={connectionHistory()}>
+                  {(entry) => (
+                    <div
+                      style={{
+                        padding: "4px 10px",
+                        "border-bottom": "1px solid var(--vscode-panel-border)",
+                        ...monoStyle,
+                        "font-size": "11px",
+                      }}
+                    >
+                      <span style={{ color: "var(--vscode-descriptionForeground)" }}>
+                        {entry.timestamp ? new Date(entry.timestamp).toLocaleString() : "?"}
+                      </span>
+                      {" "}
+                      {entry.profileName ?? ""} — {entry.status ?? "?"}
+                      <Show when={entry.error}>
+                        <span style={{ color: "var(--vscode-errorForeground)" }}> &middot; {entry.error}</span>
+                      </Show>
+                    </div>
+                  )}
+                </For>
+              </div>
+            </Show>
 
             {/* ── Add/Edit Profile Form ── */}
             <Show when={editingProfile()}>
@@ -715,14 +906,36 @@ const SSHTab: Component = () => {
 
                   <Show when={profile().authMode === "key"}>
                     <SettingsRow title="Key Path" description="Path to your SSH private key file">
-                      <input
-                        type="text"
-                        value={profile().keyPath}
-                        onInput={(e) => updateEditField("keyPath", e.currentTarget.value)}
-                        placeholder="~/.ssh/id_rsa"
-                        style={inputStyle}
-                      />
+                      <div style={{ display: "flex", gap: "6px", "align-items": "center", width: "100%" }}>
+                        <input
+                          type="text"
+                          value={profile().keyPath}
+                          onInput={(e) => updateEditField("keyPath", e.currentTarget.value)}
+                          placeholder="~/.ssh/id_rsa"
+                          style={inputStyle}
+                        />
+                        <Button
+                          variant="secondary"
+                          size="small"
+                          onClick={() => requestKeyFingerprint(profile().keyPath)}
+                          disabled={!profile().keyPath.trim()}
+                        >
+                          Fingerprint
+                        </Button>
+                      </div>
                     </SettingsRow>
+                    <Show when={keyFingerprints()[profile().keyPath]}>
+                      <div
+                        style={{
+                          padding: "4px 12px 8px",
+                          ...monoStyle,
+                          color: "var(--vscode-descriptionForeground)",
+                          "word-break": "break-all",
+                        }}
+                      >
+                        {keyFingerprints()[profile().keyPath]}
+                      </div>
+                    </Show>
                   </Show>
 
                   <SettingsRow title="Jump Host" description="Optional bastion/jump host (user@host:port)">
@@ -1280,6 +1493,189 @@ const SSHTab: Component = () => {
                 </Button>
               </div>
             </Show>
+          </div>
+        </Show>
+      </Card>
+
+      {/* --- SECTION 6: SSH Keys (canary.11) --- */}
+      <Card>
+        <div style={sectionHeaderStyle(true)} onClick={() => setKeysOpen(!keysOpen())}>
+          <span style={{ display: "flex", "align-items": "center", gap: "8px" }}>
+            {keysOpen() ? "▾" : "▸"} Generate SSH Key
+          </span>
+        </div>
+        <Show when={keysOpen()}>
+          <div style={{ padding: "0 12px 12px" }}>
+            <SettingsRow
+              title="Key Name"
+              description="Creates ~/.ssh/id_ed25519_<name> (no passphrase). Use a short identifier."
+            >
+              <input
+                type="text"
+                value={keyGenName()}
+                onInput={(e) => setKeyGenName(e.currentTarget.value)}
+                placeholder="prod, github, deploy-key"
+                style={inputStyle}
+                disabled={keyGenBusy()}
+              />
+            </SettingsRow>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <Button
+                variant="primary"
+                size="small"
+                onClick={generateKey}
+                disabled={keyGenBusy() || !keyGenName().trim()}
+              >
+                {keyGenBusy() ? "Generating..." : "Generate ed25519 Key"}
+              </Button>
+            </div>
+
+            <Show when={keyGenResult()}>
+              {(result) => (
+                <div
+                  style={{
+                    "margin-top": "12px",
+                    "padding-top": "12px",
+                    "border-top": "1px solid var(--vscode-panel-border)",
+                  }}
+                >
+                  <Show
+                    when={result().ok}
+                    fallback={
+                      <div
+                        style={{
+                          padding: "8px 10px",
+                          background: "var(--vscode-inputValidation-errorBackground, #5a1d1d)",
+                          color: "var(--vscode-inputValidation-errorForeground, #f48771)",
+                          "border-radius": "3px",
+                          "font-size": "12px",
+                        }}
+                      >
+                        {result().error ?? "Key generation failed"}
+                      </div>
+                    }
+                  >
+                    <div style={{ "font-size": "12px", color: "var(--vscode-descriptionForeground)", "margin-bottom": "4px" }}>
+                      Created: <span style={monoStyle}>{result().privatePath}</span>
+                    </div>
+                    <div
+                      style={{
+                        padding: "6px 8px",
+                        background: "var(--vscode-textBlockQuote-background)",
+                        border: "1px solid var(--vscode-panel-border)",
+                        "border-radius": "3px",
+                        ...monoStyle,
+                        "white-space": "pre-wrap",
+                        "word-break": "break-all",
+                      }}
+                    >
+                      {result().publicKey}
+                    </div>
+                    <div style={{ display: "flex", gap: "8px", "margin-top": "6px" }}>
+                      <Button variant="secondary" size="small" onClick={copyPublicKey}>
+                        {keyGenCopied() ? "Copied!" : "Copy Public Key"}
+                      </Button>
+                    </div>
+                  </Show>
+                </div>
+              )}
+            </Show>
+          </div>
+        </Show>
+      </Card>
+
+      {/* --- SECTION 7: Known Hosts (canary.11) --- */}
+      <Card>
+        <div
+          style={sectionHeaderStyle(true)}
+          onClick={() => {
+            const next = !knownHostsOpen()
+            setKnownHostsOpen(next)
+            if (next && !knownHostsLoaded()) refreshKnownHosts()
+          }}
+        >
+          <span style={{ display: "flex", "align-items": "center", gap: "8px" }}>
+            {knownHostsOpen() ? "▾" : "▸"} Known Hosts
+          </span>
+          <Show when={knownHostsLoaded()}>
+            <span style={{ "font-size": "12px", color: "var(--vscode-descriptionForeground)", "font-weight": "400" }}>
+              {knownHosts().length} host{knownHosts().length !== 1 ? "s" : ""}
+            </span>
+          </Show>
+        </div>
+        <Show when={knownHostsOpen()}>
+          <div style={{ padding: "0 12px 12px" }}>
+            <Show when={knownHostsError()}>
+              <div
+                style={{
+                  padding: "6px 10px",
+                  "margin-bottom": "8px",
+                  background: "var(--vscode-inputValidation-errorBackground, #5a1d1d)",
+                  color: "var(--vscode-inputValidation-errorForeground, #f48771)",
+                  "border-radius": "3px",
+                  "font-size": "12px",
+                }}
+              >
+                {knownHostsError()}
+              </div>
+            </Show>
+            <div
+              style={{
+                border: "1px solid var(--vscode-panel-border)",
+                "border-radius": "4px",
+                "max-height": "300px",
+                overflow: "auto",
+                "margin-bottom": "8px",
+              }}
+            >
+              <Show
+                when={knownHosts().length > 0}
+                fallback={
+                  <div
+                    style={{
+                      padding: "16px",
+                      "text-align": "center",
+                      color: "var(--vscode-descriptionForeground)",
+                      "font-size": "13px",
+                    }}
+                  >
+                    {knownHostsLoaded() ? "No known hosts. Connect to a server to populate." : "Loading..."}
+                  </div>
+                }
+              >
+                <For each={knownHosts()}>
+                  {(entry) => (
+                    <div
+                      style={{
+                        display: "flex",
+                        "align-items": "center",
+                        gap: "8px",
+                        padding: "6px 10px",
+                        "border-bottom": "1px solid var(--vscode-panel-border)",
+                        "font-size": "12px",
+                      }}
+                    >
+                      <div style={{ flex: "1", "min-width": "0" }}>
+                        <div style={{ "font-weight": "500", "white-space": "nowrap", overflow: "hidden", "text-overflow": "ellipsis" }}>
+                          {entry.host}
+                        </div>
+                        <div style={{ color: "var(--vscode-descriptionForeground)", ...monoStyle }}>
+                          {entry.keyType} &middot; {entry.fingerprint}
+                        </div>
+                      </div>
+                      <Button variant="secondary" size="small" onClick={() => removeKnownHost(entry.host)}>
+                        Remove
+                      </Button>
+                    </div>
+                  )}
+                </For>
+              </Show>
+            </div>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <Button variant="secondary" size="small" onClick={refreshKnownHosts}>
+                Refresh
+              </Button>
+            </div>
           </div>
         </Show>
       </Card>

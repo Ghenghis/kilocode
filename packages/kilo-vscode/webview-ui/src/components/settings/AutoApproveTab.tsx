@@ -1,9 +1,33 @@
-import { Component, For, Show, createEffect, createMemo, createSignal } from "solid-js"
+import { Component, For, Show, createEffect, createMemo, createSignal, onCleanup, onMount } from "solid-js"
 import { Select } from "@kilocode/kilo-ui/select"
 import { IconButton } from "@kilocode/kilo-ui/icon-button"
 import { useConfig } from "../../context/config"
 import { useLanguage } from "../../context/language"
-import type { PermissionLevel, PermissionRule } from "../../types/messages"
+import { useVSCode } from "../../context/vscode"
+import type { ExtensionMessage, PermissionLevel, PermissionRule } from "../../types/messages"
+
+// ─── Auto-approve advanced controls (canary.11) ──────────────────────
+type AutoApproveConditionType = "glob" | "count" | "window"
+type AutoApproveAction = "allow" | "deny"
+
+interface AutoApproveCondition {
+  id: string
+  type: AutoApproveConditionType
+  value: string
+  action: AutoApproveAction
+}
+
+interface AutoApproveRateLimits {
+  toolsPerMinute: number
+  enabled: boolean
+}
+
+interface AutoApproveLogEntry {
+  timestamp: number
+  action: string
+  source: string
+  conditionId?: string
+}
 
 interface LevelOption {
   value: PermissionLevel
@@ -152,6 +176,73 @@ function toolTitle(id: string): string {
 const AutoApproveTab: Component = () => {
   const { config, updateConfig } = useConfig()
   const language = useLanguage()
+  const vscode = useVSCode()
+
+  // ─── Auto-approve advanced state (canary.11) ──────────────────────
+  const [conditions, setConditions] = createSignal<AutoApproveCondition[]>([])
+  const [rateLimits, setRateLimits] = createSignal<AutoApproveRateLimits>({ toolsPerMinute: 60, enabled: false })
+  const [countWindow, setCountWindow] = createSignal<{ count: number; windowMs: number }>({ count: 0, windowMs: 60_000 })
+  const [logEntries, setLogEntries] = createSignal<AutoApproveLogEntry[]>([])
+
+  const [newCondType, setNewCondType] = createSignal<AutoApproveConditionType>("glob")
+  const [newCondValue, setNewCondValue] = createSignal("")
+  const [newCondAction, setNewCondAction] = createSignal<AutoApproveAction>("allow")
+
+  const unsubscribe = vscode.onMessage((message: ExtensionMessage) => {
+    const msg = message as ExtensionMessage & Record<string, unknown>
+    switch (msg.type) {
+      case "autoApproveConditions":
+        setConditions(((msg as unknown as { conditions?: AutoApproveCondition[] }).conditions ?? []) as AutoApproveCondition[])
+        break
+      case "autoApproveRateLimits": {
+        const data = msg as unknown as { rateLimits?: AutoApproveRateLimits; countWindow?: { count: number; windowMs: number } }
+        if (data.rateLimits) setRateLimits(data.rateLimits)
+        if (data.countWindow) setCountWindow(data.countWindow)
+        break
+      }
+      case "autoApproveLog":
+        setLogEntries(((msg as unknown as { entries?: AutoApproveLogEntry[] }).entries ?? []) as AutoApproveLogEntry[])
+        break
+      default:
+        break
+    }
+  })
+
+  onMount(() => {
+    vscode.postMessage({ type: "getAutoApproveConditions" } as never)
+    vscode.postMessage({ type: "getAutoApproveRateLimits" } as never)
+    vscode.postMessage({ type: "getAutoApproveLog", limit: 50 } as never)
+  })
+
+  onCleanup(() => unsubscribe())
+
+  const submitNewCondition = () => {
+    const value = newCondValue().trim()
+    if (!value) return
+    vscode.postMessage({
+      type: "addAutoApproveCondition",
+      conditionType: newCondType(),
+      value,
+      action: newCondAction(),
+    } as never)
+    setNewCondValue("")
+  }
+
+  const removeConditionById = (id: string) => {
+    vscode.postMessage({ type: "removeAutoApproveCondition", id } as never)
+  }
+
+  const updateRateLimit = (patch: Partial<AutoApproveRateLimits>) => {
+    vscode.postMessage({ type: "setAutoApproveRateLimit", ...patch } as never)
+  }
+
+  const formatTimestamp = (ts: number): string => {
+    try {
+      return new Date(ts).toLocaleString()
+    } catch {
+      return String(ts)
+    }
+  }
 
   const permissions = createMemo(() => config().permission ?? {})
 
@@ -273,6 +364,137 @@ const AutoApproveTab: Component = () => {
           />
         )}
       </For>
+
+      {/* ─── Conditions table (canary.11) ────────────────────────── */}
+      <div data-section="auto-approve-conditions" style={{ "margin-top": "24px", "padding-top": "16px", "border-top": "1px solid var(--border-weak-base)" }}>
+        <div style={{ "font-size": "13px", color: "var(--text-strong-base, white)", "font-weight": 600 }}>Conditions</div>
+        <div style={{ "font-size": "12px", color: "var(--text-weak-base, var(--vscode-descriptionForeground))", "margin-top": "4px" }}>
+          Path globs, file-count limits, and time windows that allow or deny auto-approval.
+        </div>
+        <Show when={conditions().length > 0}>
+          <div style={{ "margin-top": "8px" }}>
+            <For each={conditions()}>
+              {(cond) => (
+                <div style={{ display: "flex", gap: "8px", "align-items": "center", padding: "6px 0", "border-bottom": "1px solid var(--border-weak-base)" }}>
+                  <span style={{ "font-size": "11px", padding: "2px 6px", "border-radius": "3px", background: "var(--surface-strong-base, #252526)", color: "var(--text-base, #ccc)" }}>
+                    {cond.type}
+                  </span>
+                  <span style={{ flex: "1 1 0%", "min-width": 0, "font-family": "var(--vscode-editor-font-family, monospace)", "font-size": "13px", color: "var(--text-base, #ccc)", overflow: "hidden", "text-overflow": "ellipsis", "white-space": "nowrap" }} title={cond.value}>
+                    {cond.value}
+                  </span>
+                  <span style={{ "font-size": "11px", color: cond.action === "allow" ? "var(--text-success-base, #4ec9b0)" : "var(--text-danger-base, #f48771)" }}>
+                    {cond.action}
+                  </span>
+                  <IconButton variant="ghost" size="small" icon="close" onClick={() => removeConditionById(cond.id)} />
+                </div>
+              )}
+            </For>
+          </div>
+        </Show>
+        <div style={{ display: "flex", gap: "8px", "align-items": "center", "margin-top": "8px" }}>
+          <select
+            value={newCondType()}
+            onChange={(e) => setNewCondType(e.currentTarget.value as AutoApproveConditionType)}
+            style={{ background: "var(--surface-strong-base, #252526)", border: "1px solid var(--border-base, #434443)", "border-radius": "2px", color: "var(--text-base, #ccc)", "font-size": "12px", padding: "4px 6px", outline: "none" }}
+          >
+            <option value="glob">glob</option>
+            <option value="count">count</option>
+            <option value="window">window</option>
+          </select>
+          <input
+            type="text"
+            value={newCondValue()}
+            onInput={(e) => setNewCondValue(e.currentTarget.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") submitNewCondition() }}
+            placeholder={newCondType() === "glob" ? "src/**/*.ts" : newCondType() === "count" ? "10" : "09:00-17:00"}
+            style={{ flex: 1, "min-width": 0, background: "var(--surface-strong-base, #252526)", border: "1px solid var(--border-base, #434443)", "border-radius": "2px", color: "var(--text-base, #ccc)", "font-size": "13px", "font-family": "var(--vscode-editor-font-family, monospace)", padding: "4px 8px", outline: "none" }}
+          />
+          <select
+            value={newCondAction()}
+            onChange={(e) => setNewCondAction(e.currentTarget.value as AutoApproveAction)}
+            style={{ background: "var(--surface-strong-base, #252526)", border: "1px solid var(--border-base, #434443)", "border-radius": "2px", color: "var(--text-base, #ccc)", "font-size": "12px", padding: "4px 6px", outline: "none" }}
+          >
+            <option value="allow">allow</option>
+            <option value="deny">deny</option>
+          </select>
+          <button
+            onClick={submitNewCondition}
+            style={{ padding: "4px 10px", background: "var(--button-primary-base, #0e639c)", color: "white", border: "none", "border-radius": "2px", cursor: "pointer", "font-size": "12px" }}
+          >
+            Add
+          </button>
+        </div>
+      </div>
+
+      {/* ─── Rate limits panel (canary.11) ──────────────────────── */}
+      <div data-section="auto-approve-rate-limits" style={{ "margin-top": "24px", "padding-top": "16px", "border-top": "1px solid var(--border-weak-base)" }}>
+        <div style={{ "font-size": "13px", color: "var(--text-strong-base, white)", "font-weight": 600 }}>Rate limits</div>
+        <div style={{ display: "flex", "align-items": "center", gap: "8px", "margin-top": "8px" }}>
+          <input
+            type="checkbox"
+            checked={rateLimits().enabled}
+            onChange={(e) => updateRateLimit({ enabled: e.currentTarget.checked })}
+          />
+          <span style={{ "font-size": "12px", color: "var(--text-base, #ccc)" }}>Enable rate limiting</span>
+        </div>
+        <div style={{ display: "flex", "align-items": "center", gap: "12px", "margin-top": "8px" }}>
+          <span style={{ "font-size": "12px", color: "var(--text-base, #ccc)", "min-width": "140px" }}>Tools per minute</span>
+          <input
+            type="range"
+            min="0"
+            max="600"
+            step="10"
+            value={rateLimits().toolsPerMinute}
+            onChange={(e) => updateRateLimit({ toolsPerMinute: Number(e.currentTarget.value) })}
+            style={{ flex: 1 }}
+          />
+          <span style={{ "min-width": "48px", "text-align": "right", "font-family": "var(--vscode-editor-font-family, monospace)", "font-size": "12px", color: "var(--text-base, #ccc)" }}>
+            {rateLimits().toolsPerMinute}
+          </span>
+        </div>
+        <div style={{ "font-size": "11px", color: "var(--text-weak-base, var(--vscode-descriptionForeground))", "margin-top": "6px" }}>
+          Current window: {countWindow().count} actions in last {Math.round(countWindow().windowMs / 1000)}s
+        </div>
+      </div>
+
+      {/* ─── Audit log (canary.11) ──────────────────────────────── */}
+      <div data-section="auto-approve-log" style={{ "margin-top": "24px", "padding-top": "16px", "border-top": "1px solid var(--border-weak-base)" }}>
+        <div style={{ display: "flex", "align-items": "center", "justify-content": "space-between" }}>
+          <div style={{ "font-size": "13px", color: "var(--text-strong-base, white)", "font-weight": 600 }}>Audit log</div>
+          <button
+            onClick={() => vscode.postMessage({ type: "getAutoApproveLog", limit: 50 } as never)}
+            style={{ background: "none", border: "none", color: "var(--text-link-base, #3794ff)", cursor: "pointer", "font-size": "12px", padding: "0" }}
+          >
+            Refresh
+          </button>
+        </div>
+        <Show
+          when={logEntries().length > 0}
+          fallback={
+            <div style={{ "font-size": "12px", color: "var(--text-weak-base, var(--vscode-descriptionForeground))", "margin-top": "8px" }}>
+              No auto-approved actions yet.
+            </div>
+          }
+        >
+          <div style={{ "margin-top": "8px", "max-height": "240px", overflow: "auto", border: "1px solid var(--border-weak-base)", "border-radius": "2px" }}>
+            <For each={logEntries().slice().reverse()}>
+              {(entry) => (
+                <div style={{ display: "flex", gap: "12px", padding: "4px 8px", "border-bottom": "1px solid var(--border-weak-base)", "font-family": "var(--vscode-editor-font-family, monospace)", "font-size": "11px" }}>
+                  <span style={{ color: "var(--text-weak-base, var(--vscode-descriptionForeground))", "min-width": "150px" }}>
+                    {formatTimestamp(entry.timestamp)}
+                  </span>
+                  <span style={{ flex: 1, color: "var(--text-base, #ccc)", "min-width": 0, overflow: "hidden", "text-overflow": "ellipsis", "white-space": "nowrap" }}>
+                    {entry.action}
+                  </span>
+                  <span style={{ color: "var(--text-weak-base, var(--vscode-descriptionForeground))", "min-width": "120px" }}>
+                    {entry.source}
+                  </span>
+                </div>
+              )}
+            </For>
+          </div>
+        </Show>
+      </div>
     </div>
   )
 }

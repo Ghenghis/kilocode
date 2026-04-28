@@ -28,6 +28,11 @@
  * import cycle.
  */
 
+import { exec as childExec } from "child_process"
+import * as fs from "fs"
+import * as os from "os"
+import * as path from "path"
+import { promisify } from "util"
 import * as vscode from "vscode"
 import type { KiloProvider } from "./KiloProvider"
 import { handleHermesRealWebviewMessage } from "./kilo-provider/handlers/hermes-webview"
@@ -36,6 +41,7 @@ import { handleRoutingRealWebviewMessage } from "./kilo-provider/handlers/routin
 import { handleZeroClawRealWebviewMessage } from "./kilo-provider/handlers/zeroclaw-webview"
 import { handleGovernanceRealWebviewMessage } from "./kilo-provider/handlers/governance-webview"
 import { handleTrainingWebviewMessage as handleTrainingRealWebviewMessage } from "./kilo-provider/handlers/training-webview"
+import { handleContractMessage } from "./services/contracts"
 
 export class DaveProviderExtensions {
   // V4 subsystem services — set via setV4Services() after construction.
@@ -44,6 +50,7 @@ export class DaveProviderExtensions {
   private zeroClawService: import("./services/zeroclaw").ZeroClawService | null = null
   private routingService: import("./services/routing").RoutingService | null = null
   private memoryService: import("./services/memory").MemoryService | null = null
+  private autoApproveService: import("./services/autoApprove").AutoApproveService | null = null
   private trainingService: import("./services/training").TrainingService | null = null
   private governanceService: import("./services/governance").GovernanceService | null = null
   private workstationProfile: import("./services/workstation").WorkstationProfileService | null = null
@@ -125,6 +132,7 @@ export class DaveProviderExtensions {
     zeroClaw: import("./services/zeroclaw").ZeroClawService
     routing: import("./services/routing").RoutingService
     memory: import("./services/memory").MemoryService
+    autoApprove?: import("./services/autoApprove").AutoApproveService
     training: import("./services/training").TrainingService
     governance: import("./services/governance").GovernanceService
     workstation: import("./services/workstation").WorkstationProfileService
@@ -135,6 +143,7 @@ export class DaveProviderExtensions {
     this.zeroClawService = services.zeroClaw
     this.routingService = services.routing
     this.memoryService = services.memory
+    if (services.autoApprove) this.autoApproveService = services.autoApprove
     this.trainingService = services.training
     this.governanceService = services.governance
     this.workstationProfile = services.workstation
@@ -215,6 +224,7 @@ export class DaveProviderExtensions {
       if (await handleZeroClawRealWebviewMessage(message, realCtx as never)) return true
       if (await handleGovernanceRealWebviewMessage(message, realCtx as never)) return true
       if (await handleTrainingRealWebviewMessage(message, realCtx as never)) return true
+      if (await handleContractMessage(message, realCtx as never)) return true
     } catch (err) {
       console.warn("[KiloProvider.dave] real-backend handler error (non-fatal):", err)
       // Fall through to the legacy switch below.
@@ -313,6 +323,26 @@ export class DaveProviderExtensions {
             await this.sshService.importFromSSHConfig()
             this.postMessage({ type: "sshProfilesLoaded", profiles: this.sshService.getProfiles() } as never)
           }
+          break
+
+        // SSH (canary.11): test connection / fingerprint / history / keygen / known-hosts
+        case "sshTestConnection":
+          await this.handleSSHTestConnection(m.profileName as string)
+          break
+        case "sshGetKeyFingerprint":
+          await this.handleSSHGetKeyFingerprint(m.keyPath as string)
+          break
+        case "requestSSHConnectionHistory":
+          this.handleRequestSSHConnectionHistory(m.profileName as string | undefined)
+          break
+        case "generateSshKey":
+          await this.handleGenerateSshKey(m.name as string, (m.passphrase as string | undefined) ?? "")
+          break
+        case "listKnownHosts":
+          await this.handleListKnownHosts()
+          break
+        case "removeKnownHost":
+          await this.handleRemoveKnownHost(m.host as string)
           break
 
         // VPS
@@ -894,6 +924,154 @@ export class DaveProviderExtensions {
         case "hermesAgentAssist":
           await this.handleHermesAgentAssist()
           break
+
+        // ─── Auto-approve (canary.11) ──────────────────────────────────
+        case "getAutoApproveConditions": {
+          if (!this.autoApproveService) {
+            this.postMessage({ type: "autoApproveConditions", conditions: [] } as never)
+            break
+          }
+          this.postMessage({
+            type: "autoApproveConditions",
+            conditions: this.autoApproveService.getConditions(),
+          } as never)
+          break
+        }
+        case "addAutoApproveCondition": {
+          if (!this.autoApproveService) {
+            this.postMessage({ type: "autoApproveResult", op: "add", success: false, error: "AutoApprove service unavailable" } as never)
+            break
+          }
+          try {
+            const condType = (m.conditionType ?? m.condType ?? "glob") as "glob" | "count" | "window"
+            const cond = await this.autoApproveService.addCondition({
+              type: condType,
+              value: typeof m.value === "string" ? m.value : String(m.value ?? ""),
+              action: m.action === "deny" ? "deny" : "allow",
+              id: typeof m.id === "string" ? m.id : undefined,
+            })
+            this.postMessage({ type: "autoApproveResult", op: "add", success: true, condition: cond } as never)
+            this.postMessage({
+              type: "autoApproveConditions",
+              conditions: this.autoApproveService.getConditions(),
+            } as never)
+          } catch (err) {
+            this.postMessage({
+              type: "autoApproveResult",
+              op: "add",
+              success: false,
+              error: err instanceof Error ? err.message : "Add condition failed",
+            } as never)
+          }
+          break
+        }
+        case "removeAutoApproveCondition": {
+          if (!this.autoApproveService) {
+            this.postMessage({ type: "autoApproveResult", op: "remove", success: false, error: "AutoApprove service unavailable" } as never)
+            break
+          }
+          const id = typeof m.id === "string" ? m.id : ""
+          const removed = await this.autoApproveService.removeCondition(id)
+          this.postMessage({ type: "autoApproveResult", op: "remove", success: removed, id } as never)
+          this.postMessage({
+            type: "autoApproveConditions",
+            conditions: this.autoApproveService.getConditions(),
+          } as never)
+          break
+        }
+        case "getAutoApproveRateLimits": {
+          if (!this.autoApproveService) {
+            this.postMessage({
+              type: "autoApproveRateLimits",
+              rateLimits: { toolsPerMinute: 60, enabled: false },
+              countWindow: { count: 0, windowMs: 60000 },
+            } as never)
+            break
+          }
+          this.postMessage({
+            type: "autoApproveRateLimits",
+            rateLimits: this.autoApproveService.getRateLimits(),
+            countWindow: this.autoApproveService.getCountWindow(),
+          } as never)
+          break
+        }
+        case "setAutoApproveRateLimit": {
+          if (!this.autoApproveService) {
+            this.postMessage({ type: "autoApproveResult", op: "setRateLimit", success: false, error: "AutoApprove service unavailable" } as never)
+            break
+          }
+          try {
+            const next = await this.autoApproveService.setRateLimit({
+              toolsPerMinute: typeof m.toolsPerMinute === "number" ? m.toolsPerMinute : undefined,
+              enabled: typeof m.enabled === "boolean" ? m.enabled : undefined,
+            })
+            this.postMessage({ type: "autoApproveResult", op: "setRateLimit", success: true, rateLimits: next } as never)
+            this.postMessage({
+              type: "autoApproveRateLimits",
+              rateLimits: next,
+              countWindow: this.autoApproveService.getCountWindow(),
+            } as never)
+          } catch (err) {
+            this.postMessage({
+              type: "autoApproveResult",
+              op: "setRateLimit",
+              success: false,
+              error: err instanceof Error ? err.message : "Set rate limit failed",
+            } as never)
+          }
+          break
+        }
+        case "getAutoApproveLog": {
+          if (!this.autoApproveService) {
+            this.postMessage({ type: "autoApproveLog", entries: [] } as never)
+            break
+          }
+          const limit = typeof m.limit === "number" && m.limit > 0 ? Math.floor(m.limit) : 50
+          this.postMessage({
+            type: "autoApproveLog",
+            entries: this.autoApproveService.getLog(limit),
+          } as never)
+          break
+        }
+
+        case "previewSystemPrompt": {
+          // Render the active system-prompt template with current variables
+          // so the settings → Context tab can show the user what the model
+          // will actually receive. Upstream's KiloProvider doesn't carry an
+          // explicit template object, so we synthesise a representative
+          // preview from the active session + workspace + model metadata.
+          // If a richer template ever lands upstream this case can be
+          // updated to read it instead — the message contract stays stable.
+          try {
+            const provider = this.provider as unknown as {
+              currentSession?: { id?: string; modelID?: string; modelName?: string; provider?: string }
+              getProjectDirectory?: (sessionId?: string) => string | undefined
+            }
+            const session = provider.currentSession
+            const workspace = provider.getProjectDirectory?.(session?.id) ?? vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? ""
+            const modelName = session?.modelName ?? session?.modelID ?? "(no model)"
+            const providerName = session?.provider ?? "(no provider)"
+            const sessionId = session?.id ?? "(no session)"
+            const lines = [
+              `You are powered by the model named ${modelName} (provider: ${providerName}).`,
+              `Active session: ${sessionId}`,
+              `Workspace: ${workspace || "(none)"}`,
+              `Operating system: ${process.platform}`,
+              "",
+              "Follow the user's instructions, use available tools when appropriate,",
+              "and prefer minimal diffs that preserve existing style and contracts.",
+            ]
+            this.postMessage({ type: "systemPromptPreview", text: lines.join("\n") } as never)
+          } catch (err) {
+            this.postMessage({
+              type: "systemPromptPreview",
+              text: "",
+              error: err instanceof Error ? err.message : "Failed to render system prompt preview",
+            } as never)
+          }
+          break
+        }
+
         default:
           // Defensive: isV4MessageType allowed it through but no case matches.
           return false
@@ -998,6 +1176,158 @@ export class DaveProviderExtensions {
       this.postMessage({ type: "hermesError", message: err instanceof Error ? err.message : "Agent Assist failed" } as never)
     }
   }
+
+  // ──────────────────────────────────────────────────────────────────
+  // SSH canary.11 helpers — kilocode_change: test connection, fingerprint,
+  // connection history, keygen, and known_hosts inspection/removal.
+  // ──────────────────────────────────────────────────────────────────
+
+  /** Run a non-interactive `ssh -o BatchMode=yes` against a profile and report success/error. */
+  private async handleSSHTestConnection(profileName: string): Promise<void> {
+    if (!profileName || !this.sshService) {
+      this.postMessage({ type: "sshTestConnectionResult", profileName, ok: false, error: "Profile not found" } as never)
+      return
+    }
+    const profile = this.sshService.getProfiles().find((p) => p.name === profileName)
+    if (!profile) {
+      this.postMessage({ type: "sshTestConnectionResult", profileName, ok: false, error: "Profile not found" } as never)
+      return
+    }
+    const exec = promisify(childExec)
+    const args: string[] = ["-o", "BatchMode=yes", "-o", "ConnectTimeout=10", "-o", "StrictHostKeyChecking=accept-new", "-p", String(profile.port ?? 22)]
+    if (profile.authMode === "key" && profile.keyPath) {
+      args.push("-i", profile.keyPath.replace(/^~(?=$|\/|\\)/, os.homedir()))
+    }
+    const target = `${profile.user}@${profile.host}`
+    const cmd = `ssh ${args.map((a) => (/[\s"]/.test(a) ? `"${a.replace(/"/g, '\\"')}"` : a)).join(" ")} ${target} "echo ok"`
+    try {
+      const { stdout } = await exec(cmd, { timeout: 15_000, encoding: "utf-8" })
+      const ok = String(stdout).trim() === "ok"
+      this.postMessage({ type: "sshTestConnectionResult", profileName, ok, error: ok ? undefined : "Unexpected response" } as never)
+    } catch (err) {
+      this.postMessage({ type: "sshTestConnectionResult", profileName, ok: false, error: err instanceof Error ? err.message : String(err) } as never)
+    }
+  }
+
+  /** Compute the SHA256 fingerprint of an SSH public/private key path via `ssh-keygen -l -f`. */
+  private async handleSSHGetKeyFingerprint(keyPath: string): Promise<void> {
+    if (!keyPath) {
+      this.postMessage({ type: "sshKeyFingerprint", keyPath, fingerprint: null, error: "Key path required" } as never)
+      return
+    }
+    const expanded = keyPath.replace(/^~(?=$|\/|\\)/, os.homedir())
+    const exec = promisify(childExec)
+    try {
+      const { stdout } = await exec(`ssh-keygen -l -E sha256 -f "${expanded.replace(/"/g, '\\"')}"`, { timeout: 5_000, encoding: "utf-8" })
+      // Output: "<bits> SHA256:<hash> <comment> (<type>)"
+      const match = String(stdout).trim().match(/^(\d+)\s+(\S+)\s+(.*)\s+\(([^)]+)\)\s*$/)
+      const fingerprint = match?.[2] ?? String(stdout).trim()
+      this.postMessage({ type: "sshKeyFingerprint", keyPath, fingerprint, bits: match ? Number(match[1]) : undefined, keyType: match?.[4] } as never)
+    } catch (err) {
+      this.postMessage({ type: "sshKeyFingerprint", keyPath, fingerprint: null, error: err instanceof Error ? err.message : String(err) } as never)
+    }
+  }
+
+  /** Return the per-profile (or global) connection history persisted in workspaceState. */
+  private handleRequestSSHConnectionHistory(profileName?: string): void {
+    const ctx = this.extensionContext
+    const all = ctx?.workspaceState.get<Record<string, unknown[]>>("dave.ssh.connectionHistory") ?? {}
+    const history = profileName
+      ? (all[profileName] ?? [])
+      : Object.entries(all).flatMap(([k, v]) => (v as unknown[]).map((e) => ({ profileName: k, ...(e as object) })))
+    this.postMessage({ type: "sshConnectionHistoryLoaded", profileName, history } as never)
+  }
+
+  /** `ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_<name>` and return the public key contents. */
+  private async handleGenerateSshKey(name: string, passphrase: string): Promise<void> {
+    const safe = (name ?? "").trim().replace(/[^A-Za-z0-9_-]/g, "")
+    if (!safe) {
+      this.postMessage({ type: "sshKeyGenerated", ok: false, error: "Invalid name" } as never)
+      return
+    }
+    const sshDir = path.join(os.homedir(), ".ssh")
+    try {
+      await fs.promises.mkdir(sshDir, { recursive: true, mode: 0o700 })
+    } catch {
+      // ignore — keygen will fail and we'll surface that error instead.
+    }
+    const privatePath = path.join(sshDir, `id_ed25519_${safe}`)
+    if (fs.existsSync(privatePath)) {
+      this.postMessage({ type: "sshKeyGenerated", ok: false, error: `Key already exists: ${privatePath}` } as never)
+      return
+    }
+    const exec = promisify(childExec)
+    const passArg = (passphrase ?? "").replace(/"/g, '\\"')
+    const cmd = `ssh-keygen -t ed25519 -f "${privatePath.replace(/"/g, '\\"')}" -N "${passArg}" -C "kilocode-${safe}"`
+    try {
+      await exec(cmd, { timeout: 30_000, encoding: "utf-8" })
+      const publicPath = `${privatePath}.pub`
+      const publicKey = (await fs.promises.readFile(publicPath, "utf-8")).trim()
+      this.postMessage({ type: "sshKeyGenerated", ok: true, name: safe, privatePath, publicPath, publicKey } as never)
+    } catch (err) {
+      this.postMessage({ type: "sshKeyGenerated", ok: false, error: err instanceof Error ? err.message : String(err) } as never)
+    }
+  }
+
+  /** Parse `~/.ssh/known_hosts` into `{ host, keyType, fingerprint }` entries. */
+  private async handleListKnownHosts(): Promise<void> {
+    const filePath = path.join(os.homedir(), ".ssh", "known_hosts")
+    let raw = ""
+    try {
+      raw = await fs.promises.readFile(filePath, "utf-8")
+    } catch (err) {
+      const error = (err as NodeJS.ErrnoException).code === "ENOENT" ? undefined : err instanceof Error ? err.message : String(err)
+      this.postMessage({ type: "sshKnownHostsLoaded", entries: [], error } as never)
+      return
+    }
+    this.postMessage({ type: "sshKnownHostsLoaded", entries: this.parseKnownHostsRaw(raw) } as never)
+  }
+
+  /** Remove a hostname from `~/.ssh/known_hosts` via `ssh-keygen -R`, then re-list. */
+  private async handleRemoveKnownHost(host: string): Promise<void> {
+    if (!host) {
+      this.postMessage({ type: "sshKnownHostsLoaded", entries: [], error: "Host required" } as never)
+      return
+    }
+    // Allow only host-safe characters; reject leading dash so it can't be parsed as a flag.
+    const safeHost = host.replace(/[^A-Za-z0-9._:\-\[\]|]/g, "")
+    if (!safeHost || safeHost.startsWith("-")) {
+      this.postMessage({ type: "sshKnownHostsLoaded", entries: [], error: "Invalid host" } as never)
+      return
+    }
+    const exec = promisify(childExec)
+    try {
+      await exec(`ssh-keygen -R "${safeHost}"`, { timeout: 10_000, encoding: "utf-8" })
+    } catch (err) {
+      const error = err instanceof Error ? err.message : String(err)
+      const filePath = path.join(os.homedir(), ".ssh", "known_hosts")
+      let raw = ""
+      try {
+        raw = await fs.promises.readFile(filePath, "utf-8")
+      } catch {
+        /* ignore */
+      }
+      this.postMessage({ type: "sshKnownHostsLoaded", entries: this.parseKnownHostsRaw(raw), error } as never)
+      return
+    }
+    await this.handleListKnownHosts()
+  }
+
+  /** Pure parser used by both list & remove paths. */
+  private parseKnownHostsRaw(raw: string): { host: string; keyType: string; fingerprint: string }[] {
+    const entries: { host: string; keyType: string; fingerprint: string }[] = []
+    for (const line of raw.split(/\r?\n/)) {
+      const trimmed = line.trim()
+      if (!trimmed || trimmed.startsWith("#")) continue
+      const parts = trimmed.split(/\s+/)
+      if (parts.length < 3) continue
+      const [hostList, keyType, key] = parts
+      const host = (hostList ?? "").split(",")[0] ?? hostList
+      const fingerprint = key.length > 32 ? `${key.slice(0, 16)}...${key.slice(-8)}` : key
+      entries.push({ host, keyType, fingerprint })
+    }
+    return entries
+  }
 }
 
 /**
@@ -1029,7 +1359,25 @@ function isV4MessageType(type: string): boolean {
     type.startsWith("requestDiscovery") ||
     type === "triggerDiscovery" ||
     type.startsWith("hermes") ||
-    type.startsWith("requestHermes")
+    type.startsWith("requestHermes") ||
+    // Contract Markdowns Studio (Sprint 1) — webview ↔ host messages
+    type.startsWith("contract:") ||
+    // SSH (canary.11) — names don't match the "ssh"/"requestSSH" prefix
+    type === "generateSshKey" ||
+    type === "listKnownHosts" ||
+    type === "removeKnownHost" ||
+    // AutoApprove conditions / rate limits / audit log (canary.11)
+    type === "addAutoApproveCondition" ||
+    type === "removeAutoApproveCondition" ||
+    type === "getAutoApproveConditions" ||
+    type === "setAutoApproveRateLimit" ||
+    type === "getAutoApproveRateLimits" ||
+    type === "getAutoApproveLog" ||
+    // System-prompt preview round-trip (settings → Context tab "Preview" button).
+    // Owned by the dave overlay so the upstream KiloProvider stays byte-identical
+    // to the kilocode baseline; the dave switch reads the active session/model
+    // and posts back `systemPromptPreview`.
+    type === "previewSystemPrompt"
   )
 }
 

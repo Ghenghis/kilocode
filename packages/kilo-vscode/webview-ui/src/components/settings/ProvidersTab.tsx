@@ -5,13 +5,13 @@ import { Icon } from "@kilocode/kilo-ui/icon"
 import { ProviderIcon } from "@kilocode/kilo-ui/provider-icon"
 import { Tag } from "@kilocode/kilo-ui/tag"
 import { showToast } from "@kilocode/kilo-ui/toast"
-import { Component, For, Show, createMemo, onCleanup } from "solid-js"
+import { Component, For, Show, createMemo, createSignal, onCleanup } from "solid-js"
 import { useConfig } from "../../context/config"
 import { useLanguage } from "../../context/language"
 import { useProvider } from "../../context/provider"
 import { useServer } from "../../context/server"
 import { useVSCode } from "../../context/vscode"
-import type { Provider } from "../../types/messages"
+import type { ExtensionMessage, Provider } from "../../types/messages"
 import CustomProviderDialog from "./CustomProviderDialog"
 import ProviderConnectDialog from "./ProviderConnectDialog"
 import ProviderSelectDialog from "./ProviderSelectDialog"
@@ -32,6 +32,27 @@ const ProvidersTab: Component = () => {
   const action = createProviderAction(vscode)
 
   onCleanup(action.dispose)
+
+  // Per-provider test status: providerID → "ok 123ms" / "fail: …" / null
+  const [testStatus, setTestStatus] = createSignal<Record<string, string>>({})
+  const [testingId, setTestingId] = createSignal<string | null>(null)
+
+  const unsubscribeTest = vscode.onMessage((message: ExtensionMessage) => {
+    if (message.type !== "testProviderKeyResult") return
+    setTestingId(null)
+    const label = message.ok
+      ? `OK ${message.latencyMs}ms${message.modelCount !== undefined ? ` · ${message.modelCount} models` : ""}`
+      : `Failed: ${message.error ?? "unknown"}`
+    setTestStatus({ ...testStatus(), [message.providerID]: label })
+  })
+  onCleanup(unsubscribeTest)
+
+  const testProviderKey = (providerID: string) => {
+    setTestingId(providerID)
+    setTestStatus({ ...testStatus(), [providerID]: "Testing…" })
+    // No cleartext key here — server-side has the saved credential.
+    vscode.postMessage({ type: "testProviderKey", providerID })
+  }
 
   const kiloLoggedIn = createMemo(() => !!server.profileData())
 
@@ -214,7 +235,26 @@ const ProvidersTab: Component = () => {
                     </span>
                   }
                 >
-                  <div style={{ display: "flex", gap: "4px" }}>
+                  <div style={{ display: "flex", gap: "4px", "align-items": "center" }}>
+                    <Show when={testStatus()[item.id]}>
+                      <span
+                        style={{
+                          "font-size": "12px",
+                          color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+                          "padding-right": "4px",
+                        }}
+                      >
+                        {testStatus()[item.id]}
+                      </span>
+                    </Show>
+                    <Button
+                      size="large"
+                      variant="ghost"
+                      disabled={testingId() === item.id}
+                      onClick={() => testProviderKey(item.id)}
+                    >
+                      Test
+                    </Button>
                     <Show when={isCustom(item)}>
                       <Button size="large" variant="ghost" onClick={() => editProvider(item)}>
                         {language.t("provider.custom.edit.title")}

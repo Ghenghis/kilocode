@@ -1,0 +1,19 @@
+{
+  "id": "ai-tool",
+  "name": "AI Tool / Agent",
+  "keywords": ["llm", "agent", "copilot", "gpt", "claude", "prompt", "embedding", "rag"],
+  "commonNFRs": [
+    "Token-cost ceiling per session",
+    "Streaming first-token < 2s",
+    "Hallucination guardrails (rubric/critic)",
+    "Eval suite committed before launch"
+  ],
+  "regulations": ["EU AI Act (limited risk classification)", "Provenance / watermarking norms"],
+  "antipatterns": [
+    "No evals (vibes-only QA)",
+    "One-shot prompt instead of structured chain",
+    "Single-model lock-in without fallback",
+    "Storing user prompts without consent"
+  ],
+  "suggestedTemplates": ["rfc", "prd"]
+}

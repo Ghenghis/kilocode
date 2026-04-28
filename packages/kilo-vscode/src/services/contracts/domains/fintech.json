@@ -1,0 +1,19 @@
+{
+  "id": "fintech",
+  "name": "Fintech",
+  "keywords": ["fintech", "banking", "payments", "kyc", "aml", "ledger", "card", "wallet"],
+  "commonNFRs": [
+    "Double-entry ledger with idempotent writes",
+    "Reconciliation jobs nightly + on demand",
+    "PII + PAN tokenisation at the edge",
+    "Audit-grade event log"
+  ],
+  "regulations": ["PCI-DSS", "KYC/AML", "PSD2 (EU)", "SOC 2", "GDPR"],
+  "antipatterns": [
+    "Float arithmetic on money (use minor units)",
+    "Single-write-path with no reconciliation",
+    "Logging full PAN in plaintext",
+    "Soft-deleting financial records"
+  ],
+  "suggestedTemplates": ["compliance-prd"]
+}

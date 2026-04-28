@@ -248,6 +248,18 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
   private remoteService: RemoteStatusService | null = null
   private unsubscribeRemote: (() => void) | null = null
 
+  /** Terminals created via `runInTerminalRequest` / `runCodeBlock`, keyed by terminal id. */
+  private codeBlockTerminals = new Map<string, vscode.Terminal>()
+  private codeBlockTerminalSeq = 0
+  /** Favorite session ids persisted in workspace state. */
+  private favoriteSessionIds: Set<string> | null = null
+  /** Session mode (handoff target) keyed by sessionId. */
+  private sessionModes = new Map<string, string>()
+  /** Persisted message ratings keyed by `${sessionId}::${messageId}`. */
+  private messageRatings: Map<string, { rating: "up" | "down" | number; comment?: string }> = new Map()
+  /** Persisted checkpoint labels keyed by `${sessionId ?? "_"}::${ref}`. */
+  private checkpointLabels: Map<string, string> = new Map()
+
   constructor(
     private readonly extensionUri: vscode.Uri,
     private readonly connectionService: KiloConnectionService,
@@ -1083,6 +1095,197 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
           })
           break
         }
+        // ─── canary.10 chat-session / checkpoint messages ─────────────────
+        case "pauseTask":
+          await this.handlePauseTask(message.sessionId as string)
+          break
+        case "revertFile":
+          await this.handleRevertFile(
+            message.sessionId as string | undefined,
+            message.file as string,
+          )
+          break
+        case "runCodeBlock":
+        case "runInTerminalRequest":
+          this.handleRunInTerminal(
+            message.code as string,
+            message.language as string | undefined,
+            message.blockId as string | undefined,
+          )
+          break
+        case "rateMessage":
+          await this.handleRateMessage(
+            message.sessionId as string,
+            message.messageId as string,
+            message.rating as "up" | "down" | number,
+            message.comment as string | undefined,
+          )
+          break
+        case "branchMessage":
+          await this.handleBranchMessage(
+            message.sessionId as string,
+            message.messageId as string,
+            message.newPrompt as string | undefined,
+          )
+          break
+        case "requestSessionPreview":
+          await this.handleRequestSessionPreview(message.sessionId as string)
+          break
+        case "setSessionMode":
+          await this.handleSetSessionMode(
+            message.sessionId as string,
+            message.modeId as string,
+          )
+          break
+        case "toggleFavoriteSession":
+          await this.handleToggleFavoriteSession(
+            message.sessionId as string,
+            message.favorite as boolean | undefined,
+          )
+          break
+        case "checkpointCompare":
+          await this.handleCheckpointCompare(
+            message.sessionId as string | undefined,
+            message.fromRef as string,
+            message.toRef as string,
+            message.file as string | undefined,
+          )
+          break
+        case "checkpointCreateBranch":
+          await this.handleCheckpointCreateBranch(
+            message.sessionId as string | undefined,
+            message.ref as string,
+            message.branchName as string,
+          )
+          break
+        case "checkpointGetDiff":
+          await this.handleCheckpointGetDiff(
+            message.sessionId as string | undefined,
+            message.ref as string,
+            message.file as string | undefined,
+          )
+          break
+        case "checkpointLabel":
+          await this.handleCheckpointLabel(
+            message.sessionId as string | undefined,
+            message.ref as string,
+            message.label as string,
+          )
+          break
+        // ── Chat-feature wires (canary.10 catch-up) ────────────────────────
+        case "selectImages":
+          await this.handleSelectImages(message.messageId as string | undefined)
+          break
+        case "captureEditorScreenshot":
+          await this.handleCaptureEditorScreenshot()
+          break
+        case "exportConversation":
+          this.postMessage({
+            type: "action",
+            action: "openExportDialog",
+            payload: { format: (message as { format?: string }).format },
+          })
+          break
+        case "openInTab":
+          vscode.commands.executeCommand("kilo-code.new.openInTab")
+          break
+        case "reloadWindowRequest":
+          vscode.commands.executeCommand("workbench.action.reloadWindow")
+          break
+        case "refreshContext":
+          await this.syncWebviewState("refreshContext")
+          break
+        case "resumeStreamRequest":
+          this.postMessage({ type: "action", action: "resumeStream" })
+          break
+        case "retryLastRequest":
+          this.postMessage({ type: "action", action: "retryLastRequest" })
+          break
+        case "previewFileEditsResponse":
+          this.postMessage({
+            type: "action",
+            action: "previewFileEditsResolved",
+            payload: {
+              response: (message as { response?: string }).response,
+              requestId: (message as { requestId?: string }).requestId,
+            },
+          })
+          break
+        case "selectModel":
+          await this.handleSelectModel(
+            message as {
+              modelId?: string
+              modelID?: string
+              providerID?: string
+              provider?: string
+            },
+          )
+          break
+        case "openInEditorRequest":
+          await this.handleOpenInEditor(
+            message as {
+              filePath?: string
+              code?: string
+              language?: string
+              line?: number
+              column?: number
+            },
+          )
+          break
+        case "openDiffForFile":
+          await this.handleOpenDiffForFile(
+            message as {
+              filePath: string
+              leftContent?: string
+              rightContent?: string
+              title?: string
+            },
+          )
+          break
+        case "retryToolRequest":
+          this.postMessage({
+            type: "action",
+            action: "retryTool",
+            payload: {
+              partId: (message as { partId?: string }).partId,
+              sessionID: (message as { sessionID?: string }).sessionID,
+            },
+          })
+          break
+        case "settingsBack":
+          this.postMessage({ type: "action", action: "settingsBack" })
+          break
+        case "getMentionSuggestionsRequest":
+          await this.handleMentionSuggestions(
+            message as { query: string; requestId: string; limit?: number },
+          )
+          break
+        case "requestBrowserStatus": {
+          const cfg = vscode.workspace.getConfiguration("kilo-code.new.browserAutomation")
+          const enabled = cfg.get<boolean>("enabled", false)
+          const useSystemChrome = cfg.get<boolean>("useSystemChrome", false)
+          const headless = cfg.get<boolean>("headless", true)
+          const chromePath = cfg.get<string>("chromeExecutablePath", "")
+          this.postMessage({
+            type: "browserStatus",
+            enabled,
+            configured: useSystemChrome ? !!chromePath : true,
+            useSystemChrome,
+            headless,
+          })
+          break
+        }
+        case "requestVoiceInput":
+          // STT is hosted by the webview's Web Speech API in this build.
+          this.postMessage({
+            type: "voiceInputResult",
+            status: "unavailable",
+            error: "Voice input is handled by the webview in this build.",
+          })
+          break
+        case "requestVSCodeLanguage":
+          this.postMessage({ type: "vscodeLanguageDetected", language: vscode.env.language })
+          break
       }
     })
   }
@@ -3033,6 +3236,210 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     )
   }
 
+  // ── Chat-feature handlers (canary.10 catch-up) ──────────────────────────
+
+  /**
+   * Open a VS Code file picker to attach images to the current chat.
+   * Returns selected files via a `selectedImages` action so the chat input
+   * can attach them as base64 / data URIs.
+   */
+  private async handleSelectImages(messageId?: string): Promise<void> {
+    try {
+      const cwd = this.getWorkspaceDirectory(this.currentSession?.id)
+      const uris = await vscode.window.showOpenDialog({
+        canSelectMany: true,
+        canSelectFiles: true,
+        canSelectFolders: false,
+        defaultUri: vscode.Uri.file(cwd),
+        filters: { Images: ["png", "jpg", "jpeg", "gif", "webp"] },
+        openLabel: "Attach images",
+      })
+      if (!uris?.length) return
+      const files = await Promise.all(
+        uris.map(async (u) => {
+          const bytes = await vscode.workspace.fs.readFile(u)
+          const ext = (u.path.split(".").pop() ?? "png").toLowerCase()
+          const mime =
+            ext === "jpg" || ext === "jpeg"
+              ? "image/jpeg"
+              : ext === "gif"
+                ? "image/gif"
+                : ext === "webp"
+                  ? "image/webp"
+                  : "image/png"
+          const b64 = Buffer.from(bytes).toString("base64")
+          return {
+            mime,
+            url: `data:${mime};base64,${b64}`,
+            filename: u.path.split(/[\\/]/).pop() ?? "image",
+          }
+        }),
+      )
+      this.postMessage({
+        type: "action",
+        action: "selectedImages",
+        payload: { messageId, files },
+      })
+    } catch (err) {
+      console.error("[Kilo New] handleSelectImages failed:", err)
+    }
+  }
+
+  /**
+   * Capture the visible region of the active editor as text. VS Code does not
+   * expose a screenshot API, so we ship the visible source back so the webview
+   * can render or attach it. Best-effort placeholder.
+   */
+  private async handleCaptureEditorScreenshot(): Promise<void> {
+    try {
+      const editor = vscode.window.activeTextEditor
+      if (!editor) {
+        this.postMessage({
+          type: "action",
+          action: "editorScreenshot",
+          payload: { error: "No active editor" },
+        })
+        return
+      }
+      const doc = editor.document
+      const range =
+        editor.visibleRanges[0] ?? new vscode.Range(0, 0, doc.lineCount, 0)
+      const text = doc.getText(range)
+      this.postMessage({
+        type: "action",
+        action: "editorScreenshot",
+        payload: { language: doc.languageId, fileName: doc.fileName, text },
+      })
+    } catch (err) {
+      console.error("[Kilo New] handleCaptureEditorScreenshot failed:", err)
+    }
+  }
+
+  /**
+   * Switch the active model. Persists to model.json via ModelState and notifies
+   * the webview so AppContext can update its derived selection.
+   */
+  private async handleSelectModel(message: {
+    modelId?: string
+    modelID?: string
+    providerID?: string
+    provider?: string
+  }): Promise<void> {
+    const modelID = message.modelID ?? message.modelId
+    const providerID = message.providerID ?? message.provider
+    if (!modelID || !providerID) return
+    try {
+      await ModelState.handleMessage(
+        "persistModelSelection",
+        { agent: "default", providerID, modelID },
+        this.client,
+        (msg) => this.postMessage(msg),
+      )
+      this.postMessage({
+        type: "action",
+        action: "modelSelected",
+        payload: { providerID, modelID },
+      })
+    } catch (err) {
+      console.error("[Kilo New] handleSelectModel failed:", err)
+    }
+  }
+
+  /**
+   * openInEditorRequest — open a file path or drop inline `code` into a new
+   * untitled buffer.
+   */
+  private async handleOpenInEditor(message: {
+    filePath?: string
+    code?: string
+    language?: string
+    line?: number
+    column?: number
+  }): Promise<void> {
+    try {
+      if (message.filePath) {
+        this.handleOpenFile(message.filePath, message.line, message.column)
+        return
+      }
+      if (typeof message.code === "string") {
+        const doc = await vscode.workspace.openTextDocument({
+          content: message.code,
+          language: message.language,
+        })
+        await vscode.window.showTextDocument(doc, { preview: false })
+      }
+    } catch (err) {
+      console.error("[Kilo New] handleOpenInEditor failed:", err)
+    }
+  }
+
+  /**
+   * openDiffForFile — open the VS Code diff viewer comparing the on-disk file
+   * against either provided right-side content (untitled diff) or a second path.
+   */
+  private async handleOpenDiffForFile(message: {
+    filePath: string
+    leftContent?: string
+    rightContent?: string
+    title?: string
+  }): Promise<void> {
+    try {
+      const cwd = this.getWorkspaceDirectory(this.currentSession?.id)
+      const fileUri = isAbsolutePath(message.filePath)
+        ? vscode.Uri.file(message.filePath)
+        : vscode.Uri.joinPath(vscode.Uri.file(cwd), message.filePath)
+      const title = message.title ?? `Diff: ${message.filePath}`
+
+      if (typeof message.rightContent === "string") {
+        const leftUri = vscode.Uri.parse(
+          `untitled:${fileUri.fsPath}.left?diff=${encodeURIComponent(title)}`,
+        )
+        const rightUri = vscode.Uri.parse(
+          `untitled:${fileUri.fsPath}.right?diff=${encodeURIComponent(title)}`,
+        )
+        const leftDoc = await vscode.workspace.openTextDocument(leftUri)
+        const rightDoc = await vscode.workspace.openTextDocument(rightUri)
+        const leftEdit = new vscode.WorkspaceEdit()
+        leftEdit.insert(leftUri, new vscode.Position(0, 0), message.leftContent ?? "")
+        const rightEdit = new vscode.WorkspaceEdit()
+        rightEdit.insert(rightUri, new vscode.Position(0, 0), message.rightContent)
+        await vscode.workspace.applyEdit(leftEdit)
+        await vscode.workspace.applyEdit(rightEdit)
+        await vscode.commands.executeCommand("vscode.diff", leftDoc.uri, rightDoc.uri, title)
+        return
+      }
+      // No proposed content: just open the file.
+      this.handleOpenFile(message.filePath)
+    } catch (err) {
+      console.error("[Kilo New] handleOpenDiffForFile failed:", err)
+    }
+  }
+
+  /**
+   * Fuzzy-search the workspace for `@mention` suggestions.
+   */
+  private async handleMentionSuggestions(message: {
+    query: string
+    requestId: string
+    limit?: number
+  }): Promise<void> {
+    try {
+      const limit = Math.max(1, Math.min(message.limit ?? 10, 50))
+      const q = (message.query ?? "").trim().toLowerCase()
+      const glob = q ? `**/*${q}*` : `**/*`
+      const found = await vscode.workspace.findFiles(glob, "**/node_modules/**", limit)
+      const cwd = this.getWorkspaceDirectory(this.currentSession?.id)
+      const items = found.map((u) => {
+        const rel = path.relative(cwd, u.fsPath).replace(/\\/g, "/") || u.fsPath
+        return { label: rel.split("/").pop() ?? rel, path: rel, description: rel }
+      })
+      this.postMessage({ type: "mentionSuggestions", requestId: message.requestId, items })
+    } catch (err) {
+      console.error("[Kilo New] handleMentionSuggestions failed:", err)
+      this.postMessage({ type: "mentionSuggestions", requestId: message.requestId, items: [] })
+    }
+  }
+
   /**
    * Handle a generic setting update from the webview.
    * The key uses dot notation relative to `kilo-code.new` (e.g. "browserAutomation.enabled").
@@ -3409,6 +3816,478 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       ...(activeFile ? { activeFile } : {}),
       ...(shell ? { shell } : {}),
     }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // canary.10 chat-session / checkpoint handlers
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /** Pause the running task — best-effort: aborts the active session stream. */
+  private async handlePauseTask(sessionId: string): Promise<void> {
+    if (!sessionId || typeof sessionId !== "string") {
+      this.postMessage({ type: "taskPaused", sessionId: sessionId ?? "", ok: false, error: "Invalid sessionId" })
+      return
+    }
+    try {
+      this.cancelRetry(sessionId)
+      await this.handleAbort(sessionId)
+      this.postMessage({ type: "taskPaused", sessionId, ok: true })
+    } catch (err) {
+      this.postMessage({ type: "taskPaused", sessionId, ok: false, error: getErrorMessage(err) })
+    }
+  }
+
+  /** Revert a single file via existing GitOps; integrates with checkpoint system. */
+  private async handleRevertFile(sessionId: string | undefined, file: string): Promise<void> {
+    if (typeof file !== "string" || !file) {
+      this.postMessage({ type: "revertFileResult", sessionId, file: file ?? "", ok: false, message: "Invalid file" })
+      return
+    }
+    const dir = this.getWorkspaceDirectory(sessionId)
+    const git = new GitOps({ log: () => {} })
+    try {
+      const branch = await git.currentBranch(dir).catch(() => "")
+      const base =
+        (await git.resolveDefaultBranch(dir, branch).catch(() => undefined)) ?? "HEAD"
+      const result = await git.revertFile(dir, base, file)
+      this.postMessage({
+        type: "revertFileResult",
+        sessionId,
+        file,
+        ok: result.ok,
+        message: result.message,
+      })
+    } catch (err) {
+      this.postMessage({
+        type: "revertFileResult",
+        sessionId,
+        file,
+        ok: false,
+        message: getErrorMessage(err),
+      })
+    } finally {
+      git.dispose()
+    }
+  }
+
+  /** Run a code block / shell command in a new VS Code terminal. */
+  private handleRunInTerminal(code: string, language?: string, blockId?: string): void {
+    if (typeof code !== "string" || !code.trim()) {
+      this.postMessage({
+        type: "terminalCreated",
+        terminalId: "",
+        blockId,
+        language,
+        ok: false,
+        error: "Empty code",
+      })
+      return
+    }
+    try {
+      const cwd = this.getContextDirectory()
+      const id = `kilo-codeblock-${++this.codeBlockTerminalSeq}`
+      const name = `Kilo Run${language ? ` (${language})` : ""}`
+      const terminal = vscode.window.createTerminal({ name, cwd })
+      this.codeBlockTerminals.set(id, terminal)
+      // Send the code/command then focus the terminal.
+      terminal.sendText(code, true)
+      terminal.show(true)
+      this.postMessage({ type: "terminalCreated", terminalId: id, blockId, language, ok: true })
+    } catch (err) {
+      this.postMessage({
+        type: "terminalCreated",
+        terminalId: "",
+        blockId,
+        language,
+        ok: false,
+        error: getErrorMessage(err),
+      })
+    }
+  }
+
+  private ratingsKey(sessionId: string, messageId: string): string {
+    return `${sessionId}::${messageId}`
+  }
+
+  /** Persist a message rating in extension global state. */
+  private async handleRateMessage(
+    sessionId: string,
+    messageId: string,
+    rating: "up" | "down" | number,
+    comment?: string,
+  ): Promise<void> {
+    if (!sessionId || !messageId) {
+      this.postMessage({ type: "messageRated", sessionId: sessionId ?? "", messageId: messageId ?? "", ok: false })
+      return
+    }
+    const key = this.ratingsKey(sessionId, messageId)
+    this.messageRatings.set(key, { rating, comment })
+    try {
+      const map = this.extensionContext?.globalState.get<Record<string, { rating: unknown; comment?: string }>>(
+        "kilo.messageRatings",
+      ) ?? {}
+      map[key] = { rating, comment }
+      await this.extensionContext?.globalState.update("kilo.messageRatings", map)
+    } catch {
+      /* non-fatal */
+    }
+    this.postMessage({ type: "messageRated", sessionId, messageId, ok: true })
+  }
+
+  /** Branch / fork a conversation from a given message. */
+  private async handleBranchMessage(
+    sessionId: string,
+    messageId: string,
+    newPrompt?: string,
+  ): Promise<void> {
+    if (!sessionId || !messageId) {
+      this.postMessage({
+        type: "messageBranched",
+        sessionId: sessionId ?? "",
+        messageId: messageId ?? "",
+        ok: false,
+        error: "Invalid sessionId or messageId",
+      })
+      return
+    }
+    try {
+      // Best-effort: revert to the message in the existing session (creates a divergence point),
+      // then optionally inject a new prompt. The newSessionId mirrors sessionId because the
+      // backend's `revert` operates in-place.
+      await this.handleRevertSession(sessionId, messageId)
+      if (newPrompt && typeof newPrompt === "string" && newPrompt.trim() && this.client) {
+        const dir = this.getWorkspaceDirectory(sessionId)
+        try {
+          await this.client.session.promptAsync({
+            sessionID: sessionId,
+            directory: dir,
+            parts: [{ type: "text", text: newPrompt } as TextPartInput],
+          })
+        } catch {
+          /* non-fatal — branch is still considered ok */
+        }
+      }
+      this.postMessage({
+        type: "messageBranched",
+        sessionId,
+        messageId,
+        newSessionId: sessionId,
+        ok: true,
+      })
+    } catch (err) {
+      this.postMessage({
+        type: "messageBranched",
+        sessionId,
+        messageId,
+        ok: false,
+        error: getErrorMessage(err),
+      })
+    }
+  }
+
+  /** Provide a quick preview snippet for a given session id (title + first message). */
+  private async handleRequestSessionPreview(sessionId: string): Promise<void> {
+    if (!sessionId) {
+      this.postMessage({ type: "sessionPreviewLoaded", sessionId: "", ok: false, error: "Invalid sessionId" })
+      return
+    }
+    try {
+      if (!this.client) {
+        this.postMessage({ type: "sessionPreviewLoaded", sessionId, ok: false, error: "Not connected to CLI backend" })
+        return
+      }
+      const dir = this.getWorkspaceDirectory(sessionId)
+      const { data: session } = await this.client.session.get(
+        { sessionID: sessionId, directory: dir },
+        { throwOnError: false },
+      )
+      let snippet: string | undefined
+      let messageCount: number | undefined
+      try {
+        const { data: msgs } = await this.client.session.messages(
+          { sessionID: sessionId, directory: dir, limit: 1 },
+          { throwOnError: false },
+        )
+        if (Array.isArray(msgs)) {
+          messageCount = msgs.length
+          const first = msgs[0] as { parts?: Array<{ type: string; text?: string }> } | undefined
+          if (first?.parts) {
+            const text = first.parts.find((p) => p.type === "text")?.text
+            if (text) snippet = text.slice(0, 200)
+          }
+        }
+      } catch {
+        /* non-fatal */
+      }
+      this.postMessage({
+        type: "sessionPreviewLoaded",
+        sessionId,
+        preview: {
+          title: (session as { title?: string } | undefined)?.title,
+          snippet,
+          messageCount,
+        },
+        ok: true,
+      })
+    } catch (err) {
+      this.postMessage({
+        type: "sessionPreviewLoaded",
+        sessionId,
+        ok: false,
+        error: getErrorMessage(err),
+      })
+    }
+  }
+
+  /** Set the active mode (agent) for a session. */
+  private async handleSetSessionMode(sessionId: string, modeId: string): Promise<void> {
+    if (!sessionId || !modeId) {
+      this.postMessage({
+        type: "sessionModeSet",
+        sessionId: sessionId ?? "",
+        modeId: modeId ?? "",
+        ok: false,
+      })
+      return
+    }
+    this.sessionModes.set(sessionId, modeId)
+    try {
+      const map =
+        this.extensionContext?.globalState.get<Record<string, string>>("kilo.sessionModes") ?? {}
+      map[sessionId] = modeId
+      await this.extensionContext?.globalState.update("kilo.sessionModes", map)
+    } catch {
+      /* non-fatal */
+    }
+    this.postMessage({ type: "sessionModeSet", sessionId, modeId, ok: true })
+  }
+
+  private loadFavoriteSessions(): Set<string> {
+    if (this.favoriteSessionIds) return this.favoriteSessionIds
+    const list = this.extensionContext?.globalState.get<string[]>("kilo.favoriteSessions") ?? []
+    this.favoriteSessionIds = new Set(list)
+    return this.favoriteSessionIds
+  }
+
+  private async handleToggleFavoriteSession(sessionId: string, favorite?: boolean): Promise<void> {
+    if (!sessionId) {
+      this.postMessage({ type: "sessionFavoriteToggled", sessionId: "", favorite: false })
+      return
+    }
+    const set = this.loadFavoriteSessions()
+    const next = typeof favorite === "boolean" ? favorite : !set.has(sessionId)
+    if (next) set.add(sessionId)
+    else set.delete(sessionId)
+    try {
+      await this.extensionContext?.globalState.update("kilo.favoriteSessions", Array.from(set))
+    } catch {
+      /* non-fatal */
+    }
+    this.postMessage({ type: "sessionFavoriteToggled", sessionId, favorite: next })
+  }
+
+  // ─── Checkpoint operations (link to GitOps) ───────────────────────────────
+
+  private checkpointKey(sessionId: string | undefined, ref: string): string {
+    return `${sessionId ?? "_"}::${ref}`
+  }
+
+  private async handleCheckpointCompare(
+    sessionId: string | undefined,
+    fromRef: string,
+    toRef: string,
+    file: string | undefined,
+  ): Promise<void> {
+    if (!fromRef || !toRef) {
+      this.postMessage({
+        type: "checkpointCompareResult",
+        sessionId,
+        fromRef: fromRef ?? "",
+        toRef: toRef ?? "",
+        ok: false,
+        error: "Invalid refs",
+      })
+      return
+    }
+    const dir = this.getWorkspaceDirectory(sessionId)
+    const git = new GitOps({ log: () => {} })
+    try {
+      const args = ["diff", `${fromRef}..${toRef}`]
+      if (file) args.push("--", file)
+      const filesArgs = ["diff", "--name-only", `${fromRef}..${toRef}`]
+      const diff = await git.execGit(args, dir).then((r) => r.stdout).catch(() => "")
+      const fileList = await git.execGit(filesArgs, dir).then((r) =>
+        r.stdout.split(/\r?\n/).map((s) => s.trim()).filter(Boolean),
+      ).catch(() => [])
+      this.postMessage({
+        type: "checkpointCompareResult",
+        sessionId,
+        fromRef,
+        toRef,
+        diff,
+        files: fileList,
+        ok: true,
+      })
+    } catch (err) {
+      this.postMessage({
+        type: "checkpointCompareResult",
+        sessionId,
+        fromRef,
+        toRef,
+        ok: false,
+        error: getErrorMessage(err),
+      })
+    } finally {
+      git.dispose()
+    }
+  }
+
+  private async handleCheckpointCreateBranch(
+    sessionId: string | undefined,
+    ref: string,
+    branchName: string,
+  ): Promise<void> {
+    if (!ref || !branchName) {
+      this.postMessage({
+        type: "checkpointBranchCreated",
+        sessionId,
+        ref: ref ?? "",
+        branchName: branchName ?? "",
+        ok: false,
+        error: "Invalid ref or branchName",
+      })
+      return
+    }
+    // Validate branch name to avoid arg injection.
+    if (!/^[A-Za-z0-9._/-]+$/.test(branchName) || branchName.startsWith("-")) {
+      this.postMessage({
+        type: "checkpointBranchCreated",
+        sessionId,
+        ref,
+        branchName,
+        ok: false,
+        error: "Invalid branchName",
+      })
+      return
+    }
+    const dir = this.getWorkspaceDirectory(sessionId)
+    const git = new GitOps({ log: () => {} })
+    try {
+      const r = await git.execGit(["branch", branchName, ref], dir)
+      if (r.code !== 0) {
+        this.postMessage({
+          type: "checkpointBranchCreated",
+          sessionId,
+          ref,
+          branchName,
+          ok: false,
+          error: r.stderr.trim() || "git branch failed",
+        })
+        return
+      }
+      this.postMessage({
+        type: "checkpointBranchCreated",
+        sessionId,
+        ref,
+        branchName,
+        ok: true,
+      })
+    } catch (err) {
+      this.postMessage({
+        type: "checkpointBranchCreated",
+        sessionId,
+        ref,
+        branchName,
+        ok: false,
+        error: getErrorMessage(err),
+      })
+    } finally {
+      git.dispose()
+    }
+  }
+
+  private async handleCheckpointGetDiff(
+    sessionId: string | undefined,
+    ref: string,
+    file: string | undefined,
+  ): Promise<void> {
+    if (!ref) {
+      this.postMessage({
+        type: "checkpointDiffResult",
+        sessionId,
+        ref: ref ?? "",
+        file,
+        ok: false,
+        error: "Invalid ref",
+      })
+      return
+    }
+    const dir = this.getWorkspaceDirectory(sessionId)
+    const git = new GitOps({ log: () => {} })
+    try {
+      const args = ["show", "--patch", ref]
+      if (file) args.push("--", file)
+      const r = await git.execGit(args, dir)
+      if (r.code !== 0) {
+        this.postMessage({
+          type: "checkpointDiffResult",
+          sessionId,
+          ref,
+          file,
+          ok: false,
+          error: r.stderr.trim() || "git show failed",
+        })
+        return
+      }
+      this.postMessage({
+        type: "checkpointDiffResult",
+        sessionId,
+        ref,
+        file,
+        diff: r.stdout,
+        ok: true,
+      })
+    } catch (err) {
+      this.postMessage({
+        type: "checkpointDiffResult",
+        sessionId,
+        ref,
+        file,
+        ok: false,
+        error: getErrorMessage(err),
+      })
+    } finally {
+      git.dispose()
+    }
+  }
+
+  private async handleCheckpointLabel(
+    sessionId: string | undefined,
+    ref: string,
+    label: string,
+  ): Promise<void> {
+    if (!ref || typeof label !== "string") {
+      this.postMessage({
+        type: "checkpointLabelResult",
+        sessionId,
+        ref: ref ?? "",
+        label: label ?? "",
+        ok: false,
+        error: "Invalid ref or label",
+      })
+      return
+    }
+    const key = this.checkpointKey(sessionId, ref)
+    this.checkpointLabels.set(key, label)
+    try {
+      const map =
+        this.extensionContext?.globalState.get<Record<string, string>>("kilo.checkpointLabels") ?? {}
+      map[key] = label
+      await this.extensionContext?.globalState.update("kilo.checkpointLabels", map)
+    } catch {
+      /* non-fatal */
+    }
+    this.postMessage({ type: "checkpointLabelResult", sessionId, ref, label, ok: true })
   }
 
   /**

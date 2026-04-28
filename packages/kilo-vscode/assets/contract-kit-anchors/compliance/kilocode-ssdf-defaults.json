@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "templateId": "kilocode-ssdf-defaults",
+  "version": "1.0.0",
+  "nistSsdfVersion": "1.1",
+  "description": "Pre-mapping of KiloCode-shipped CI workflows and scaffold artefacts to NIST SSDF (SP 800-218 v1.1) practices. When a project uses our scaffold, the matching practices auto-flip to status='implemented' with the listed paths as evidence.",
+  "sourceUrl": "https://csrc.nist.gov/publications/detail/sp/800-218/final",
+  "autoPopulate": {
+    "strategy": "if-file-exists",
+    "notes": "For each entry below, the auto-populator checks every path in `evidence` against the workspace root. If at least one path resolves, the matching practice is set to status='implemented' and the resolved paths are written into the practice's evidence field."
+  },
+  "mappings": [
+    {
+      "practice": "PO.1",
+      "title": "Define Security Requirements for Software Development",
+      "evidence": [
+        "docs/PRD.md",
+        "agent-spec.yaml",
+        "compliance/security-requirements.md"
+      ],
+      "rationale": "PRD's NFR section + agent-spec.yaml capabilities define security requirements (anchor 1)."
+    },
+    {
+      "practice": "PO.2",
+      "title": "Implement Roles and Responsibilities",
+      "evidence": [
+        ".github/CODEOWNERS",
+        "SECURITY.md"
+      ],
+      "rationale": "CODEOWNERS assigns review responsibility; SECURITY.md names the security contact."
+    },
+    {
+      "practice": "PO.3",
+      "title": "Implement Supporting Toolchains",
+      "evidence": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/codeql.yml",
+        ".github/workflows/scorecard.yml"
+      ],
+      "rationale": "Automated CI, SAST, and Scorecard workflows shipped by the scaffold."
+    },
+    {
+      "practice": "PO.4",
+      "title": "Define and Use Criteria for Software Security Checks",
+      "evidence": [
+        ".github/workflows/ci.yml",
+        "verification/INDEX.md"
+      ],
+      "rationale": "Gate thresholds (test pass-rate, scorecard >= 7.0, SLSA L3) are enforced in CI (anchors 2, 6, 7)."
+    },
+    {
+      "practice": "PO.5",
+      "title": "Implement and Maintain Secure Environments for Software Development",
+      "evidence": [
+        ".github/workflows/release.yml",
+        ".github/workflows/ci.yml"
+      ],
+      "rationale": "GitHub-hosted runners with pinned action SHAs and minimum token-permissions (anchor 7)."
+    },
+    {
+      "practice": "PS.1",
+      "title": "Protect All Forms of Code from Unauthorized Access and Tampering",
+      "evidence": [
+        ".github/workflows/release.yml",
+        ".github/branch-protection.tf"
+      ],
+      "rationale": "SLSA L3 release pipeline + branch-protection template (anchor 6)."
+    },
+    {
+      "practice": "PS.2",
+      "title": "Provide a Mechanism for Verifying Software Release Integrity",
+      "evidence": [
+        ".github/workflows/release.yml",
+        "verify.sh"
+      ],
+      "rationale": "Cosign keyless signing via OIDC + verify.sh local verifier (anchor 6)."
+    },
+    {
+      "practice": "PS.3",
+      "title": "Archive and Protect Each Software Release",
+      "evidence": [
+        ".github/workflows/release.yml"
+      ],
+      "rationale": "Release workflow uploads SLSA provenance + cosign signature + SBOM as immutable release assets."
+    },
+    {
+      "practice": "PW.1",
+      "title": "Design Software to Meet Security Requirements and Mitigate Security Risks",
+      "evidence": [
+        "docs/PRD.md",
+        "docs/ADR-0001-architecture.md",
+        "risk-register/owasp-llm.md"
+      ],
+      "rationale": "PRD threat-model section + ADR design rationale + OWASP LLM risk register (anchor 4)."
+    },
+    {
+      "practice": "PW.2",
+      "title": "Review the Software Design to Verify Compliance",
+      "evidence": [
+        "docs/ADR-0001-architecture.md",
+        ".github/CODEOWNERS"
+      ],
+      "rationale": "ADR review process gated by CODEOWNERS."
+    },
+    {
+      "practice": "PW.4",
+      "title": "Reuse Existing, Well-Secured Software When Feasible",
+      "evidence": [
+        "package-lock.json",
+        "yarn.lock",
+        "pnpm-lock.yaml",
+        ".github/dependabot.yml"
+      ],
+      "rationale": "Pinned lockfile + Dependabot config keep third-party components audited (anchor 7)."
+    },
+    {
+      "practice": "PW.5",
+      "title": "Create Source Code by Adhering to Secure Coding Practices",
+      "evidence": [
+        ".eslintrc",
+        ".eslintrc.json",
+        "eslint.config.mjs",
+        ".github/workflows/ci.yml"
+      ],
+      "rationale": "Lint + typecheck enforced in CI; secure-coding rules emitted by scaffold."
+    },
+    {
+      "practice": "PW.6",
+      "title": "Configure Compilation/Build Processes to Improve Security",
+      "evidence": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/release.yml"
+      ],
+      "rationale": "Hardened runner + pinned action SHAs + reproducible build flags."
+    },
+    {
+      "practice": "PW.7",
+      "title": "Review/Analyze Human-Readable Code to Identify Vulnerabilities",
+      "evidence": [
+        ".github/workflows/codeql.yml",
+        ".github/workflows/semgrep.yml"
+      ],
+      "rationale": "CodeQL + Semgrep SAST scans on every PR."
+    },
+    {
+      "practice": "PW.8",
+      "title": "Test Executable Code to Identify Vulnerabilities",
+      "evidence": [
+        ".github/workflows/zap.yml",
+        "verification/e2e"
+      ],
+      "rationale": "OWASP ZAP DAST stub + Playwright E2E suite (anchor 3)."
+    },
+    {
+      "practice": "PW.9",
+      "title": "Configure Software to Have Secure Settings by Default",
+      "evidence": [
+        "config/defaults.json",
+        "SECURITY.md"
+      ],
+      "rationale": "Scaffold ships defaults that fail-closed on auth/secret config."
+    },
+    {
+      "practice": "RV.1",
+      "title": "Identify and Confirm Vulnerabilities on an Ongoing Basis",
+      "evidence": [
+        ".github/dependabot.yml",
+        ".github/workflows/scorecard.yml",
+        ".github/workflows/codeql.yml"
+      ],
+      "rationale": "Dependabot + Scorecard + CodeQL run on schedule (anchor 7)."
+    },
+    {
+      "practice": "RV.2",
+      "title": "Assess, Prioritize, and Remediate Vulnerabilities",
+      "evidence": [
+        "SECURITY.md"
+      ],
+      "rationale": "SECURITY.md publishes the SLA for severity-tiered remediation."
+    },
+    {
+      "practice": "RV.3",
+      "title": "Analyze Vulnerabilities to Identify Their Root Causes",
+      "evidence": [
+        "docs/postmortem-template.md",
+        "docs/postmortems"
+      ],
+      "rationale": "Postmortem template (one of the 28 canonical templates) drives root-cause analysis."
+    }
+  ]
+}

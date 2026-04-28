@@ -1,10 +1,11 @@
-import { Component, createSignal, onCleanup } from "solid-js"
+import { Component, Show, createSignal, onCleanup } from "solid-js"
 import { Switch } from "@kilocode/kilo-ui/switch"
 import { Select } from "@kilocode/kilo-ui/select"
 import { Card } from "@kilocode/kilo-ui/card"
+import { Button } from "@kilocode/kilo-ui/button"
 import { useVSCode } from "../../context/vscode"
 import { useLanguage } from "../../context/language"
-import type { ExtensionMessage } from "../../types/messages"
+import type { ExtensionMessage, TestNotificationChannel } from "../../types/messages"
 import SettingsRow from "./SettingsRow"
 
 interface SoundOption {
@@ -27,22 +28,34 @@ const NotificationsTab: Component = () => {
   const [agentSound, setAgentSound] = createSignal("default")
   const [permSound, setPermSound] = createSignal("default")
   const [errorSound, setErrorSound] = createSignal("default")
+  const [testStatus, setTestStatus] = createSignal<string | null>(null)
+  const [testing, setTesting] = createSignal(false)
 
   const unsubscribe = vscode.onMessage((message: ExtensionMessage) => {
-    if (message.type !== "notificationSettingsLoaded") {
+    if (message.type === "notificationSettingsLoaded") {
+      const s = message.settings
+      setAgentNotify(s.notifyAgent)
+      setPermNotify(s.notifyPermissions)
+      setErrorNotify(s.notifyErrors)
+      setAgentSound(s.soundAgent)
+      setPermSound(s.soundPermissions)
+      setErrorSound(s.soundErrors)
       return
     }
-    const s = message.settings
-    setAgentNotify(s.notifyAgent)
-    setPermNotify(s.notifyPermissions)
-    setErrorNotify(s.notifyErrors)
-    setAgentSound(s.soundAgent)
-    setPermSound(s.soundPermissions)
-    setErrorSound(s.soundErrors)
+    if (message.type === "testNotificationResult") {
+      setTesting(false)
+      setTestStatus(message.ok ? `Sent to ${message.channel}` : `Failed: ${message.error ?? "unknown"}`)
+    }
   })
 
   onCleanup(unsubscribe)
   vscode.postMessage({ type: "requestNotificationSettings" })
+
+  const sendTestNotification = (channel: TestNotificationChannel) => {
+    setTesting(true)
+    setTestStatus(null)
+    vscode.postMessage({ type: "testNotification", channel })
+  }
 
   const save = (key: string, value: unknown) => {
     vscode.postMessage({ type: "updateSetting", key, value })
@@ -96,6 +109,44 @@ const NotificationsTab: Component = () => {
           >
             {language.t("settings.notifications.errors.title")}
           </Switch>
+        </SettingsRow>
+      </Card>
+
+      <h4 style={{ "margin-top": "16px", "margin-bottom": "8px" }}>Test notifications</h4>
+      <Card>
+        <SettingsRow
+          title="Send test notification"
+          description="Verify your notification channel is working."
+          last
+        >
+          <div style={{ display: "flex", gap: "8px", "align-items": "center" }}>
+            <Button
+              variant="secondary"
+              size="small"
+              disabled={testing()}
+              onClick={() => sendTestNotification("popup")}
+            >
+              Popup
+            </Button>
+            <Button
+              variant="secondary"
+              size="small"
+              disabled={testing()}
+              onClick={() => sendTestNotification("log")}
+            >
+              Log
+            </Button>
+            <Show when={testStatus()}>
+              <span
+                style={{
+                  "font-size": "12px",
+                  color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+                }}
+              >
+                {testStatus()}
+              </span>
+            </Show>
+          </div>
         </SettingsRow>
       </Card>
 

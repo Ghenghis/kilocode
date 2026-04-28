@@ -1,0 +1,67 @@
+/* ============================================================
+   OfflineBanner — connection state banners
+   ============================================================ */
+
+.kc-offline-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border-bottom: 1px solid transparent;
+}
+
+/* Amber — no internet */
+.kc-offline-banner--warning {
+  background: var(--vscode-inputValidation-warningBackground, rgba(204, 167, 0, 0.1));
+  border-color: var(--vscode-inputValidation-warningBorder, #cca700);
+  color: var(--vscode-editorWarning-foreground, #cca700);
+}
+
+/* Red — extension disconnected */
+.kc-offline-banner--error {
+  background: var(--vscode-inputValidation-errorBackground, rgba(241, 76, 76, 0.1));
+  border-color: var(--vscode-inputValidation-errorBorder, #f14c4c);
+  color: var(--vscode-errorForeground, #f14c4c);
+}
+
+.kc-offline-banner-icon {
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.kc-offline-banner-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.kc-offline-banner-action {
+  background: none;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  color: inherit;
+  flex-shrink: 0;
+}
+.kc-offline-banner-action:hover {
+  opacity: 0.8;
+}
+
+.kc-offline-banner-dismiss {
+  background: none;
+  border: none;
+  padding: 0 2px;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  color: inherit;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+.kc-offline-banner-dismiss:hover {
+  opacity: 1;
+}

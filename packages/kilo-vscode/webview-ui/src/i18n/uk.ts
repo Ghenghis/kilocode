@@ -1101,6 +1101,7 @@ export const dict = {
   "settings.notifications.errorSound.description": "Звук, що відтворюється при виникненні помилок",
   "settings.notifications.sound.default": "За замовчуванням",
   "settings.notifications.sound.none": "Немає",
+  "settings.notifications.quietHours": "Quiet hours",
 
   "settings.experimental.share.title": "Режим публікації",
   "settings.experimental.share.description": "Як поводиться публікація сесій",
@@ -1132,6 +1133,7 @@ export const dict = {
   "settings.experimental.remote.hint": "Використовуйте /remote у чаті для перемикання",
   "settings.experimental.toolToggles": "Перемикачі інструментів",
 
+  "settings.agentBehaviour.color": "UI accent color",
   "settings.agentBehaviour.defaultAgent.title": "Агент за замовчуванням",
   "settings.agentBehaviour.defaultAgent.description": "Агент, що використовується, якщо не вказано інший",
   "settings.agentBehaviour.availableAgents": "Доступні агенти",
@@ -1263,6 +1265,13 @@ export const dict = {
   "settings.context.prune.description": "Видаляти старі виводи інструментів під час стиснення",
   "settings.context.watcherPatterns": "Шаблони ігнорування спостерігача файлів",
   "settings.context.watcherPatterns.description": "Glob-шаблони для файлів, які спостерігач має ігнорувати",
+  "settings.context.contextWindow": "Context window",
+  "settings.context.contextWindowHint": "Tokens kept in context for the model",
+  "settings.context.fileLimits": "File size & count limits",
+  "settings.context.rulesFiles": "Rules files",
+  "settings.context.createRulesFile": "Create rules file",
+  "settings.context.mentionCheatsheet": "@mention cheatsheet",
+  "settings.context.systemPromptPreview": "Preview system prompt",
 
   "settings.commitMessage.title": "Commit Message",
   "settings.commitMessage.override.title": "Використовувати власний prompt",

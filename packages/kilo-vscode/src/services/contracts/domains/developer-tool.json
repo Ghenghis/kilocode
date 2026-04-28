@@ -1,0 +1,19 @@
+{
+  "id": "developer-tool",
+  "name": "Developer Tool",
+  "keywords": ["dev tool", "cli", "sdk", "vscode", "ide", "library", "api"],
+  "commonNFRs": [
+    "Time to first success < 5 min",
+    "Reproducible builds, semver discipline",
+    "Public docs site + changelog from day one",
+    "Telemetry opt-in only"
+  ],
+  "regulations": ["Open-source license (SPDX)", "Export controls (if cryptographic)"],
+  "antipatterns": [
+    "Closed-source with paid evaluation gate",
+    "Required telemetry on by default",
+    "Versioning by date with no semver",
+    "No CI on the public quickstart"
+  ],
+  "suggestedTemplates": ["rfc", "design-doc"]
+}

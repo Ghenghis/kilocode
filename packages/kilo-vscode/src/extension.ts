@@ -27,9 +27,11 @@ import { VPSService } from "./services/vps"
 import { ZeroClawService } from "./services/zeroclaw"
 import { RoutingService } from "./services/routing"
 import { MemoryService } from "./services/memory"
+import { AutoApproveService } from "./services/autoApprove"
 import { TrainingService } from "./services/training"
 import { GovernanceService } from "./services/governance"
 import { WorkstationProfileService } from "./services/workstation"
+import { templateService as contractTemplateService } from "./services/contracts"
 import type { KiloClient } from "@kilocode/sdk/v2"
 import { KiloLogger } from "./services/KiloLogger"
 import { HubPanel } from "./panels/HubPanel"
@@ -118,6 +120,9 @@ export function activate(context: vscode.ExtensionContext) {
   const memoryService = new MemoryService(context)
   context.subscriptions.push(memoryService)
 
+  const autoApproveService = new AutoApproveService(context)
+  context.subscriptions.push(autoApproveService)
+
   const trainingService = new TrainingService(context)
   context.subscriptions.push(trainingService)
 
@@ -127,6 +132,11 @@ export function activate(context: vscode.ExtensionContext) {
 
   const workstationProfile = new WorkstationProfileService()
   context.subscriptions.push(workstationProfile)
+
+  // Contract Markdowns Studio — TemplateService reads bundled templates from
+  // `assets/contract-templates/*.md`. Initialise here so first-touch on the
+  // Studio tab does not pay the directory-scan cost.
+  contractTemplateService.init(context.extensionUri)
 
   // Auto-discovery — created here, wired into providers, started after setV4Services.
   // Import is dynamic so the onboarding bundle is only loaded when the module exists.
@@ -246,6 +256,7 @@ export function activate(context: vscode.ExtensionContext) {
     zeroClaw: zeroClawService,
     routing: routingService,
     memory: memoryService,
+    autoApprove: autoApproveService,
     training: trainingService,
     governance: governanceService,
     workstation: workstationProfile,
@@ -265,6 +276,7 @@ export function activate(context: vscode.ExtensionContext) {
       zeroClaw: zeroClawService,
       routing: routingService,
       memory: memoryService,
+      autoApprove: autoApproveService,
       training: trainingService,
       governance: governanceService,
       workstation: workstationProfile,
@@ -383,6 +395,7 @@ export function activate(context: vscode.ExtensionContext) {
           zeroClaw: zeroClawService,
           routing: routingService,
           memory: memoryService,
+          autoApprove: autoApproveService,
           training: trainingService,
           governance: governanceService,
           workstation: workstationProfile,
@@ -431,6 +444,7 @@ export function activate(context: vscode.ExtensionContext) {
     zeroClaw: zeroClawService,
     routing: routingService,
     memory: memoryService,
+    autoApprove: autoApproveService,
     training: trainingService,
     governance: governanceService,
     workstation: workstationProfile,
@@ -543,7 +557,7 @@ export function activate(context: vscode.ExtensionContext) {
         tabPanels,
         diffVirtualProvider,
         remoteService,
-        { ssh: sshService, vps: vpsService, zeroClaw: zeroClawService, routing: routingService, memory: memoryService, training: trainingService, governance: governanceService, workstation: workstationProfile, discovery: discoveryService },
+        { ssh: sshService, vps: vpsService, zeroClaw: zeroClawService, routing: routingService, memory: memoryService, autoApprove: autoApproveService, training: trainingService, governance: governanceService, workstation: workstationProfile, discovery: discoveryService },
         hermesStatus,
         hermesClient,
       )

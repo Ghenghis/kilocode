@@ -1,0 +1,13 @@
+id: CASE-DATA-003
+title: Pricing input validator rejects negative amounts
+given: a draft listing with price = -1
+when: the validator runs against the listing schema
+then: it raises ValidationError with field "price" and code "min_value"
+run:
+  kind: pytest
+  spec: verification/unit/test_pricing_validator.py
+  evidencePaths:
+    - verification/unit/_artifacts/pricing-validator.txt
+mapsTo:
+  storyId: "2.3"
+  reqId: F-7

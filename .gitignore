@@ -50,6 +50,7 @@ tsconfig.tsbuildinfo
 
 # Kilo
 .kilo/plans/*upstream-merge-report-*.md
+.kilo/*.log
 
 # Test Artifacts
 packages/app/.artifacts/

@@ -1,0 +1,53 @@
+# =============================================================================
+# Dependabot configuration — Contract Kit Creator scaffold default
+# -----------------------------------------------------------------------------
+# Required for OpenSSF Scorecard `Dependency-Update-Tool` check (10/10).
+# Docs: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# This file ships with two ecosystems pre-configured:
+#   - npm        (package.json / package-lock.json)
+#   - github-actions (workflows in .github/workflows)
+#
+# Daily schedule keeps the dependency-update SLA tight. Adjust per repo if
+# noisy (recommended minimum: weekly).
+# =============================================================================
+
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "06:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "automated"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    groups:
+      production-deps:
+        dependency-type: "production"
+        update-types:
+          - "patch"
+          - "minor"
+      development-deps:
+        dependency-type: "development"
+        update-types:
+          - "patch"
+          - "minor"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "06:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 5
+    labels:
+      - "ci"
+      - "automated"
+    commit-message:
+      prefix: "ci"

@@ -1,4 +1,4 @@
-import { Component, For, createSignal } from "solid-js"
+import { Component, For, Show, createSignal, onCleanup } from "solid-js"
 import { Switch } from "@kilocode/kilo-ui/switch"
 import { TextField } from "@kilocode/kilo-ui/text-field"
 import { Card } from "@kilocode/kilo-ui/card"
@@ -7,12 +7,48 @@ import { IconButton } from "@kilocode/kilo-ui/icon-button"
 
 import { useConfig } from "../../context/config"
 import { useLanguage } from "../../context/language"
+import { useVSCode } from "../../context/vscode"
+import type { ExtensionMessage } from "../../types/messages"
 import SettingsRow from "./SettingsRow"
 
 const ContextTab: Component = () => {
   const { config, updateConfig } = useConfig()
   const language = useLanguage()
+  const vscode = useVSCode()
   const [newPattern, setNewPattern] = createSignal("")
+
+  // System-prompt preview round-trip — extension reads the active template,
+  // interpolates known variables, and posts back `systemPromptPreview`.
+  const [previewing, setPreviewing] = createSignal(false)
+  const [previewText, setPreviewText] = createSignal<string | null>(null)
+  const [previewError, setPreviewError] = createSignal<string | null>(null)
+  const unsubscribePreview = vscode.onMessage((msg: ExtensionMessage) => {
+    const m = msg as unknown as Record<string, unknown>
+    if (m.type === "systemPromptPreview") {
+      const data = m as unknown as { text?: string; error?: string }
+      setPreviewing(false)
+      if (data.error) {
+        setPreviewError(data.error)
+        setPreviewText(null)
+      } else {
+        setPreviewText(data.text ?? "")
+        setPreviewError(null)
+      }
+    }
+  })
+  onCleanup(unsubscribePreview)
+  const requestPreview = () => {
+    setPreviewing(true)
+    setPreviewError(null)
+    vscode.postMessage({ type: "previewSystemPrompt" } as never)
+    // Safety timeout in case the extension is unreachable.
+    setTimeout(() => {
+      if (previewing()) {
+        setPreviewing(false)
+        if (!previewText()) setPreviewError("No response from extension (timeout)")
+      }
+    }, 8000)
+  }
 
   const patterns = () => config().watcher?.ignore ?? []
 
@@ -62,6 +98,50 @@ const ContextTab: Component = () => {
             {language.t("settings.context.prune.title")}
           </Switch>
         </SettingsRow>
+      </Card>
+
+      {/* System Prompt Preview — round-trip via `previewSystemPrompt` */}
+      <h4 style={{ "margin-top": "16px", "margin-bottom": "8px" }}>
+        {language.t("settings.context.systemPromptPreview")}
+      </h4>
+      <Card>
+        <div style={{ padding: "8px 0", display: "flex", "align-items": "center", gap: "8px" }}>
+          <Button variant="secondary" onClick={requestPreview} disabled={previewing()}>
+            {previewing() ? "Loading..." : "Preview"}
+          </Button>
+          <span style={{ "font-size": "12px", color: "var(--text-weak-base, var(--vscode-descriptionForeground))" }}>
+            Render the active system-prompt template with current model + workspace variables.
+          </span>
+        </div>
+        <Show when={previewError()}>
+          <div
+            style={{
+              "font-size": "12px",
+              color: "var(--vscode-errorForeground)",
+              padding: "8px 0",
+            }}
+          >
+            {previewError()}
+          </div>
+        </Show>
+        <Show when={previewText() != null}>
+          <pre
+            style={{
+              "font-size": "11px",
+              "font-family": "var(--vscode-editor-font-family, monospace)",
+              padding: "8px",
+              background: "var(--vscode-textBlockQuote-background)",
+              "border-radius": "4px",
+              "max-height": "320px",
+              overflow: "auto",
+              "white-space": "pre-wrap",
+              "word-break": "break-word",
+              margin: "0",
+            }}
+          >
+            {previewText()}
+          </pre>
+        </Show>
       </Card>
 
       <h4 style={{ "margin-top": "16px", "margin-bottom": "8px" }}>{language.t("settings.context.watcherPatterns")}</h4>

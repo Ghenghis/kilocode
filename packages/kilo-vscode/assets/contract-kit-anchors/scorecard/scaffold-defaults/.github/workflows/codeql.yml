@@ -1,0 +1,68 @@
+# =============================================================================
+# CodeQL workflow — Contract Kit Creator scaffold default
+# -----------------------------------------------------------------------------
+# Required for OpenSSF Scorecard `SAST` check (10/10).
+#
+# Pinned action SHAs (review and bump approximately every 90 days):
+#
+#   actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11               # v4.1.1
+#   github/codeql-action/init@1b1aada464948af03b950897e5eb522f92603cc2      # v3.24.9
+#   github/codeql-action/autobuild@1b1aada464948af03b950897e5eb522f92603cc2 # v3.24.9
+#   github/codeql-action/analyze@1b1aada464948af03b950897e5eb522f92603cc2   # v3.24.9
+#
+# Update procedure: visit https://github.com/github/codeql-action/releases ,
+# copy the SHA of the latest 3.x tag, replace all four occurrences below.
+# =============================================================================
+
+name: CodeQL
+
+on:
+  push:
+    branches:
+      - main
+      - "release/*"
+  pull_request:
+    branches:
+      - main
+      - "release/*"
+  schedule:
+    # Weekly — Tuesday 07:00 UTC
+    - cron: "0 7 * * 2"
+
+permissions: read-all
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        # Adjust per project. CodeQL supports: cpp, csharp, go, java, javascript,
+        # python, ruby, swift, typescript (alias for javascript).
+        language:
+          - javascript
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@1b1aada464948af03b950897e5eb522f92603cc2 # v3.24.9
+        with:
+          languages: ${{ matrix.language }}
+          queries: +security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@1b1aada464948af03b950897e5eb522f92603cc2 # v3.24.9
+
+      - name: Perform analysis
+        uses: github/codeql-action/analyze@1b1aada464948af03b950897e5eb522f92603cc2 # v3.24.9
+        with:
+          category: "/language:${{ matrix.language }}"

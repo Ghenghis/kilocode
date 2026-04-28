@@ -1,0 +1,19 @@
+{
+  "id": "b2b-saas",
+  "name": "B2B SaaS",
+  "keywords": ["saas", "b2b", "enterprise", "dashboard", "team-seats", "sso", "tenant"],
+  "commonNFRs": [
+    "Multi-tenant isolation enforced at row + role layer",
+    "SSO via SAML + OIDC",
+    "SLA: 99.9% uptime, 99.95% for enterprise tier",
+    "Audit log retention >= 12 months"
+  ],
+  "regulations": ["SOC 2 Type II", "GDPR", "ISO 27001 (large enterprise)"],
+  "antipatterns": [
+    "Self-serve sign-up only (enterprise needs procurement)",
+    "Per-user pricing with no team-seats option",
+    "No usage-based pricing tier",
+    "Skipping audit logs in v1"
+  ],
+  "suggestedTemplates": ["prd", "rfc"]
+}

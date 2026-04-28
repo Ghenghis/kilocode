@@ -1,0 +1,19 @@
+{
+  "id": "mobile-app",
+  "name": "Mobile App",
+  "keywords": ["ios", "android", "mobile", "swift", "kotlin", "react-native", "flutter"],
+  "commonNFRs": [
+    "Cold-start time < 2s on mid-tier device",
+    "Offline-first for core flows",
+    "Crash-free sessions > 99.5%",
+    "App-Store / Play-Store policy compliance"
+  ],
+  "regulations": ["COPPA (kid users)", "App Store Review Guidelines", "GDPR"],
+  "antipatterns": [
+    "Web-first build hidden in WebView",
+    "No deep-link strategy",
+    "Push notifications without opt-in flow",
+    "Skipping accessibility (VoiceOver/TalkBack)"
+  ],
+  "suggestedTemplates": ["prd"]
+}

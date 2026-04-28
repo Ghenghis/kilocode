@@ -1,0 +1,13 @@
+id: CASE-API-002
+title: POST /listings creates a listing and returns 201 with the new id
+given: an authenticated seller and a valid listing payload
+when: the client POSTs to /api/listings
+then: the response is 201, body matches CreateListingResponse, and a row exists in the listings table
+run:
+  kind: vitest
+  spec: verification/unit/api/create-listing.test.ts
+  evidencePaths:
+    - verification/unit/_logs/create-listing.log
+mapsTo:
+  storyId: "2.1"
+  reqId: F-3

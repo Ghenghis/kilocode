@@ -1,0 +1,121 @@
+/* ============================================================
+   SectionErrorBoundary — full-panel error fallback UI
+   ============================================================ */
+
+.kc-error-boundary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  gap: 12px;
+  text-align: center;
+  min-height: 180px;
+  color: var(--vscode-foreground);
+}
+
+.kc-error-boundary-icon {
+  font-size: 32px;
+  color: var(--vscode-editorWarning-foreground, #cca700);
+  line-height: 1;
+}
+
+.kc-error-boundary-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--vscode-foreground);
+}
+
+.kc-error-boundary-message {
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+  margin: 0;
+  max-width: 360px;
+}
+
+/* ── Action row ── */
+.kc-error-boundary-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.kc-error-boundary-btn {
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: opacity 150ms;
+}
+.kc-error-boundary-btn:hover {
+  opacity: 0.85;
+}
+
+.kc-error-boundary-btn--primary {
+  background: var(--vscode-button-background, #0e639c);
+  color: var(--vscode-button-foreground, #fff);
+  border-color: var(--vscode-button-background, #0e639c);
+}
+.kc-error-boundary-btn--primary:hover {
+  background: var(--vscode-button-hoverBackground, #1177bb);
+}
+
+.kc-error-boundary-btn--ghost {
+  background: none;
+  color: var(--vscode-textLink-foreground, #3794ff);
+  border-color: var(--vscode-editorWidget-border, #454545);
+}
+.kc-error-boundary-btn--ghost:hover {
+  background: var(--vscode-list-hoverBackground, rgba(255,255,255,0.05));
+}
+
+/* ── Details disclosure ── */
+.kc-error-boundary-details {
+  width: 100%;
+  max-width: 480px;
+  text-align: left;
+}
+
+.kc-error-boundary-details-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.kc-error-boundary-details-toggle:hover {
+  color: var(--vscode-foreground);
+}
+
+.kc-error-boundary-chevron {
+  display: inline-block;
+  transition: transform 150ms;
+  font-size: 14px;
+  line-height: 1;
+}
+.kc-error-boundary-chevron--open {
+  transform: rotate(90deg);
+}
+
+.kc-error-boundary-pre {
+  margin: 8px 0 0 0;
+  padding: 10px;
+  background: var(--vscode-editor-background);
+  border: 1px solid var(--vscode-editorWidget-border, #454545);
+  border-radius: 4px;
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 11px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 200px;
+  overflow-y: auto;
+  color: var(--vscode-foreground);
+}

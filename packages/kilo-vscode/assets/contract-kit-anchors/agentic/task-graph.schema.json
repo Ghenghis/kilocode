@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kilocode.ai/schemas/contract-kit-anchors/agentic/task-graph.schema.json",
+  "title": "Contract Kit Task Graph",
+  "description": "Directed acyclic graph (DAG) of buildable units that any compliant agent can claim. Anchor 1 of CONTRACT_KIT_CREATOR_ANCHORS.md. Validates structurally: no cycles, all dependsOn ids exist, all leaf tasks (those nothing depends on) carry concrete acceptance criteria. Edges are derived from dependsOn but may be listed explicitly for tooling/diagram purposes.",
+  "type": "object",
+  "required": ["tasks"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Optional SemVer of this task-graph document.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+    },
+    "tasks": {
+      "type": "array",
+      "description": "Buildable units. Every id must be unique. Every value in any task's dependsOn array must reference another task's id (validator enforces this; JSON Schema cannot).",
+      "items": { "$ref": "#/$defs/task" },
+      "minItems": 1
+    },
+    "edges": {
+      "type": "array",
+      "description": "Optional explicit edges for diagram/tooling consumers. Each edge connects two task ids. Validators may treat edges as authoritative or derive them from dependsOn.",
+      "items": { "$ref": "#/$defs/edge" },
+      "default": []
+    }
+  },
+  "$defs": {
+    "task": {
+      "type": "object",
+      "required": ["id", "title", "dependsOn", "acceptanceCriteria", "assigneeRole"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable task id, e.g. T-001. Must be unique across the task array.",
+          "pattern": "^T-[A-Z0-9-]+$"
+        },
+        "title": {
+          "type": "string",
+          "description": "Short imperative phrase ('Scaffold auth API', 'Wire S3 image upload').",
+          "minLength": 1
+        },
+        "dependsOn": {
+          "type": "array",
+          "description": "Ids of tasks that must complete before this one starts. Empty array means a root task. Each id must reference an existing task (validator enforces; JSON Schema cannot).",
+          "items": {
+            "type": "string",
+            "pattern": "^T-[A-Z0-9-]+$"
+          },
+          "default": [],
+          "uniqueItems": true
+        },
+        "acceptanceCriteria": {
+          "type": "string",
+          "description": "Given/When/Then prose or a bullet list of RFC 2119 criteria. Required for every leaf task; recommended for non-leaf tasks. May reference REQ-XXX or ADR-XXXX ids.",
+          "minLength": 1
+        },
+        "assigneeRole": {
+          "type": "string",
+          "description": "Agent role expected to claim this task. Common values: 'planner', 'frontend-eng', 'backend-eng', 'qa', 'devops', 'security', 'doc-writer', 'researcher'.",
+          "minLength": 1
+        },
+        "estimatedHours": {
+          "type": "number",
+          "description": "Optional estimate in person-hours. Used by the supervisor agent for capacity planning.",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "required": ["from", "to"],
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "type": "string",
+          "description": "Source task id (predecessor).",
+          "pattern": "^T-[A-Z0-9-]+$"
+        },
+        "to": {
+          "type": "string",
+          "description": "Target task id (successor).",
+          "pattern": "^T-[A-Z0-9-]+$"
+        },
+        "kind": {
+          "type": "string",
+          "description": "Optional edge classification. 'depends-on' is the default; 'informs' indicates a soft, non-blocking link.",
+          "enum": ["depends-on", "informs"],
+          "default": "depends-on"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+# =============================================================================
+# CODEOWNERS — Contract Kit Creator scaffold default
+# -----------------------------------------------------------------------------
+# This file maps paths to GitHub users/teams who own them. GitHub uses it to
+# auto-request reviews on PRs. Required for the OpenSSF Scorecard `Code-Review`
+# check to score 10/10.
+#
+# Syntax: <path-pattern> <@owner> [@owner ...]
+# Docs:   https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-security/customizing-your-repository/about-code-owners
+#
+# REPLACE the placeholder owners below with real GitHub usernames or teams
+# (e.g. @your-org/security-reviewers) before merging the scaffold.
+# =============================================================================
+
+# Default owners for everything in the repo.
+*                       @REPLACE_WITH_OWNER
+
+# Security-sensitive paths require an explicit security review.
+/SECURITY.md            @REPLACE_WITH_OWNER @REPLACE_WITH_SECURITY_OWNER
+/.github/               @REPLACE_WITH_OWNER @REPLACE_WITH_SECURITY_OWNER
+/compliance/            @REPLACE_WITH_OWNER @REPLACE_WITH_SECURITY_OWNER
+
+# Build / release infrastructure.
+/.github/workflows/release.yml      @REPLACE_WITH_OWNER @REPLACE_WITH_RELEASE_OWNER
+/.github/workflows/scorecard.yml    @REPLACE_WITH_OWNER @REPLACE_WITH_SECURITY_OWNER
+/.github/workflows/codeql.yml       @REPLACE_WITH_OWNER @REPLACE_WITH_SECURITY_OWNER

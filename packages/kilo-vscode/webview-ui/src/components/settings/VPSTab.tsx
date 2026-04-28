@@ -282,6 +282,11 @@ const VPSTab: Component = () => {
   const [refreshInterval, setRefreshInterval] = createSignal(15)
   let refreshTimer: ReturnType<typeof setInterval> | undefined
 
+  // Per-server ping state — keyed by server id; { ok, responseMs, ts }
+  const [pingResults, setPingResults] = createSignal<Record<string, { ok: boolean; responseMs?: number; ts: number }>>({})
+  // Auto-ping every 30s for the entire inventory
+  let pingTimer: ReturnType<typeof setInterval> | undefined
+
   // Section collapse state
   const [inventoryOpen, setInventoryOpen] = createSignal(true)
   const [monitoringOpen, setMonitoringOpen] = createSignal(true)
@@ -348,6 +353,22 @@ const VPSTab: Component = () => {
         }
         break
       }
+      case "vpsServerPingResult": {
+        // Server reachability probe — used by the inline Ping button + the 30s
+        // auto-ping sweep. Stored per-server so each row can show a fresh badge.
+        const r = msg as unknown as { serverId: string; ok: boolean; responseMs?: number }
+        if (!r.serverId) break
+        setPingResults((prev) => ({
+          ...prev,
+          [r.serverId]: { ok: r.ok, responseMs: r.responseMs, ts: Date.now() },
+        }))
+        // Reflect online/offline in the row's status badge for instant feedback,
+        // even before the next vpsServersLoaded refresh from the backend.
+        setServers((prev) =>
+          prev.map((s) => (s.id === r.serverId ? { ...s, status: r.ok ? "online" : "offline" } : s)),
+        )
+        break
+      }
     }
   })
   onCleanup(unsubscribe)
@@ -362,8 +383,24 @@ const VPSTab: Component = () => {
     }
   })
 
+  // ── 30s auto-ping sweep ─────────────────────────────
+  // Fires `vpsServerPing` for every registered server on a 30s cadence so the
+  // inventory's status column is "live" without the user having to click each row.
+  createEffect(() => {
+    if (pingTimer) clearInterval(pingTimer)
+    if (servers().length === 0) return
+    const sweep = () => {
+      for (const s of servers()) {
+        postMessage({ type: "vpsServerPing", serverId: s.id } as never)
+      }
+    }
+    sweep() // immediate first pass on mount / inventory change
+    pingTimer = setInterval(sweep, 30_000)
+  })
+
   onCleanup(() => {
     if (refreshTimer) clearInterval(refreshTimer)
+    if (pingTimer) clearInterval(pingTimer)
   })
 
   // ── Request initial data ─────────────────────────────
@@ -418,8 +455,12 @@ const VPSTab: Component = () => {
       .filter(Boolean)
 
     if (editingId()) {
+      // Edit-save sends `vpsServerUpdate` so the backend can route to its
+      // update path (and the webview gets a `vpsServerUpdated` echo back).
+      // Previously this incorrectly reused `vpsServerAdd` which conflated the
+      // two operations and skipped any update-only validation.
       postMessage({
-        type: "vpsServerAdd",
+        type: "vpsServerUpdate",
         server: {
           id: editingId(),
           hostname: f.hostname.trim(),
@@ -451,6 +492,10 @@ const VPSTab: Component = () => {
 
   function removeServer(id: string) {
     postMessage({ type: "vpsServerRemove", serverId: id } as never)
+  }
+
+  function pingServer(id: string) {
+    postMessage({ type: "vpsServerPing", serverId: id } as never)
   }
 
   function connectSSH(server: VPSServer) {
@@ -693,9 +738,35 @@ const VPSTab: Component = () => {
                           <span style={badgeStyle(server.status)}>
                             {server.status}
                           </span>
+                          <Show when={pingResults()[server.id]}>
+                            {(r) => (
+                              <span
+                                title={`Last ping ${formatTimestamp(r().ts)}`}
+                                style={{
+                                  "margin-left": "6px",
+                                  "font-size": "10px",
+                                  color: r().ok
+                                    ? "var(--vscode-testing-iconPassed)"
+                                    : "var(--vscode-testing-iconFailed)",
+                                }}
+                              >
+                                {r().ok ? `OK ${r().responseMs ?? "?"}ms` : "unreachable"}
+                              </span>
+                            )}
+                          </Show>
                         </td>
                         <td style={{ ...tdStyle, "text-align": "right" }}>
                           <div style={{ display: "flex", gap: "4px", "justify-content": "flex-end" }}>
+                            <button
+                              style={rowButtonStyle}
+                              title="Ping server (also runs every 30s automatically)"
+                              onClick={(e: MouseEvent) => {
+                                e.stopPropagation()
+                                pingServer(server.id)
+                              }}
+                            >
+                              Ping
+                            </button>
                             <button
                               style={rowButtonStyle}
                               title="Connect via SSH"

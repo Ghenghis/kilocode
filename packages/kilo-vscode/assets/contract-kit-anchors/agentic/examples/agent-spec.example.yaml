@@ -1,0 +1,144 @@
+# Example agent-spec.yaml for a "Vintage Cameras Marketplace" project.
+# Validates against ../agent-spec.schema.json.
+# Anchor 1 (Agentic Software Engineering) of CONTRACT_KIT_CREATOR_ANCHORS.md.
+version: "0.1.0"
+
+intent: |
+  I want a marketplace where collectors can list, browse, and buy vintage film
+  cameras. Listings should include condition grading, sample photos, and
+  serviceable-status. Buyers should be able to message sellers, place offers,
+  and pay with escrow. We need to look credible to serious collectors and
+  protect both sides from fraud.
+
+domain: marketplace
+
+audience:
+  - eng
+  - exec
+  - legal
+  - design
+
+capabilities:
+  - id: REQ-001
+    description: >-
+      Sellers can create a listing for a vintage camera with photos,
+      condition grading, provenance notes, and asking price.
+    priority: must
+    acceptanceCriteria:
+      - "Given a verified seller, When they submit a listing with >=3 photos and a condition grade, Then the listing is queued for moderation within 5 seconds."
+      - "Listings MUST reject submissions with fewer than 3 photos or missing condition grade."
+      - "Listings MUST persist the original photo EXIF where available so buyers can audit authenticity claims."
+
+  - id: REQ-002
+    description: >-
+      Buyers can search and filter listings by brand, format (35mm, medium,
+      large), era, condition, and price range with sub-300ms p95 latency.
+    priority: must
+    acceptanceCriteria:
+      - "Given a catalog of 50k listings, When a buyer queries with two filters, Then results return in under 300ms at p95."
+      - "Search MUST support brand synonyms (Hasselblad / Victor Hasselblad AB) via a curated dictionary."
+
+  - id: REQ-003
+    description: >-
+      Buyers can place an offer below the asking price; sellers can accept,
+      counter, or reject within a 72-hour window.
+    priority: must
+    acceptanceCriteria:
+      - "Given a listing in 'available' state, When a buyer submits an offer, Then the seller receives a notification within 60 seconds."
+      - "Offers MUST expire automatically at the 72-hour mark and revert the listing to 'available'."
+
+  - id: REQ-004
+    description: >-
+      Payments are held in escrow until buyer confirms receipt or 7-day
+      auto-release window elapses with no dispute.
+    priority: must
+    acceptanceCriteria:
+      - "Given a successful payment, When funds clear, Then they are held in escrow under the marketplace's PCI-compliant processor."
+      - "Disputes opened within 7 days MUST freeze escrow release until adjudicated."
+
+  - id: REQ-005
+    description: >-
+      Buyer-seller messaging with attachment support, scoped to a listing,
+      with PII redaction on outbound notifications.
+    priority: should
+    acceptanceCriteria:
+      - "Messages MUST strip phone numbers and email addresses from notification previews to deter off-platform contact."
+
+  - id: REQ-006
+    description: >-
+      Trust signals: verified seller badge, reputation score, and
+      transparent sale history per seller profile.
+    priority: should
+    acceptanceCriteria:
+      - "Given a seller with >=10 completed sales, When their profile is viewed, Then a verified badge is rendered."
+
+  - id: REQ-007
+    description: >-
+      Admin moderation queue with audit log of every approve/reject action.
+    priority: must
+    acceptanceCriteria:
+      - "Every moderation action MUST append an immutable audit record with actor, timestamp, listing id, and reason."
+
+constraints:
+  - "Hosting budget: under $400/month at 10k MAU."
+  - "Data residency: EU users' data stored in eu-west-1; US users in us-east-1."
+  - "Tech stack: TypeScript end-to-end (Next.js + tRPC + Postgres + S3-compatible object store)."
+  - "Time-to-first-listing for a new seller MUST be under 4 minutes."
+  - "WCAG 2.2 AA conformance on all buyer-facing flows."
+
+decisions:
+  - id: ADR-0001
+    title: Use Stripe Connect for escrowed marketplace payments
+    status: accepted
+    adrPath: .kilo/contracts/adr/ADR-0001-stripe-connect-escrow.md
+  - id: ADR-0002
+    title: Postgres + Meilisearch for catalog search
+    status: accepted
+    adrPath: .kilo/contracts/adr/ADR-0002-meilisearch-for-catalog.md
+  - id: ADR-0003
+    title: Cloudflare R2 for image storage with signed URLs
+    status: accepted
+    adrPath: .kilo/contracts/adr/ADR-0003-cloudflare-r2.md
+  - id: ADR-0004
+    title: Reject crypto payment rails in v1
+    status: accepted
+    adrPath: .kilo/contracts/adr/ADR-0004-no-crypto-v1.md
+
+risks:
+  - id: RISK-001
+    likelihood: high
+    impact: high
+    mitigation: >-
+      Counterfeit listings: require provenance evidence for items priced over
+      $1,500 and run a manual moderation step. Buyers see a "verified
+      provenance" badge only when documentation passes review.
+    owner: trust-and-safety@example.com
+  - id: RISK-002
+    likelihood: medium
+    impact: critical
+    mitigation: >-
+      Payment fraud / chargebacks: rely on Stripe Radar; require 3DS for
+      transactions over $500; freeze escrow on chargeback signal.
+    owner: payments-lead@example.com
+  - id: RISK-003
+    likelihood: medium
+    impact: high
+    mitigation: >-
+      Off-platform leakage (buyers/sellers exchange contact info to dodge
+      fees): outbound message previews redact phone/email; in-app messaging
+      flags suspected off-platform attempts for review.
+    owner: product-lead@example.com
+  - id: RISK-004
+    likelihood: low
+    impact: high
+    mitigation: >-
+      Image-storage cost runaway from speculative listings: enforce a 12-image
+      cap per listing and lifecycle-policy unsold images after 180 days.
+    owner: eng-lead@example.com
+  - id: RISK-005
+    likelihood: medium
+    impact: medium
+    mitigation: >-
+      Seller dispute brigading via fake reviews: gate review writes behind
+      verified-purchase signal and rate-limit per buyer.
+    owner: trust-and-safety@example.com

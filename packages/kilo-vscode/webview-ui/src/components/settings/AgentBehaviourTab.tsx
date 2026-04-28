@@ -75,6 +75,23 @@ const AgentBehaviourTab: Component = () => {
 
   // MCP view state
   const [editingMcp, setEditingMcp] = createSignal<string>("")
+  // MCP test status: serverName → human-readable status (or null)
+  const [mcpTestStatus, setMcpTestStatus] = createSignal<Record<string, string>>({})
+  const [mcpTestingName, setMcpTestingName] = createSignal<string | null>(null)
+  const unsubMcpTest = vscode.onMessage((msg) => {
+    if (msg.type !== "mcpToolTestResult") return
+    setMcpTestingName(null)
+    const label = msg.ok
+      ? `OK ${msg.latencyMs}ms`
+      : `Failed: ${msg.error ?? "unknown"}`
+    setMcpTestStatus({ ...mcpTestStatus(), [msg.serverName]: label })
+  })
+  onCleanup(unsubMcpTest)
+  const testMcpServer = (name: string) => {
+    setMcpTestingName(name)
+    setMcpTestStatus({ ...mcpTestStatus(), [name]: "Testing…" })
+    vscode.postMessage({ type: "testMcpTool", serverName: name })
+  }
 
   // Fetch skills whenever the skills subtab becomes active
   createEffect(() => {
@@ -660,6 +677,28 @@ const AgentBehaviourTab: Component = () => {
                         </span>
                       </div>
                       <div style={{ display: "flex", gap: "4px", "align-items": "center" }}>
+                        <Show when={mcpTestStatus()[name]}>
+                          <span
+                            style={{
+                              "font-size": "11px",
+                              color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+                            }}
+                            onClick={(e: MouseEvent) => e.stopPropagation()}
+                          >
+                            {mcpTestStatus()[name]}
+                          </span>
+                        </Show>
+                        <Button
+                          size="small"
+                          variant="ghost"
+                          disabled={mcpTestingName() === name}
+                          onClick={(e: MouseEvent) => {
+                            e.stopPropagation()
+                            testMcpServer(name)
+                          }}
+                        >
+                          {language.t("common.test") || "Test"}
+                        </Button>
                         <div onClick={(e: MouseEvent) => e.stopPropagation()}>
                           <Switch
                             checked={isConnected(name)}

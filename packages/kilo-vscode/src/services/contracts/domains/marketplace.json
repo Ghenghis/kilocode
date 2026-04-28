@@ -1,0 +1,19 @@
+{
+  "id": "marketplace",
+  "name": "Two-sided Marketplace",
+  "keywords": ["marketplace", "buyers", "sellers", "listings", "auction", "c2c", "p2p"],
+  "commonNFRs": [
+    "Search latency p95 < 300ms",
+    "Image upload to listing-live < 5s",
+    "Trust signals visible on every listing",
+    "Fraud detection on first transaction"
+  ],
+  "regulations": ["GDPR (EU users)", "CCPA (CA users)", "VAT/sales-tax remit"],
+  "antipatterns": [
+    "Cold-start with no anchor inventory",
+    "Disintermediation leakage (off-platform deals)",
+    "Identical UX for buyers and sellers",
+    "No dispute resolution before launch"
+  ],
+  "suggestedTemplates": ["prd", "design-doc"]
+}

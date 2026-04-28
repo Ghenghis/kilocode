@@ -344,6 +344,13 @@ const RoutingTab: Component = () => {
   // Fallback reorder
   const [editingFallback, setEditingFallback] = createSignal(false)
 
+  // Rule tester — lets the user evaluate a sample prompt against the
+  // configured rule list and see which provider would win. Round-trips
+  // `routingTestRule` -> `routingRuleTestResult`.
+  const [rulePrompt, setRulePrompt] = createSignal("")
+  const [ruleTestResult, setRuleTestResult] = createSignal<{ provider: string; rule: string } | null>(null)
+  const [testingRule, setTestingRule] = createSignal(false)
+
   // ── Message Handler ──────────────────────────────────────
   const unsubscribe = vscode.onMessage((msg: ExtensionMessage) => {
     const m = msg as unknown as Record<string, unknown>
@@ -396,6 +403,18 @@ const RoutingTab: Component = () => {
       )
       setConfiguringProvider(null)
       setApiKeyInput("")
+    }
+    if (m.type === "routingPrivacyUpdated") {
+      // Backend echoes the persisted privacyMode after `routingSetPrivacy`.
+      // Mirror it locally so the toggle stays in sync if the value was
+      // normalized server-side (or rejected and rolled back).
+      const data = m as unknown as { privacyMode: "local_preferred" | "cloud_ok" }
+      if (data.privacyMode) setConfig((prev) => ({ ...prev, privacyMode: data.privacyMode }))
+    }
+    if (m.type === "routingRuleTestResult") {
+      const data = m as unknown as { provider: string; rule: string }
+      setRuleTestResult({ provider: data.provider ?? "", rule: data.rule ?? "" })
+      setTestingRule(false)
     }
   })
 
@@ -464,7 +483,12 @@ const RoutingTab: Component = () => {
 
   const setPrivacy = (privacyMode: "local_preferred" | "cloud_ok") => {
     setConfig((prev) => ({ ...prev, privacyMode }))
-    vscode.postMessage({ type: "routingSetMode", privacyMode } as never)
+    // Use the dedicated `routingSetPrivacy` channel — backend has a matching
+    // case that updates RoutingService and emits routingConfigLoaded /
+    // routingPrivacyUpdated. The legacy overloaded `routingSetMode` path is
+    // retained server-side for back-compat but the toggle now uses the
+    // single-purpose message so the round-trip is unambiguous.
+    vscode.postMessage({ type: "routingSetPrivacy", privacyMode } as never)
   }
 
   const setCostThreshold = (value: number) => {
@@ -476,6 +500,19 @@ const RoutingTab: Component = () => {
       type: "routingSetMode",
       costThreshold: config().costThreshold,
     } as never)
+  }
+
+  const testRule = () => {
+    // Send the current sample prompt to the backend's rule-evaluator. Result
+    // arrives via `routingRuleTestResult`. Empty prompt is allowed — the
+    // backend treats it as "what would the default provider be".
+    setTestingRule(true)
+    setRuleTestResult(null)
+    vscode.postMessage({ type: "routingTestRule", prompt: rulePrompt() } as never)
+    // Safety timeout: if the backend never replies (service down), reset.
+    setTimeout(() => {
+      if (testingRule()) setTestingRule(false)
+    }, 10_000)
   }
 
   const moveFallback = (index: number, direction: "up" | "down") => {
@@ -1211,6 +1248,50 @@ const RoutingTab: Component = () => {
                   onBlur={saveCostThreshold}
                   style={{ ...inputStyle, width: "100px" }}
                 />
+              </div>
+            </SettingsRow>
+
+            {/* Rule Tester — round-trips through the backend so the result
+                reflects the persisted rule list, not a stale snapshot. */}
+            <SettingsRow
+              title="Test Routing Rule"
+              description="Enter a sample prompt to see which provider and rule would be selected for it."
+            >
+              <div style={{ display: "flex", "flex-direction": "column", gap: "6px", width: "100%" }}>
+                <div style={{ display: "flex", gap: "6px", "align-items": "center" }}>
+                  <input
+                    type="text"
+                    value={rulePrompt()}
+                    onInput={(e) => setRulePrompt(e.currentTarget.value)}
+                    placeholder="e.g. write a Solidity audit for an ERC-4626 vault"
+                    style={{ ...inputStyle, flex: "1" }}
+                  />
+                  <Button
+                    variant="secondary"
+                    size="small"
+                    onClick={testRule}
+                    disabled={testingRule()}
+                  >
+                    {testingRule() ? "Testing..." : "Test Rule"}
+                  </Button>
+                </div>
+                <Show when={ruleTestResult()}>
+                  {(r) => (
+                    <div
+                      style={{
+                        "font-size": "11px",
+                        padding: "6px 8px",
+                        background: "var(--vscode-textBlockQuote-background)",
+                        "border-radius": "4px",
+                      }}
+                    >
+                      <span style={{ color: "var(--vscode-descriptionForeground)" }}>Matched rule:</span>{" "}
+                      <strong>{r().rule || "(default)"}</strong>{" "}
+                      <span style={{ color: "var(--vscode-descriptionForeground)" }}>{"->"}</span>{" "}
+                      <strong>{providerName(r().provider) || "(no provider)"}</strong>
+                    </div>
+                  )}
+                </Show>
               </div>
             </SettingsRow>
 

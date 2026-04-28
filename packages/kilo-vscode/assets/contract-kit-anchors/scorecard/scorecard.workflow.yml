@@ -1,0 +1,126 @@
+# =============================================================================
+# OpenSSF Scorecard CI workflow — Contract Kit Creator (Anchor 7)
+# -----------------------------------------------------------------------------
+# Pinned action SHAs (review and bump approximately every 90 days):
+#
+#   actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11               # v4.1.1
+#   ossf/scorecard-action@dc50aa9510b46c811795eb24b2f1ba02a914e534          # v2.3.3
+#   github/codeql-action/upload-sarif@1b1aada464948af03b950897e5eb522f92603cc2  # v3.24.9
+#   actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3        # v4.3.1
+#
+# To update an action SHA: visit the action's GitHub release page, copy the
+# commit SHA of the desired tag (NEVER the tag itself — that fails the
+# Pinned-Dependencies scorecard check), and update the SHA + version comment.
+# =============================================================================
+
+name: OpenSSF Scorecard
+
+on:
+  branch_protection_rule:
+  schedule:
+    # Weekly — Monday 06:00 UTC
+    - cron: "0 6 * * 1"
+  push:
+    branches:
+      - main
+      - "release/*"
+  pull_request:
+    branches:
+      - main
+      - "release/*"
+
+# Top-level permissions are minimal; jobs request only what they need.
+permissions: read-all
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    runs-on: ubuntu-latest
+    permissions:
+      # Required for SARIF upload to Security tab.
+      security-events: write
+      # Required for OIDC token used by publish_results / Sigstore.
+      id-token: write
+      # Read-only: workflow definitions + repo content.
+      actions: read
+      contents: read
+      # Required for the PR status-check posting.
+      checks: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          persist-credentials: false
+
+      - name: Run analysis
+        uses: ossf/scorecard-action@dc50aa9510b46c811795eb24b2f1ba02a914e534 # v2.3.3
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          # Publish results to OpenSSF transparency log + securityscorecards.dev
+          # only on main-branch / scheduled runs (not on PRs from forks).
+          publish_results: ${{ github.event_name != 'pull_request' }}
+
+      - name: Run analysis (JSON output for gate)
+        uses: ossf/scorecard-action@dc50aa9510b46c811795eb24b2f1ba02a914e534 # v2.3.3
+        with:
+          results_file: scorecard.latest.json
+          results_format: json
+          publish_results: false
+
+      - name: Upload SARIF artifact
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
+        with:
+          name: scorecard-sarif
+          path: results.sarif
+          retention-days: 14
+
+      - name: Upload JSON artifact (for compliance/scorecard.latest.json)
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
+        with:
+          name: scorecard-json
+          path: scorecard.latest.json
+          retention-days: 90
+
+      - name: Upload to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@1b1aada464948af03b950897e5eb522f92603cc2 # v3.24.9
+        with:
+          sarif_file: results.sarif
+
+      - name: Compute aggregate score
+        id: score
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f scorecard.latest.json ]; then
+            echo "score=0" >> "$GITHUB_OUTPUT"
+            echo "missing=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # `.score` in scorecard JSON is the aggregate (0..10, may be -1 if unknown).
+          SCORE=$(jq -r '.score // 0' scorecard.latest.json)
+          echo "score=${SCORE}" >> "$GITHUB_OUTPUT"
+          echo "Aggregate scorecard score: ${SCORE}/10"
+
+      - name: Post PR status check
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const score = parseFloat("${{ steps.score.outputs.score }}");
+            const threshold = 7.0;
+            const state = score >= threshold ? "success" : "failure";
+            const description = score >= threshold
+              ? `OpenSSF Scorecard ${score.toFixed(1)}/10 (>= ${threshold})`
+              : `OpenSSF Scorecard ${score.toFixed(1)}/10 (< ${threshold})`;
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.payload.pull_request.head.sha,
+              state,
+              context: "openssf-scorecard",
+              description,
+              target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/security/code-scanning`,
+            });

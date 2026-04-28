@@ -1,0 +1,111 @@
+# Vintage Cameras Marketplace — Claude Code Primer
+
+> This file lives at `.kilo/contracts/CLAUDE.md`. Any fresh Claude Code (or
+> compatible agentic) session should read it first. It is generated from
+> `agent-spec.yaml` + `task-graph.yaml` and is the single source of truth
+> for "what we are building, why, and what shape proof must take."
+>
+> Cross-references: see `CONTRACT_KIT_CREATOR_ANCHORS.md` for the 7 anchors
+> this kit enforces; this file pertains primarily to **Anchor 1** (Agentic
+> Software Engineering).
+
+---
+
+## Project intent
+
+A marketplace where collectors list, browse, and buy vintage film cameras.
+Listings carry condition grading, sample photos, and serviceable status.
+Buyers can message sellers, place offers, and pay through escrow. The
+product must look credible to serious collectors and protect both sides
+from fraud.
+
+## Domain & audience
+
+- **Domain pack:** `marketplace`
+- **Primary audiences:** engineering, exec, legal, design
+
+## Authoritative artifacts
+
+| File | Purpose |
+| --- | --- |
+| `agent-spec.yaml` | Machine-readable spec (REQ-, ADR-, RISK- ids). |
+| `task-graph.yaml` | DAG of buildable tasks. Claim by `id`. |
+| `verification/INDEX.md` | Map of acceptance criteria to executable tests + Playwright traces. |
+| `risk-register/owasp-llm.md` | OWASP LLM Top 10 mapping (if/when AI is added). |
+| `compliance/ssdf-attestation.md` | NIST SSDF practice coverage. |
+| `.github/workflows/release.yml` | SLSA L3 + cosign release. |
+
+If you change behavior, also update the relevant artifact above. Drift
+between code and these files is treated as a build break.
+
+## Capabilities you must respect (REQ-XXX)
+
+- **REQ-001** — Sellers create listings (>=3 photos, condition grade required).
+- **REQ-002** — Catalog search under 300ms p95 with brand synonyms.
+- **REQ-003** — Offers with 72-hour expiry.
+- **REQ-004** — Escrowed payments with 7-day auto-release.
+- **REQ-005** — Buyer-seller messaging with PII redaction.
+- **REQ-006** — Trust signals (verified badge, reputation, history).
+- **REQ-007** — Admin moderation queue with immutable audit log.
+
+Every PR description MUST cite at least one REQ id (or ADR/RISK id) so
+the gate `proof.req-id-cited` passes.
+
+## Standing decisions (ADR-XXXX)
+
+- **ADR-0001** — Stripe Connect for escrowed payments (accepted).
+- **ADR-0002** — Postgres + Meilisearch for catalog search (accepted).
+- **ADR-0003** — Cloudflare R2 for image storage (accepted).
+- **ADR-0004** — No crypto payment rails in v1 (accepted — do not relitigate).
+
+If you propose changing one of these, open a new ADR superseding the
+prior; do not silently swap implementations.
+
+## Risk posture (RISK-XXX)
+
+- **RISK-001** Counterfeit listings (high/high).
+- **RISK-002** Payment fraud / chargebacks (medium/critical).
+- **RISK-003** Off-platform leakage (medium/high).
+- **RISK-004** Image-storage cost runaway (low/high).
+- **RISK-005** Dispute brigading via fake reviews (medium/medium).
+
+When you implement code that touches any of these surfaces (image upload,
+messaging, escrow, reviews, listing moderation) cite the relevant RISK
+id in your commit body and the relevant test.
+
+## How to claim work
+
+1. Read `task-graph.yaml`. Pick a task whose `dependsOn` items are all
+   `done`. Tasks are uniquely identified by `T-XXX`.
+2. Announce in the PR body: `Claiming T-007 (Search API with brand-synonym
+   dictionary). Satisfies REQ-002.`
+3. Implement. Add tests under `verification/` mapped to the acceptance
+   criteria of the task.
+4. Run `npm run check && npm run test && npm run e2e`. Trace artifacts
+   from Playwright must land under `verification/e2e/.traces/` (Anchor 3).
+5. Update the row in `verification/INDEX.md` so non-coders can review.
+
+## Style & guardrails
+
+- TypeScript end-to-end. No JS files.
+- Public APIs are typed via tRPC; do not introduce raw REST endpoints
+  without an ADR.
+- Never log raw user payment data. Stripe IDs only.
+- Never echo API keys or secrets in generated code, comments, or test
+  fixtures (gate: `compliance.no-secrets-in-output`).
+- Use `must` / `shall` / `will` only when the sentence cites a REQ or
+  ADR id. Unscoped imperative claims are flagged by `proof.req-id-cited`.
+
+## Definition of "done" for any task
+
+A task is done when **all** of:
+
+- All acceptance criteria from the matching capability are exercised by
+  at least one executable test (Anchor 2).
+- Playwright trace exists if the task touches a buyer- or seller-facing
+  flow (Anchor 3).
+- CI is green: lint, typecheck, unit, e2e, scorecard.
+- The PR description cites the relevant REQ-, ADR-, or RISK- ids.
+
+If you cannot honor one of the above, stop and post a question rather
+than ship a half-met contract.

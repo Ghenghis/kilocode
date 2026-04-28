@@ -1,0 +1,19 @@
+{
+  "id": "consumer-web",
+  "name": "Consumer Web",
+  "keywords": ["consumer", "social", "b2c", "creators", "feed", "viral"],
+  "commonNFRs": [
+    "Time-to-Interactive < 3s on 3G",
+    "SEO/OG metadata on every public route",
+    "Content moderation pipeline before launch",
+    "Growth instrumentation in v1"
+  ],
+  "regulations": ["GDPR", "CCPA", "DSA (EU)", "DMCA notice/takedown"],
+  "antipatterns": [
+    "No moderation playbook",
+    "Single growth loop (no diversification)",
+    "Skipping share/embed surfaces",
+    "Forcing sign-up before any value"
+  ],
+  "suggestedTemplates": ["prd"]
+}

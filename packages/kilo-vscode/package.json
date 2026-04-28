@@ -2,7 +2,7 @@
   "name": "kilo-code",
   "displayName": "KiloCode MAOS Edition",
   "description": "Multi-Agent Operating System (MAOS) for VS Code — 21-agent workforce (kc-main + kc-01..kc-20) with MiniMax default routing, Hub/Open WebUI integration, and collaborative AI development.",
-  "version": "7.2.21-canary.2",
+  "version": "7.2.21-canary.15",
   "icon": "assets/icons/logo-outline-black.png",
   "galleryBanner": {
     "color": "#FFFFFF",
@@ -1281,6 +1281,11 @@
           "type": "number",
           "default": 800,
           "description": "Total estimated model storage in GB across all libraries."
+        },
+        "kilocode.swCache.lastClearedVersion": {
+          "type": "string",
+          "default": "",
+          "description": "Last extension version for which the VS Code Service Worker cache was cleared. Used to detect stale SW cache after VS Code or extension updates."
         }
       }
     }
@@ -1312,6 +1317,7 @@
     "build-storybook": "storybook build -o storybook-static",
     "test:visual": "playwright test",
     "test:visual:update": "playwright test --update-snapshots",
+    "visual-test": "node --experimental-strip-types --no-warnings scripts/visual-test.ts",
     "snapshot:build": "bun script/dev-snapshot.ts build",
     "snapshot:install": "bun script/dev-snapshot.ts install",
     "extension": "bun script/launch.ts"

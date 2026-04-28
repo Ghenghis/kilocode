@@ -15,6 +15,7 @@ import { ServerProvider } from "../context/server"
 import { ProviderContext } from "../context/provider"
 import { flattenModels, findModel as _findModel } from "../context/provider-utils"
 import { ConfigProvider, ConfigContext } from "../context/config"
+import { BackendProvider } from "../context/backend-context"
 import { DataProvider } from "@kilocode/kilo-ui/context/data"
 import { DiffComponentProvider } from "@kilocode/kilo-ui/context/diff"
 import { CodeComponentProvider } from "@kilocode/kilo-ui/context/code"
@@ -275,6 +276,7 @@ export const StoryProviders: ParentComponent<StoryProvidersProps> = (props) => {
     <VSCodeProvider>
       <ServerProvider>
         <ConfigWrapper config={props.config}>
+          <BackendProvider>
           <MockProviderProvider>
             <DialogProvider>
               <LanguageContext.Provider
@@ -309,6 +311,7 @@ export const StoryProviders: ParentComponent<StoryProvidersProps> = (props) => {
               </LanguageContext.Provider>
             </DialogProvider>
           </MockProviderProvider>
+          </BackendProvider>
         </ConfigWrapper>
       </ServerProvider>
     </VSCodeProvider>

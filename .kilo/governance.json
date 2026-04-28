@@ -48,7 +48,14 @@
       ]
     }
   ],
-  "tierAssignments": [],
+  "tierAssignments": [
+    {
+      "user": "Dave",
+      "tier": "superadmin",
+      "assignedAt": 1777391782350,
+      "assignedBy": "operator"
+    }
+  ],
   "riskThresholds": {
     "low": {
       "min": 0,
@@ -233,6 +240,1725 @@
     }
   ],
   "auditLog": [
+    {
+      "id": "moj9g9sv-9rasdagz",
+      "timestamp": 1777419119263,
+      "actor": "system",
+      "action": "Registered subsystem: hubServices",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hubServices\" registered with status \"active\""
+    },
+    {
+      "id": "moj9g9sv-gc1c5mji",
+      "timestamp": 1777419119263,
+      "actor": "system",
+      "action": "Registered subsystem: onboarding",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"onboarding\" registered with status \"active\""
+    },
+    {
+      "id": "moj9g9su-e1a59nb1",
+      "timestamp": 1777419119262,
+      "actor": "system",
+      "action": "Registered subsystem: speech",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"speech\" registered with status \"active\""
+    },
+    {
+      "id": "moj9g9su-2cdd8g90",
+      "timestamp": 1777419119262,
+      "actor": "system",
+      "action": "Registered subsystem: hermes",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hermes\" registered with status \"active\""
+    },
+    {
+      "id": "moj9g9su-3iwohv75",
+      "timestamp": 1777419119262,
+      "actor": "system",
+      "action": "Registered subsystem: workstation",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"workstation\" registered with status \"active\""
+    },
+    {
+      "id": "moj9g9st-i5dgj859",
+      "timestamp": 1777419119261,
+      "actor": "system",
+      "action": "Registered subsystem: training",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"training\" registered with status \"active\""
+    },
+    {
+      "id": "moj9g9st-fcmt7if4",
+      "timestamp": 1777419119261,
+      "actor": "system",
+      "action": "Registered subsystem: memory",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"memory\" registered with status \"active\""
+    },
+    {
+      "id": "moj9g9st-ja7ogmf8",
+      "timestamp": 1777419119261,
+      "actor": "system",
+      "action": "Registered subsystem: routing",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"routing\" registered with status \"active\""
+    },
+    {
+      "id": "moj9g9ss-xkkaojqi",
+      "timestamp": 1777419119260,
+      "actor": "system",
+      "action": "Registered subsystem: zeroClaw",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"zeroClaw\" registered with status \"active\""
+    },
+    {
+      "id": "moj9g9ss-x0gpasf4",
+      "timestamp": 1777419119260,
+      "actor": "system",
+      "action": "Registered subsystem: vps",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"vps\" registered with status \"active\""
+    },
+    {
+      "id": "moj9g9ss-gspdj4dm",
+      "timestamp": 1777419119260,
+      "actor": "system",
+      "action": "Registered subsystem: ssh",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"ssh\" registered with status \"active\""
+    },
+    {
+      "id": "moj9g9sr-xe0p4m4b",
+      "timestamp": 1777419119259,
+      "actor": "system",
+      "action": "Registered subsystem: governance",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"governance\" registered with status \"active\""
+    },
+    {
+      "id": "moj3fjbb-vqjcdkbg",
+      "timestamp": 1777409007239,
+      "actor": "system",
+      "action": "Registered subsystem: hubServices",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hubServices\" registered with status \"active\""
+    },
+    {
+      "id": "moj3fjbb-mrbtl1il",
+      "timestamp": 1777409007239,
+      "actor": "system",
+      "action": "Registered subsystem: onboarding",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"onboarding\" registered with status \"active\""
+    },
+    {
+      "id": "moj3fjba-8ix38ena",
+      "timestamp": 1777409007238,
+      "actor": "system",
+      "action": "Registered subsystem: speech",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"speech\" registered with status \"active\""
+    },
+    {
+      "id": "moj3fjba-51d08bhc",
+      "timestamp": 1777409007238,
+      "actor": "system",
+      "action": "Registered subsystem: hermes",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hermes\" registered with status \"active\""
+    },
+    {
+      "id": "moj3fjba-48s6ephg",
+      "timestamp": 1777409007238,
+      "actor": "system",
+      "action": "Registered subsystem: workstation",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"workstation\" registered with status \"active\""
+    },
+    {
+      "id": "moj3fjb9-lutpwnx6",
+      "timestamp": 1777409007237,
+      "actor": "system",
+      "action": "Registered subsystem: training",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"training\" registered with status \"active\""
+    },
+    {
+      "id": "moj3fjb9-xg2tq9j8",
+      "timestamp": 1777409007237,
+      "actor": "system",
+      "action": "Registered subsystem: memory",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"memory\" registered with status \"active\""
+    },
+    {
+      "id": "moj3fjb9-mg662xbp",
+      "timestamp": 1777409007237,
+      "actor": "system",
+      "action": "Registered subsystem: routing",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"routing\" registered with status \"active\""
+    },
+    {
+      "id": "moj3fjb8-1gbk0nrp",
+      "timestamp": 1777409007236,
+      "actor": "system",
+      "action": "Registered subsystem: zeroClaw",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"zeroClaw\" registered with status \"active\""
+    },
+    {
+      "id": "moj3fjb8-bc11q9tl",
+      "timestamp": 1777409007236,
+      "actor": "system",
+      "action": "Registered subsystem: vps",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"vps\" registered with status \"active\""
+    },
+    {
+      "id": "moj3fjb8-wr9k7js1",
+      "timestamp": 1777409007236,
+      "actor": "system",
+      "action": "Registered subsystem: ssh",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"ssh\" registered with status \"active\""
+    },
+    {
+      "id": "moj3fjb7-89mvgg4u",
+      "timestamp": 1777409007235,
+      "actor": "system",
+      "action": "Registered subsystem: governance",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"governance\" registered with status \"active\""
+    },
+    {
+      "id": "moj3d5ox-1vylsxg7",
+      "timestamp": 1777408896273,
+      "actor": "system",
+      "action": "Registered subsystem: hubServices",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hubServices\" registered with status \"active\""
+    },
+    {
+      "id": "moj3d5ow-t8uhlrpr",
+      "timestamp": 1777408896272,
+      "actor": "system",
+      "action": "Registered subsystem: onboarding",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"onboarding\" registered with status \"active\""
+    },
+    {
+      "id": "moj3d5ow-ce2r4amd",
+      "timestamp": 1777408896272,
+      "actor": "system",
+      "action": "Registered subsystem: speech",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"speech\" registered with status \"active\""
+    },
+    {
+      "id": "moj3d5ow-p91uncn1",
+      "timestamp": 1777408896272,
+      "actor": "system",
+      "action": "Registered subsystem: hermes",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hermes\" registered with status \"active\""
+    },
+    {
+      "id": "moj3d5ov-jcg5ajqz",
+      "timestamp": 1777408896271,
+      "actor": "system",
+      "action": "Registered subsystem: workstation",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"workstation\" registered with status \"active\""
+    },
+    {
+      "id": "moj3d5ov-gkfon42u",
+      "timestamp": 1777408896271,
+      "actor": "system",
+      "action": "Registered subsystem: training",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"training\" registered with status \"active\""
+    },
+    {
+      "id": "moj3d5ov-mxabuxy0",
+      "timestamp": 1777408896271,
+      "actor": "system",
+      "action": "Registered subsystem: memory",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"memory\" registered with status \"active\""
+    },
+    {
+      "id": "moj3d5ou-rsfbjub1",
+      "timestamp": 1777408896270,
+      "actor": "system",
+      "action": "Registered subsystem: routing",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"routing\" registered with status \"active\""
+    },
+    {
+      "id": "moj3d5ou-yerckt5m",
+      "timestamp": 1777408896270,
+      "actor": "system",
+      "action": "Registered subsystem: zeroClaw",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"zeroClaw\" registered with status \"active\""
+    },
+    {
+      "id": "moj3d5ou-7042pg96",
+      "timestamp": 1777408896270,
+      "actor": "system",
+      "action": "Registered subsystem: vps",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"vps\" registered with status \"active\""
+    },
+    {
+      "id": "moj3d5ot-ywyb0y0x",
+      "timestamp": 1777408896270,
+      "actor": "system",
+      "action": "Registered subsystem: ssh",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"ssh\" registered with status \"active\""
+    },
+    {
+      "id": "moj3d5os-5k8gj6at",
+      "timestamp": 1777408896268,
+      "actor": "system",
+      "action": "Registered subsystem: governance",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"governance\" registered with status \"active\""
+    },
+    {
+      "id": "moj2lv82-lealn6sw",
+      "timestamp": 1777407622994,
+      "actor": "system",
+      "action": "Registered subsystem: hubServices",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hubServices\" registered with status \"active\""
+    },
+    {
+      "id": "moj2lv82-29w98y27",
+      "timestamp": 1777407622994,
+      "actor": "system",
+      "action": "Registered subsystem: onboarding",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"onboarding\" registered with status \"active\""
+    },
+    {
+      "id": "moj2lv82-vs5n0ldf",
+      "timestamp": 1777407622994,
+      "actor": "system",
+      "action": "Registered subsystem: speech",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"speech\" registered with status \"active\""
+    },
+    {
+      "id": "moj2lv82-9ioral60",
+      "timestamp": 1777407622994,
+      "actor": "system",
+      "action": "Registered subsystem: hermes",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hermes\" registered with status \"active\""
+    },
+    {
+      "id": "moj2lv81-gx6xoyhv",
+      "timestamp": 1777407622993,
+      "actor": "system",
+      "action": "Registered subsystem: workstation",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"workstation\" registered with status \"active\""
+    },
+    {
+      "id": "moj2lv81-ugkouw6d",
+      "timestamp": 1777407622993,
+      "actor": "system",
+      "action": "Registered subsystem: training",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"training\" registered with status \"active\""
+    },
+    {
+      "id": "moj2lv81-pysn3new",
+      "timestamp": 1777407622993,
+      "actor": "system",
+      "action": "Registered subsystem: memory",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"memory\" registered with status \"active\""
+    },
+    {
+      "id": "moj2lv81-ozieyo18",
+      "timestamp": 1777407622993,
+      "actor": "system",
+      "action": "Registered subsystem: routing",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"routing\" registered with status \"active\""
+    },
+    {
+      "id": "moj2lv80-dvekr2jm",
+      "timestamp": 1777407622992,
+      "actor": "system",
+      "action": "Registered subsystem: zeroClaw",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"zeroClaw\" registered with status \"active\""
+    },
+    {
+      "id": "moj2lv80-a6eguvo0",
+      "timestamp": 1777407622992,
+      "actor": "system",
+      "action": "Registered subsystem: vps",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"vps\" registered with status \"active\""
+    },
+    {
+      "id": "moj2lv80-vx8lou0n",
+      "timestamp": 1777407622992,
+      "actor": "system",
+      "action": "Registered subsystem: ssh",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"ssh\" registered with status \"active\""
+    },
+    {
+      "id": "moj2lv80-s50lkivd",
+      "timestamp": 1777407622992,
+      "actor": "system",
+      "action": "Registered subsystem: governance",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"governance\" registered with status \"active\""
+    },
+    {
+      "id": "moj2juwz-1olz9dgw",
+      "timestamp": 1777407529283,
+      "actor": "system",
+      "action": "Registered subsystem: hubServices",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hubServices\" registered with status \"active\""
+    },
+    {
+      "id": "moj2juwz-bfqo5zwd",
+      "timestamp": 1777407529283,
+      "actor": "system",
+      "action": "Registered subsystem: onboarding",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"onboarding\" registered with status \"active\""
+    },
+    {
+      "id": "moj2juwz-17i53sbm",
+      "timestamp": 1777407529283,
+      "actor": "system",
+      "action": "Registered subsystem: speech",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"speech\" registered with status \"active\""
+    },
+    {
+      "id": "moj2juwz-satd1nol",
+      "timestamp": 1777407529283,
+      "actor": "system",
+      "action": "Registered subsystem: hermes",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hermes\" registered with status \"active\""
+    },
+    {
+      "id": "moj2juwz-br3pzfa6",
+      "timestamp": 1777407529283,
+      "actor": "system",
+      "action": "Registered subsystem: workstation",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"workstation\" registered with status \"active\""
+    },
+    {
+      "id": "moj2juwy-j9gw3il3",
+      "timestamp": 1777407529282,
+      "actor": "system",
+      "action": "Registered subsystem: training",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"training\" registered with status \"active\""
+    },
+    {
+      "id": "moj2juwy-92qvw7w8",
+      "timestamp": 1777407529282,
+      "actor": "system",
+      "action": "Registered subsystem: memory",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"memory\" registered with status \"active\""
+    },
+    {
+      "id": "moj2juwy-w1mmahn3",
+      "timestamp": 1777407529282,
+      "actor": "system",
+      "action": "Registered subsystem: routing",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"routing\" registered with status \"active\""
+    },
+    {
+      "id": "moj2juwy-rr5z50wi",
+      "timestamp": 1777407529282,
+      "actor": "system",
+      "action": "Registered subsystem: zeroClaw",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"zeroClaw\" registered with status \"active\""
+    },
+    {
+      "id": "moj2juwy-5fdnrzda",
+      "timestamp": 1777407529282,
+      "actor": "system",
+      "action": "Registered subsystem: vps",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"vps\" registered with status \"active\""
+    },
+    {
+      "id": "moj2juwy-rrlw9joq",
+      "timestamp": 1777407529282,
+      "actor": "system",
+      "action": "Registered subsystem: ssh",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"ssh\" registered with status \"active\""
+    },
+    {
+      "id": "moj2juwx-211mq5hy",
+      "timestamp": 1777407529281,
+      "actor": "system",
+      "action": "Registered subsystem: governance",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"governance\" registered with status \"active\""
+    },
+    {
+      "id": "moit6ci6-367h7dyc",
+      "timestamp": 1777391782350,
+      "actor": "operator",
+      "action": "Set tier for \"Dave\" to \"superadmin\"",
+      "riskLevel": "medium",
+      "result": "auto",
+      "details": "User \"Dave\" assigned tier \"superadmin\" by \"operator\""
+    },
+    {
+      "id": "moip9j3t-59htxugq",
+      "timestamp": 1777385212409,
+      "actor": "system",
+      "action": "Registered subsystem: hubServices",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hubServices\" registered with status \"active\""
+    },
+    {
+      "id": "moip9j3t-773s5y58",
+      "timestamp": 1777385212409,
+      "actor": "system",
+      "action": "Registered subsystem: onboarding",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"onboarding\" registered with status \"active\""
+    },
+    {
+      "id": "moip9j3t-nryuft5z",
+      "timestamp": 1777385212409,
+      "actor": "system",
+      "action": "Registered subsystem: speech",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"speech\" registered with status \"active\""
+    },
+    {
+      "id": "moip9j3s-imunq3yr",
+      "timestamp": 1777385212408,
+      "actor": "system",
+      "action": "Registered subsystem: hermes",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hermes\" registered with status \"active\""
+    },
+    {
+      "id": "moip9j3s-33h6bf6b",
+      "timestamp": 1777385212408,
+      "actor": "system",
+      "action": "Registered subsystem: workstation",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"workstation\" registered with status \"active\""
+    },
+    {
+      "id": "moip9j3s-1ztbip6v",
+      "timestamp": 1777385212408,
+      "actor": "system",
+      "action": "Registered subsystem: training",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"training\" registered with status \"active\""
+    },
+    {
+      "id": "moip9j3s-t52opthr",
+      "timestamp": 1777385212408,
+      "actor": "system",
+      "action": "Registered subsystem: memory",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"memory\" registered with status \"active\""
+    },
+    {
+      "id": "moip9j3s-h6u8ive6",
+      "timestamp": 1777385212408,
+      "actor": "system",
+      "action": "Registered subsystem: routing",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"routing\" registered with status \"active\""
+    },
+    {
+      "id": "moip9j3s-y8i133q5",
+      "timestamp": 1777385212408,
+      "actor": "system",
+      "action": "Registered subsystem: zeroClaw",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"zeroClaw\" registered with status \"active\""
+    },
+    {
+      "id": "moip9j3s-7eoaui3h",
+      "timestamp": 1777385212408,
+      "actor": "system",
+      "action": "Registered subsystem: vps",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"vps\" registered with status \"active\""
+    },
+    {
+      "id": "moip9j3r-9921bmq3",
+      "timestamp": 1777385212407,
+      "actor": "system",
+      "action": "Registered subsystem: ssh",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"ssh\" registered with status \"active\""
+    },
+    {
+      "id": "moip9j3r-95t9xg5s",
+      "timestamp": 1777385212407,
+      "actor": "system",
+      "action": "Registered subsystem: governance",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"governance\" registered with status \"active\""
+    },
+    {
+      "id": "moinknce-936unkqc",
+      "timestamp": 1777382371886,
+      "actor": "system",
+      "action": "Registered subsystem: hubServices",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hubServices\" registered with status \"active\""
+    },
+    {
+      "id": "moinknce-0ntd9486",
+      "timestamp": 1777382371886,
+      "actor": "system",
+      "action": "Registered subsystem: onboarding",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"onboarding\" registered with status \"active\""
+    },
+    {
+      "id": "moinknce-ox482c17",
+      "timestamp": 1777382371886,
+      "actor": "system",
+      "action": "Registered subsystem: speech",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"speech\" registered with status \"active\""
+    },
+    {
+      "id": "moinkncd-i5ba0idj",
+      "timestamp": 1777382371885,
+      "actor": "system",
+      "action": "Registered subsystem: hermes",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hermes\" registered with status \"active\""
+    },
+    {
+      "id": "moinkncd-odloa91r",
+      "timestamp": 1777382371885,
+      "actor": "system",
+      "action": "Registered subsystem: workstation",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"workstation\" registered with status \"active\""
+    },
+    {
+      "id": "moinkncd-2cn27z03",
+      "timestamp": 1777382371885,
+      "actor": "system",
+      "action": "Registered subsystem: training",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"training\" registered with status \"active\""
+    },
+    {
+      "id": "moinkncd-wbd0dap9",
+      "timestamp": 1777382371885,
+      "actor": "system",
+      "action": "Registered subsystem: memory",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"memory\" registered with status \"active\""
+    },
+    {
+      "id": "moinkncd-ji0zr8vn",
+      "timestamp": 1777382371885,
+      "actor": "system",
+      "action": "Registered subsystem: routing",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"routing\" registered with status \"active\""
+    },
+    {
+      "id": "moinkncc-6hj480i3",
+      "timestamp": 1777382371884,
+      "actor": "system",
+      "action": "Registered subsystem: zeroClaw",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"zeroClaw\" registered with status \"active\""
+    },
+    {
+      "id": "moinkncc-b3qq6hji",
+      "timestamp": 1777382371884,
+      "actor": "system",
+      "action": "Registered subsystem: vps",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"vps\" registered with status \"active\""
+    },
+    {
+      "id": "moinkncc-6zfb05zw",
+      "timestamp": 1777382371884,
+      "actor": "system",
+      "action": "Registered subsystem: ssh",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"ssh\" registered with status \"active\""
+    },
+    {
+      "id": "moinkncb-6bp7by99",
+      "timestamp": 1777382371883,
+      "actor": "system",
+      "action": "Registered subsystem: governance",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"governance\" registered with status \"active\""
+    },
+    {
+      "id": "moimt98b-c22necy8",
+      "timestamp": 1777381093883,
+      "actor": "system",
+      "action": "Registered subsystem: hubServices",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hubServices\" registered with status \"active\""
+    },
+    {
+      "id": "moimt98b-9evz57vz",
+      "timestamp": 1777381093883,
+      "actor": "system",
+      "action": "Registered subsystem: onboarding",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"onboarding\" registered with status \"active\""
+    },
+    {
+      "id": "moimt98b-l4dku8hm",
+      "timestamp": 1777381093883,
+      "actor": "system",
+      "action": "Registered subsystem: speech",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"speech\" registered with status \"active\""
+    },
+    {
+      "id": "moimt98a-8m2xd73u",
+      "timestamp": 1777381093882,
+      "actor": "system",
+      "action": "Registered subsystem: hermes",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hermes\" registered with status \"active\""
+    },
+    {
+      "id": "moimt98a-gdu5pptn",
+      "timestamp": 1777381093882,
+      "actor": "system",
+      "action": "Registered subsystem: workstation",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"workstation\" registered with status \"active\""
+    },
+    {
+      "id": "moimt98a-rx7567t7",
+      "timestamp": 1777381093882,
+      "actor": "system",
+      "action": "Registered subsystem: training",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"training\" registered with status \"active\""
+    },
+    {
+      "id": "moimt98a-3rdfil40",
+      "timestamp": 1777381093882,
+      "actor": "system",
+      "action": "Registered subsystem: memory",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"memory\" registered with status \"active\""
+    },
+    {
+      "id": "moimt98a-wekb3ana",
+      "timestamp": 1777381093882,
+      "actor": "system",
+      "action": "Registered subsystem: routing",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"routing\" registered with status \"active\""
+    },
+    {
+      "id": "moimt989-stiecwre",
+      "timestamp": 1777381093881,
+      "actor": "system",
+      "action": "Registered subsystem: zeroClaw",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"zeroClaw\" registered with status \"active\""
+    },
+    {
+      "id": "moimt989-dgzf5g08",
+      "timestamp": 1777381093881,
+      "actor": "system",
+      "action": "Registered subsystem: vps",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"vps\" registered with status \"active\""
+    },
+    {
+      "id": "moimt989-fflxzw3f",
+      "timestamp": 1777381093881,
+      "actor": "system",
+      "action": "Registered subsystem: ssh",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"ssh\" registered with status \"active\""
+    },
+    {
+      "id": "moimt989-41icoysq",
+      "timestamp": 1777381093881,
+      "actor": "system",
+      "action": "Registered subsystem: governance",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"governance\" registered with status \"active\""
+    },
+    {
+      "id": "moim4uas-yultxt1z",
+      "timestamp": 1777379954788,
+      "actor": "system",
+      "action": "Registered subsystem: hubServices",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hubServices\" registered with status \"active\""
+    },
+    {
+      "id": "moim4uas-kp3p2k0f",
+      "timestamp": 1777379954788,
+      "actor": "system",
+      "action": "Registered subsystem: onboarding",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"onboarding\" registered with status \"active\""
+    },
+    {
+      "id": "moim4uas-d3btpkau",
+      "timestamp": 1777379954788,
+      "actor": "system",
+      "action": "Registered subsystem: speech",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"speech\" registered with status \"active\""
+    },
+    {
+      "id": "moim4uas-e5i8x8z0",
+      "timestamp": 1777379954788,
+      "actor": "system",
+      "action": "Registered subsystem: hermes",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hermes\" registered with status \"active\""
+    },
+    {
+      "id": "moim4uas-zqxy0isi",
+      "timestamp": 1777379954788,
+      "actor": "system",
+      "action": "Registered subsystem: workstation",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"workstation\" registered with status \"active\""
+    },
+    {
+      "id": "moim4uar-af32hqg9",
+      "timestamp": 1777379954787,
+      "actor": "system",
+      "action": "Registered subsystem: training",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"training\" registered with status \"active\""
+    },
+    {
+      "id": "moim4uar-xsshiwyk",
+      "timestamp": 1777379954787,
+      "actor": "system",
+      "action": "Registered subsystem: memory",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"memory\" registered with status \"active\""
+    },
+    {
+      "id": "moim4uar-mxul77p8",
+      "timestamp": 1777379954787,
+      "actor": "system",
+      "action": "Registered subsystem: routing",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"routing\" registered with status \"active\""
+    },
+    {
+      "id": "moim4uar-uq1b5jef",
+      "timestamp": 1777379954787,
+      "actor": "system",
+      "action": "Registered subsystem: zeroClaw",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"zeroClaw\" registered with status \"active\""
+    },
+    {
+      "id": "moim4uar-bde2h94u",
+      "timestamp": 1777379954787,
+      "actor": "system",
+      "action": "Registered subsystem: vps",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"vps\" registered with status \"active\""
+    },
+    {
+      "id": "moim4uar-oott8262",
+      "timestamp": 1777379954787,
+      "actor": "system",
+      "action": "Registered subsystem: ssh",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"ssh\" registered with status \"active\""
+    },
+    {
+      "id": "moim4uar-oyd8qcs5",
+      "timestamp": 1777379954787,
+      "actor": "system",
+      "action": "Registered subsystem: governance",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"governance\" registered with status \"active\""
+    },
+    {
+      "id": "moim35ru-0ib0df2z",
+      "timestamp": 1777379876346,
+      "actor": "system",
+      "action": "Registered subsystem: hubServices",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hubServices\" registered with status \"active\""
+    },
+    {
+      "id": "moim35ru-92s3poxf",
+      "timestamp": 1777379876346,
+      "actor": "system",
+      "action": "Registered subsystem: onboarding",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"onboarding\" registered with status \"active\""
+    },
+    {
+      "id": "moim35ru-bhp8vmjw",
+      "timestamp": 1777379876346,
+      "actor": "system",
+      "action": "Registered subsystem: speech",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"speech\" registered with status \"active\""
+    },
+    {
+      "id": "moim35ru-6q2hiepf",
+      "timestamp": 1777379876346,
+      "actor": "system",
+      "action": "Registered subsystem: hermes",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hermes\" registered with status \"active\""
+    },
+    {
+      "id": "moim35ru-p206jvae",
+      "timestamp": 1777379876346,
+      "actor": "system",
+      "action": "Registered subsystem: workstation",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"workstation\" registered with status \"active\""
+    },
+    {
+      "id": "moim35rt-r8mdh8vw",
+      "timestamp": 1777379876345,
+      "actor": "system",
+      "action": "Registered subsystem: training",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"training\" registered with status \"active\""
+    },
+    {
+      "id": "moim35rt-4jb2w08t",
+      "timestamp": 1777379876345,
+      "actor": "system",
+      "action": "Registered subsystem: memory",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"memory\" registered with status \"active\""
+    },
+    {
+      "id": "moim35rt-iis4q3ci",
+      "timestamp": 1777379876345,
+      "actor": "system",
+      "action": "Registered subsystem: routing",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"routing\" registered with status \"active\""
+    },
+    {
+      "id": "moim35rt-947eku1l",
+      "timestamp": 1777379876345,
+      "actor": "system",
+      "action": "Registered subsystem: zeroClaw",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"zeroClaw\" registered with status \"active\""
+    },
+    {
+      "id": "moim35rt-ldzlyyqd",
+      "timestamp": 1777379876345,
+      "actor": "system",
+      "action": "Registered subsystem: vps",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"vps\" registered with status \"active\""
+    },
+    {
+      "id": "moim35rt-zvtvbcs1",
+      "timestamp": 1777379876345,
+      "actor": "system",
+      "action": "Registered subsystem: ssh",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"ssh\" registered with status \"active\""
+    },
+    {
+      "id": "moim35rt-4lwg4jfz",
+      "timestamp": 1777379876345,
+      "actor": "system",
+      "action": "Registered subsystem: governance",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"governance\" registered with status \"active\""
+    },
+    {
+      "id": "moilcr68-brcb99xk",
+      "timestamp": 1777378644368,
+      "actor": "system",
+      "action": "Registered subsystem: hubServices",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hubServices\" registered with status \"active\""
+    },
+    {
+      "id": "moilcr68-ky5l60tv",
+      "timestamp": 1777378644368,
+      "actor": "system",
+      "action": "Registered subsystem: onboarding",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"onboarding\" registered with status \"active\""
+    },
+    {
+      "id": "moilcr68-zjtfppji",
+      "timestamp": 1777378644368,
+      "actor": "system",
+      "action": "Registered subsystem: speech",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"speech\" registered with status \"active\""
+    },
+    {
+      "id": "moilcr68-kv0vqzh1",
+      "timestamp": 1777378644368,
+      "actor": "system",
+      "action": "Registered subsystem: hermes",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hermes\" registered with status \"active\""
+    },
+    {
+      "id": "moilcr68-qzws7k4l",
+      "timestamp": 1777378644368,
+      "actor": "system",
+      "action": "Registered subsystem: workstation",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"workstation\" registered with status \"active\""
+    },
+    {
+      "id": "moilcr68-xbrq28e5",
+      "timestamp": 1777378644368,
+      "actor": "system",
+      "action": "Registered subsystem: training",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"training\" registered with status \"active\""
+    },
+    {
+      "id": "moilcr68-vml5yqmd",
+      "timestamp": 1777378644368,
+      "actor": "system",
+      "action": "Registered subsystem: memory",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"memory\" registered with status \"active\""
+    },
+    {
+      "id": "moilcr68-kmcn7a7v",
+      "timestamp": 1777378644368,
+      "actor": "system",
+      "action": "Registered subsystem: routing",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"routing\" registered with status \"active\""
+    },
+    {
+      "id": "moilcr68-827wp6jg",
+      "timestamp": 1777378644368,
+      "actor": "system",
+      "action": "Registered subsystem: zeroClaw",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"zeroClaw\" registered with status \"active\""
+    },
+    {
+      "id": "moilcr67-rr1p6v9n",
+      "timestamp": 1777378644367,
+      "actor": "system",
+      "action": "Registered subsystem: vps",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"vps\" registered with status \"active\""
+    },
+    {
+      "id": "moilcr67-mbrh9yko",
+      "timestamp": 1777378644367,
+      "actor": "system",
+      "action": "Registered subsystem: ssh",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"ssh\" registered with status \"active\""
+    },
+    {
+      "id": "moilcr67-43bif1tp",
+      "timestamp": 1777378644367,
+      "actor": "system",
+      "action": "Registered subsystem: governance",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"governance\" registered with status \"active\""
+    },
+    {
+      "id": "moijgijt-rfbpefi3",
+      "timestamp": 1777375460585,
+      "actor": "system",
+      "action": "Registered subsystem: hubServices",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hubServices\" registered with status \"active\""
+    },
+    {
+      "id": "moijgijt-80z0ggra",
+      "timestamp": 1777375460585,
+      "actor": "system",
+      "action": "Registered subsystem: onboarding",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"onboarding\" registered with status \"active\""
+    },
+    {
+      "id": "moijgijt-0sdepf5n",
+      "timestamp": 1777375460585,
+      "actor": "system",
+      "action": "Registered subsystem: speech",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"speech\" registered with status \"active\""
+    },
+    {
+      "id": "moijgijt-gokh03ur",
+      "timestamp": 1777375460585,
+      "actor": "system",
+      "action": "Registered subsystem: hermes",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hermes\" registered with status \"active\""
+    },
+    {
+      "id": "moijgijs-clko8zfd",
+      "timestamp": 1777375460584,
+      "actor": "system",
+      "action": "Registered subsystem: workstation",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"workstation\" registered with status \"active\""
+    },
+    {
+      "id": "moijgijs-ih324597",
+      "timestamp": 1777375460584,
+      "actor": "system",
+      "action": "Registered subsystem: training",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"training\" registered with status \"active\""
+    },
+    {
+      "id": "moijgijs-wfnurp12",
+      "timestamp": 1777375460584,
+      "actor": "system",
+      "action": "Registered subsystem: memory",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"memory\" registered with status \"active\""
+    },
+    {
+      "id": "moijgijs-tcujb1mp",
+      "timestamp": 1777375460584,
+      "actor": "system",
+      "action": "Registered subsystem: routing",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"routing\" registered with status \"active\""
+    },
+    {
+      "id": "moijgijs-wlx5t6we",
+      "timestamp": 1777375460584,
+      "actor": "system",
+      "action": "Registered subsystem: zeroClaw",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"zeroClaw\" registered with status \"active\""
+    },
+    {
+      "id": "moijgijs-dfiymy32",
+      "timestamp": 1777375460584,
+      "actor": "system",
+      "action": "Registered subsystem: vps",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"vps\" registered with status \"active\""
+    },
+    {
+      "id": "moijgijr-xtys9b0t",
+      "timestamp": 1777375460583,
+      "actor": "system",
+      "action": "Registered subsystem: ssh",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"ssh\" registered with status \"active\""
+    },
+    {
+      "id": "moijgijr-x98z6zrd",
+      "timestamp": 1777375460583,
+      "actor": "system",
+      "action": "Registered subsystem: governance",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"governance\" registered with status \"active\""
+    },
+    {
+      "id": "moij67r8-xrqmmtkn",
+      "timestamp": 1777374980036,
+      "actor": "system",
+      "action": "Registered subsystem: hubServices",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hubServices\" registered with status \"active\""
+    },
+    {
+      "id": "moij67r8-r9yp83gq",
+      "timestamp": 1777374980036,
+      "actor": "system",
+      "action": "Registered subsystem: onboarding",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"onboarding\" registered with status \"active\""
+    },
+    {
+      "id": "moij67r7-y4e8krb3",
+      "timestamp": 1777374980035,
+      "actor": "system",
+      "action": "Registered subsystem: speech",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"speech\" registered with status \"active\""
+    },
+    {
+      "id": "moij67r7-hqc7wiq5",
+      "timestamp": 1777374980035,
+      "actor": "system",
+      "action": "Registered subsystem: hermes",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hermes\" registered with status \"active\""
+    },
+    {
+      "id": "moij67r7-gn8uojfc",
+      "timestamp": 1777374980035,
+      "actor": "system",
+      "action": "Registered subsystem: workstation",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"workstation\" registered with status \"active\""
+    },
+    {
+      "id": "moij67r7-38xlp9o4",
+      "timestamp": 1777374980035,
+      "actor": "system",
+      "action": "Registered subsystem: training",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"training\" registered with status \"active\""
+    },
+    {
+      "id": "moij67r7-v4awcyge",
+      "timestamp": 1777374980035,
+      "actor": "system",
+      "action": "Registered subsystem: memory",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"memory\" registered with status \"active\""
+    },
+    {
+      "id": "moij67r7-5qfq2jn1",
+      "timestamp": 1777374980035,
+      "actor": "system",
+      "action": "Registered subsystem: routing",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"routing\" registered with status \"active\""
+    },
+    {
+      "id": "moij67r6-479q3obo",
+      "timestamp": 1777374980034,
+      "actor": "system",
+      "action": "Registered subsystem: zeroClaw",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"zeroClaw\" registered with status \"active\""
+    },
+    {
+      "id": "moij67r6-mq4nvrw2",
+      "timestamp": 1777374980034,
+      "actor": "system",
+      "action": "Registered subsystem: vps",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"vps\" registered with status \"active\""
+    },
+    {
+      "id": "moij67r6-bjmzcsgh",
+      "timestamp": 1777374980034,
+      "actor": "system",
+      "action": "Registered subsystem: ssh",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"ssh\" registered with status \"active\""
+    },
+    {
+      "id": "moij67r6-1strhmfr",
+      "timestamp": 1777374980034,
+      "actor": "system",
+      "action": "Registered subsystem: governance",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"governance\" registered with status \"active\""
+    },
+    {
+      "id": "moij1god-qj3svv6k",
+      "timestamp": 1777374758317,
+      "actor": "system",
+      "action": "Registered subsystem: hubServices",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hubServices\" registered with status \"active\""
+    },
+    {
+      "id": "moij1god-90atp1ai",
+      "timestamp": 1777374758317,
+      "actor": "system",
+      "action": "Registered subsystem: onboarding",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"onboarding\" registered with status \"active\""
+    },
+    {
+      "id": "moij1god-3osbx5w9",
+      "timestamp": 1777374758317,
+      "actor": "system",
+      "action": "Registered subsystem: speech",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"speech\" registered with status \"active\""
+    },
+    {
+      "id": "moij1goc-462cd084",
+      "timestamp": 1777374758316,
+      "actor": "system",
+      "action": "Registered subsystem: hermes",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hermes\" registered with status \"active\""
+    },
+    {
+      "id": "moij1goc-3qdhed1x",
+      "timestamp": 1777374758316,
+      "actor": "system",
+      "action": "Registered subsystem: workstation",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"workstation\" registered with status \"active\""
+    },
+    {
+      "id": "moij1goc-28eqsxcy",
+      "timestamp": 1777374758316,
+      "actor": "system",
+      "action": "Registered subsystem: training",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"training\" registered with status \"active\""
+    },
+    {
+      "id": "moij1goc-y70durbf",
+      "timestamp": 1777374758316,
+      "actor": "system",
+      "action": "Registered subsystem: memory",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"memory\" registered with status \"active\""
+    },
+    {
+      "id": "moij1goc-nwm73xwe",
+      "timestamp": 1777374758316,
+      "actor": "system",
+      "action": "Registered subsystem: routing",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"routing\" registered with status \"active\""
+    },
+    {
+      "id": "moij1goc-3vy6lkho",
+      "timestamp": 1777374758316,
+      "actor": "system",
+      "action": "Registered subsystem: zeroClaw",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"zeroClaw\" registered with status \"active\""
+    },
+    {
+      "id": "moij1goc-5u7cpc9h",
+      "timestamp": 1777374758316,
+      "actor": "system",
+      "action": "Registered subsystem: vps",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"vps\" registered with status \"active\""
+    },
+    {
+      "id": "moij1gob-31z8pe55",
+      "timestamp": 1777374758315,
+      "actor": "system",
+      "action": "Registered subsystem: ssh",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"ssh\" registered with status \"active\""
+    },
+    {
+      "id": "moij1gob-1h4golme",
+      "timestamp": 1777374758315,
+      "actor": "system",
+      "action": "Registered subsystem: governance",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"governance\" registered with status \"active\""
+    },
+    {
+      "id": "moh7zqw0-8rejbu4q",
+      "timestamp": 1777295736288,
+      "actor": "system",
+      "action": "Registered subsystem: onboarding",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"onboarding\" registered with status \"active\""
+    },
+    {
+      "id": "moh7zqw0-hf948vyo",
+      "timestamp": 1777295736288,
+      "actor": "system",
+      "action": "Registered subsystem: speech",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"speech\" registered with status \"active\""
+    },
+    {
+      "id": "moh7zqw0-8p703q9o",
+      "timestamp": 1777295736288,
+      "actor": "system",
+      "action": "Registered subsystem: hermes",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hermes\" registered with status \"active\""
+    },
+    {
+      "id": "moh7zqw0-lufq5nd7",
+      "timestamp": 1777295736288,
+      "actor": "system",
+      "action": "Registered subsystem: workstation",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"workstation\" registered with status \"active\""
+    },
+    {
+      "id": "moh7zqw0-uu9je5ix",
+      "timestamp": 1777295736288,
+      "actor": "system",
+      "action": "Registered subsystem: training",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"training\" registered with status \"active\""
+    },
+    {
+      "id": "moh7zqw0-qz9gbcnv",
+      "timestamp": 1777295736288,
+      "actor": "system",
+      "action": "Registered subsystem: memory",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"memory\" registered with status \"active\""
+    },
+    {
+      "id": "moh7zqw0-1lbq6lz8",
+      "timestamp": 1777295736288,
+      "actor": "system",
+      "action": "Registered subsystem: routing",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"routing\" registered with status \"active\""
+    },
+    {
+      "id": "moh7zqvz-9jila6uh",
+      "timestamp": 1777295736287,
+      "actor": "system",
+      "action": "Registered subsystem: zeroClaw",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"zeroClaw\" registered with status \"active\""
+    },
+    {
+      "id": "moh7zqvz-q2fsgx49",
+      "timestamp": 1777295736287,
+      "actor": "system",
+      "action": "Registered subsystem: vps",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"vps\" registered with status \"active\""
+    },
+    {
+      "id": "moh7zqvz-8hlmtaha",
+      "timestamp": 1777295736287,
+      "actor": "system",
+      "action": "Registered subsystem: ssh",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"ssh\" registered with status \"active\""
+    },
+    {
+      "id": "moh7zqvz-5e3m7bp5",
+      "timestamp": 1777295736287,
+      "actor": "system",
+      "action": "Registered subsystem: governance",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"governance\" registered with status \"active\""
+    },
+    {
+      "id": "moh7yp30-onceaaet",
+      "timestamp": 1777295687292,
+      "actor": "system",
+      "action": "Registered subsystem: onboarding",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"onboarding\" registered with status \"active\""
+    },
+    {
+      "id": "moh7yp30-tlaademl",
+      "timestamp": 1777295687292,
+      "actor": "system",
+      "action": "Registered subsystem: speech",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"speech\" registered with status \"active\""
+    },
+    {
+      "id": "moh7yp2z-ch8zcvxj",
+      "timestamp": 1777295687291,
+      "actor": "system",
+      "action": "Registered subsystem: hermes",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"hermes\" registered with status \"active\""
+    },
+    {
+      "id": "moh7yp2z-lsqvhqxn",
+      "timestamp": 1777295687291,
+      "actor": "system",
+      "action": "Registered subsystem: workstation",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"workstation\" registered with status \"active\""
+    },
+    {
+      "id": "moh7yp2z-mp690bky",
+      "timestamp": 1777295687291,
+      "actor": "system",
+      "action": "Registered subsystem: training",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"training\" registered with status \"active\""
+    },
+    {
+      "id": "moh7yp2z-75zm0q46",
+      "timestamp": 1777295687291,
+      "actor": "system",
+      "action": "Registered subsystem: memory",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"memory\" registered with status \"active\""
+    },
+    {
+      "id": "moh7yp2z-1zgojera",
+      "timestamp": 1777295687291,
+      "actor": "system",
+      "action": "Registered subsystem: routing",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"routing\" registered with status \"active\""
+    },
+    {
+      "id": "moh7yp2z-orouavzi",
+      "timestamp": 1777295687291,
+      "actor": "system",
+      "action": "Registered subsystem: zeroClaw",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"zeroClaw\" registered with status \"active\""
+    },
+    {
+      "id": "moh7yp2z-uv4l1uwi",
+      "timestamp": 1777295687291,
+      "actor": "system",
+      "action": "Registered subsystem: vps",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"vps\" registered with status \"active\""
+    },
+    {
+      "id": "moh7yp2z-2pwlsv6g",
+      "timestamp": 1777295687291,
+      "actor": "system",
+      "action": "Registered subsystem: ssh",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"ssh\" registered with status \"active\""
+    },
+    {
+      "id": "moh7yp2y-n8g9j2fh",
+      "timestamp": 1777295687290,
+      "actor": "system",
+      "action": "Registered subsystem: governance",
+      "riskLevel": "low",
+      "result": "auto",
+      "details": "Subsystem \"governance\" registered with status \"active\""
+    },
     {
       "id": "mo577fo0-ac6eu8j0",
       "timestamp": 1776568821264,

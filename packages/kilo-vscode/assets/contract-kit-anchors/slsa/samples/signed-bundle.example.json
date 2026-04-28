@@ -1,0 +1,42 @@
+{
+  "mediaType": "application/vnd.dev.sigstore.bundle+json;version=0.3",
+  "verificationMaterial": {
+    "certificate": {
+      "rawBytes": "MIIDqjCCAzCgAwIBAgIUVFZ4KQYV2Lh3c6jK7y9sYj0ZxK0wCgYIKoZIzj0EAwMwNzEVMBMGA1UEChMMc2lnc3RvcmUuZGV2MR4wHAYDVQQDExVzaWdzdG9yZS1pbnRlcm1lZGlhdGUwHhcNMjYwNDI4MDkxNzMyWhcNMjYwNDI4MDkyNzMyWjAAMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE...redacted-base64-cert..."
+    },
+    "tlogEntries": [
+      {
+        "logIndex": "112304455",
+        "logId": {
+          "keyId": "wNI9atQGlz+VWfO6LRygH4QUfY/8W4RFwiT5i5WRgB0="
+        },
+        "kindVersion": {
+          "kind": "hashedrekord",
+          "version": "0.0.1"
+        },
+        "integratedTime": "1761635862",
+        "inclusionPromise": {
+          "signedEntryTimestamp": "MEUCIQDk1u8/nq9tF5g0pZK9...redacted-set..."
+        },
+        "inclusionProof": {
+          "logIndex": "112304455",
+          "rootHash": "5a5e9b3c7d1f2a8b4c6d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b",
+          "treeSize": "112304500",
+          "hashes": [
+            "8b4c6d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c"
+          ],
+          "checkpoint": {
+            "envelope": "rekor.sigstore.dev - 1193050959916656506\n112304500\n5a5e9b3c7d1f2a8b4c6d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b\n\n— rekor.sigstore.dev wNI9aj..."
+          }
+        }
+      }
+    ]
+  },
+  "messageSignature": {
+    "messageDigest": {
+      "algorithm": "SHA2_256",
+      "digest": "m40qHE8+bdWoe8ydDeHi9LXG1tWmMxfWnlyA0R7p8Ko="
+    },
+    "signature": "MEUCIQDk1u8/nq9tF5g0pZK9Pn3XzC4lWmJeXxTtHvY0GhKqJAIgX5j6oMzTd9k1u2v3w4x5y6z7a8b9c0d1e2f3a4b5c6d="
+  }
+}

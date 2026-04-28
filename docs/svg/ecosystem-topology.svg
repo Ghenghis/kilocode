@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1200 900" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', system-ui, sans-serif">
+
+  <!-- ── Background ─────────────────────────────────────────────── -->
+  <rect width="1200" height="900" fill="#0d1117"/>
+
+  <!-- ── Title ──────────────────────────────────────────────────── -->
+  <text x="600" y="36" text-anchor="middle" font-size="18" font-weight="700" fill="#e6edf3">
+    KiloCode Ecosystem — Service Topology
+  </text>
+  <text x="600" y="56" text-anchor="middle" font-size="11" fill="#8b949e">2026-04-28 · packages/kilo-vscode</text>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       ZONE 1 — VS Code Extension Host
+  ════════════════════════════════════════════════════════════════ -->
+  <rect x="20" y="75" width="560" height="200" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+  <text x="300" y="96" text-anchor="middle" font-size="12" font-weight="600" fill="#58a6ff">VS Code Extension Host (Node.js)</text>
+
+  <!-- extension.ts -->
+  <rect x="40" y="107" width="120" height="44" rx="6" fill="#21262d" stroke="#388bfd" stroke-width="1"/>
+  <text x="100" y="123" text-anchor="middle" font-size="10" font-weight="600" fill="#79c0ff">extension.ts</text>
+  <text x="100" y="137" text-anchor="middle" font-size="9" fill="#8b949e">entry point</text>
+  <text x="100" y="148" text-anchor="middle" font-size="9" fill="#8b949e">service orchestrator</text>
+
+  <!-- KiloProvider -->
+  <rect x="180" y="107" width="120" height="44" rx="6" fill="#21262d" stroke="#388bfd" stroke-width="1"/>
+  <text x="240" y="123" text-anchor="middle" font-size="10" font-weight="600" fill="#79c0ff">KiloProvider</text>
+  <text x="240" y="137" text-anchor="middle" font-size="9" fill="#8b949e">message router</text>
+  <text x="240" y="148" text-anchor="middle" font-size="9" fill="#8b949e">webview bridge</text>
+
+  <!-- HermesClient -->
+  <rect x="320" y="107" width="120" height="44" rx="6" fill="#21262d" stroke="#388bfd" stroke-width="1"/>
+  <text x="380" y="123" text-anchor="middle" font-size="10" font-weight="600" fill="#79c0ff">HermesClient</text>
+  <text x="380" y="137" text-anchor="middle" font-size="9" fill="#8b949e">Bridge A only</text>
+  <text x="380" y="148" text-anchor="middle" font-size="9" fill="#8b949e">task submission</text>
+
+  <!-- RoutingService -->
+  <rect x="40" y="163" width="120" height="44" rx="6" fill="#21262d" stroke="#388bfd" stroke-width="1"/>
+  <text x="100" y="179" text-anchor="middle" font-size="10" font-weight="600" fill="#79c0ff">RoutingService</text>
+  <text x="100" y="193" text-anchor="middle" font-size="9" fill="#8b949e">circuit breaker</text>
+  <text x="100" y="204" text-anchor="middle" font-size="9" fill="#8b949e">provider selection</text>
+
+  <!-- MemoryService -->
+  <rect x="180" y="163" width="120" height="44" rx="6" fill="#21262d" stroke="#388bfd" stroke-width="1"/>
+  <text x="240" y="179" text-anchor="middle" font-size="10" font-weight="600" fill="#79c0ff">MemoryService</text>
+  <text x="240" y="193" text-anchor="middle" font-size="9" fill="#8b949e">TF-IDF recall</text>
+  <text x="240" y="204" text-anchor="middle" font-size="9" fill="#8b949e">Shiba client</text>
+
+  <!-- SSHService + VPSService -->
+  <rect x="320" y="163" width="120" height="44" rx="6" fill="#21262d" stroke="#388bfd" stroke-width="1"/>
+  <text x="380" y="179" text-anchor="middle" font-size="10" font-weight="600" fill="#79c0ff">SSHService</text>
+  <text x="380" y="193" text-anchor="middle" font-size="9" fill="#8b949e">profile mgmt</text>
+  <text x="380" y="204" text-anchor="middle" font-size="9" fill="#8b949e">VPSService probe</text>
+
+  <!-- GovernanceService -->
+  <rect x="460" y="107" width="100" height="44" rx="6" fill="#21262d" stroke="#f78166" stroke-width="1"/>
+  <text x="510" y="123" text-anchor="middle" font-size="10" font-weight="600" fill="#ff7b72">GovernanceService</text>
+  <text x="510" y="137" text-anchor="middle" font-size="9" fill="#8b949e">audit log</text>
+  <text x="510" y="148" text-anchor="middle" font-size="9" fill="#8b949e">approval gates</text>
+
+  <!-- HubServicesService -->
+  <rect x="460" y="163" width="100" height="44" rx="6" fill="#21262d" stroke="#388bfd" stroke-width="1"/>
+  <text x="510" y="179" text-anchor="middle" font-size="10" font-weight="600" fill="#79c0ff">HubServices</text>
+  <text x="510" y="193" text-anchor="middle" font-size="9" fill="#8b949e">status bar</text>
+  <text x="510" y="204" text-anchor="middle" font-size="9" fill="#8b949e">watchdog</text>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       postMessage bridge arrow
+  ════════════════════════════════════════════════════════════════ -->
+  <line x1="300" y1="275" x2="300" y2="300" stroke="#30363d" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <polygon points="296,298 304,298 300,305" fill="#30363d"/>
+  <text x="350" y="292" font-size="9" fill="#6e7681">postMessage bridge</text>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       ZONE 2 — Webview (SolidJS)
+  ════════════════════════════════════════════════════════════════ -->
+  <rect x="20" y="305" width="560" height="165" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+  <text x="300" y="324" text-anchor="middle" font-size="12" font-weight="600" fill="#3fb950">Webview — SolidJS Settings Tabs</text>
+
+  <!-- Tab boxes row 1 -->
+  <rect x="35" y="333" width="74" height="32" rx="5" fill="#0f2d0f" stroke="#3fb950" stroke-width="1"/>
+  <text x="72" y="350" text-anchor="middle" font-size="9" fill="#3fb950">ZeroClaw</text>
+  <text x="72" y="361" text-anchor="middle" font-size="8" fill="#6e7681">execution</text>
+
+  <rect x="118" y="333" width="74" height="32" rx="5" fill="#0f2d0f" stroke="#3fb950" stroke-width="1"/>
+  <text x="155" y="350" text-anchor="middle" font-size="9" fill="#3fb950">Hermes</text>
+  <text x="155" y="361" text-anchor="middle" font-size="8" fill="#6e7681">pipeline</text>
+
+  <rect x="201" y="333" width="74" height="32" rx="5" fill="#0f2d0f" stroke="#3fb950" stroke-width="1"/>
+  <text x="238" y="350" text-anchor="middle" font-size="9" fill="#3fb950">OpenClaw</text>
+  <text x="238" y="361" text-anchor="middle" font-size="8" fill="#6e7681">gateway</text>
+
+  <rect x="284" y="333" width="74" height="32" rx="5" fill="#0f2d0f" stroke="#3fb950" stroke-width="1"/>
+  <text x="321" y="350" text-anchor="middle" font-size="9" fill="#3fb950">Hub</text>
+  <text x="321" y="361" text-anchor="middle" font-size="8" fill="#6e7681">ops surface</text>
+
+  <rect x="367" y="333" width="74" height="32" rx="5" fill="#0f2d0f" stroke="#3fb950" stroke-width="1"/>
+  <text x="404" y="350" text-anchor="middle" font-size="9" fill="#3fb950">Routing</text>
+  <text x="404" y="361" text-anchor="middle" font-size="8" fill="#6e7681">provider mgmt</text>
+
+  <rect x="450" y="333" width="74" height="32" rx="5" fill="#0f2d0f" stroke="#3fb950" stroke-width="1"/>
+  <text x="487" y="350" text-anchor="middle" font-size="9" fill="#3fb950">Speech</text>
+  <text x="487" y="361" text-anchor="middle" font-size="8" fill="#6e7681">TTS / STT</text>
+
+  <!-- Tab boxes row 2 -->
+  <rect x="35" y="376" width="74" height="32" rx="5" fill="#0f2d0f" stroke="#3fb950" stroke-width="1"/>
+  <text x="72" y="393" text-anchor="middle" font-size="9" fill="#3fb950">VPS</text>
+  <text x="72" y="404" text-anchor="middle" font-size="8" fill="#6e7681">server mgmt</text>
+
+  <rect x="118" y="376" width="74" height="32" rx="5" fill="#0f2d0f" stroke="#3fb950" stroke-width="1"/>
+  <text x="155" y="393" text-anchor="middle" font-size="9" fill="#3fb950">SSH</text>
+  <text x="155" y="404" text-anchor="middle" font-size="8" fill="#6e7681">key manager</text>
+
+  <rect x="201" y="376" width="74" height="32" rx="5" fill="#0f2d0f" stroke="#3fb950" stroke-width="1"/>
+  <text x="238" y="393" text-anchor="middle" font-size="9" fill="#3fb950">Training</text>
+  <text x="238" y="404" text-anchor="middle" font-size="8" fill="#6e7681">GPU / LoRA</text>
+
+  <rect x="284" y="376" width="74" height="32" rx="5" fill="#0f2d0f" stroke="#3fb950" stroke-width="1"/>
+  <text x="321" y="393" text-anchor="middle" font-size="9" fill="#3fb950">Memory</text>
+  <text x="321" y="404" text-anchor="middle" font-size="8" fill="#6e7681">Shiba RAG</text>
+
+  <rect x="367" y="376" width="74" height="32" rx="5" fill="#102030" stroke="#f78166" stroke-width="1"/>
+  <text x="404" y="393" text-anchor="middle" font-size="9" fill="#ff7b72">Governance</text>
+  <text x="404" y="404" text-anchor="middle" font-size="8" fill="#6e7681">audit / gates</text>
+
+  <!-- legend badge -->
+  <text x="300" y="455" text-anchor="middle" font-size="9" fill="#6e7681">All tabs: SolidJS · communicate via postMessage only · no direct HTTP</text>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       CONNECTORS — Extension Host → External Services
+  ════════════════════════════════════════════════════════════════ -->
+
+  <!-- Left down arrow from zone 1 to Hermes -->
+  <line x1="380" y1="275" x2="690" y2="490" stroke="#58a6ff" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <polygon points="686,487 694,487 690,494" fill="#58a6ff"/>
+
+  <!-- Down arrow to Hub -->
+  <line x1="510" y1="275" x2="510" y2="490" stroke="#58a6ff" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <polygon points="506,488 514,488 510,495" fill="#58a6ff"/>
+
+  <!-- Down arrow to Shiba -->
+  <line x1="240" y1="275" x2="240" y2="490" stroke="#58a6ff" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <!-- re-route to shiba position -->
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       ZONE 3 — External / Local Services (Row 1)
+  ════════════════════════════════════════════════════════════════ -->
+
+  <!-- Hermes Bridge -->
+  <rect x="600" y="490" width="200" height="90" rx="10" fill="#161b22" stroke="#388bfd" stroke-width="2"/>
+  <text x="700" y="510" text-anchor="middle" font-size="11" font-weight="700" fill="#79c0ff">Hermes Bridge</text>
+  <text x="700" y="526" text-anchor="middle" font-size="10" fill="#e6edf3">http://187.77.30.206:18789</text>
+  <text x="700" y="540" text-anchor="middle" font-size="9" fill="#8b949e">mission control · policy · ledger</text>
+  <text x="700" y="553" text-anchor="middle" font-size="9" fill="#8b949e">routes tasks → ZeroClaw</text>
+  <rect x="640" y="562" width="120" height="14" rx="3" fill="#0d419d" stroke="none"/>
+  <text x="700" y="572" text-anchor="middle" font-size="8" fill="#79c0ff">auth: HERMES_API_KEY</text>
+
+  <!-- Hub -->
+  <rect x="420" y="490" width="160" height="90" rx="10" fill="#161b22" stroke="#f0883e" stroke-width="2"/>
+  <text x="500" y="510" text-anchor="middle" font-size="11" font-weight="700" fill="#f0883e">Hub</text>
+  <text x="500" y="526" text-anchor="middle" font-size="10" fill="#e6edf3">localhost:8095</text>
+  <text x="500" y="540" text-anchor="middle" font-size="9" fill="#8b949e">services · audit gates</text>
+  <text x="500" y="553" text-anchor="middle" font-size="9" fill="#8b949e">PR queue · quota · secret-scan</text>
+  <rect x="447" y="562" width="106" height="14" rx="3" fill="#341c00" stroke="none"/>
+  <text x="500" y="572" text-anchor="middle" font-size="8" fill="#f0883e">auth: KILO_HUB_TOKEN</text>
+
+  <!-- Shiba Memory -->
+  <rect x="240" y="490" width="160" height="90" rx="10" fill="#161b22" stroke="#a371f7" stroke-width="2"/>
+  <text x="320" y="510" text-anchor="middle" font-size="11" font-weight="700" fill="#a371f7">Shiba / Memory RAG</text>
+  <text x="320" y="526" text-anchor="middle" font-size="10" fill="#e6edf3">localhost:7002</text>
+  <text x="320" y="540" text-anchor="middle" font-size="9" fill="#8b949e">vector store · recall</text>
+  <text x="320" y="553" text-anchor="middle" font-size="9" fill="#8b949e">hermes.json / shiba.json</text>
+  <rect x="264" y="562" width="112" height="14" rx="3" fill="#1e0035" stroke="none"/>
+  <text x="320" y="572" text-anchor="middle" font-size="8" fill="#a371f7">config: .kilo/hermes.json</text>
+
+  <!-- OpenClaw Gateway -->
+  <rect x="40" y="490" width="180" height="90" rx="10" fill="#161b22" stroke="#56d364" stroke-width="2"/>
+  <text x="130" y="510" text-anchor="middle" font-size="11" font-weight="700" fill="#56d364">OpenClaw Gateway</text>
+  <text x="130" y="526" text-anchor="middle" font-size="10" fill="#e6edf3">localhost:18789</text>
+  <text x="130" y="540" text-anchor="middle" font-size="9" fill="#8b949e">21 channel connectors</text>
+  <text x="130" y="553" text-anchor="middle" font-size="9" fill="#8b949e">model/agent assignment</text>
+  <rect x="57" y="562" width="146" height="14" rx="3" fill="#002d0a" stroke="none"/>
+  <text x="130" y="572" text-anchor="middle" font-size="8" fill="#56d364">webchat: :18789/webchat</text>
+
+  <!-- Arrow from Hermes to ZeroClaw -->
+  <line x1="700" y1="580" x2="700" y2="640" stroke="#388bfd" stroke-width="1.5"/>
+  <polygon points="696,638 704,638 700,645" fill="#388bfd"/>
+  <text x="720" y="615" font-size="8" fill="#6e7681">Bridge B (internal)</text>
+
+  <!-- Arrow from Shiba to Vector Store -->
+  <line x1="320" y1="580" x2="320" y2="640" stroke="#a371f7" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <polygon points="316,638 324,638 320,645" fill="#a371f7"/>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       ZONE 4 — Execution + AI Providers
+  ════════════════════════════════════════════════════════════════ -->
+
+  <!-- ZeroClaw -->
+  <rect x="600" y="645" width="200" height="70" rx="10" fill="#161b22" stroke="#f85149" stroke-width="2"/>
+  <text x="700" y="665" text-anchor="middle" font-size="11" font-weight="700" fill="#f85149">ZeroClaw Engine</text>
+  <text x="700" y="681" text-anchor="middle" font-size="9" fill="#8b949e">task execution · sandbox</text>
+  <text x="700" y="694" text-anchor="middle" font-size="9" fill="#8b949e">circuit-breaker · risk policy</text>
+  <text x="700" y="707" text-anchor="middle" font-size="9" fill="#6e7681">task_id · SSE events → KiloCode</text>
+
+  <!-- Local Vector Store -->
+  <rect x="240" y="645" width="160" height="70" rx="10" fill="#161b22" stroke="#a371f7" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="320" y="665" text-anchor="middle" font-size="11" font-weight="700" fill="#a371f7">Vector Store</text>
+  <text x="320" y="681" text-anchor="middle" font-size="9" fill="#8b949e">all-MiniLM-L6-v2</text>
+  <text x="320" y="694" text-anchor="middle" font-size="9" fill="#8b949e">cosine similarity recall</text>
+  <text x="320" y="707" text-anchor="middle" font-size="9" fill="#6e7681">[Phase 1 target — MEM-1]</text>
+
+  <!-- AI Providers box -->
+  <rect x="830" y="490" width="340" height="225" rx="10" fill="#0d1117" stroke="#30363d" stroke-width="1.5"/>
+  <text x="1000" y="510" text-anchor="middle" font-size="12" font-weight="600" fill="#e6edf3">AI Providers</text>
+
+  <!-- Cloud providers -->
+  <rect x="845" y="520" width="145" height="28" rx="5" fill="#161b22" stroke="#6e7681" stroke-width="1"/>
+  <text x="918" y="538" text-anchor="middle" font-size="10" fill="#e6edf3">Anthropic (claude-*)</text>
+
+  <rect x="1000" y="520" width="155" height="28" rx="5" fill="#161b22" stroke="#6e7681" stroke-width="1"/>
+  <text x="1078" y="538" text-anchor="middle" font-size="10" fill="#e6edf3">OpenAI / Azure OpenAI</text>
+
+  <rect x="845" y="558" width="145" height="28" rx="5" fill="#161b22" stroke="#56d364" stroke-width="1"/>
+  <text x="918" y="576" text-anchor="middle" font-size="10" fill="#56d364">Ollama (localhost:11434)</text>
+
+  <rect x="1000" y="558" width="155" height="28" rx="5" fill="#161b22" stroke="#56d364" stroke-width="1"/>
+  <text x="1078" y="576" text-anchor="middle" font-size="10" fill="#56d364">LM Studio (localhost:1234)</text>
+
+  <!-- Channel providers section -->
+  <rect x="845" y="596" width="310" height="16" rx="3" fill="#161b22" stroke="none"/>
+  <text x="1000" y="608" text-anchor="middle" font-size="9" fill="#8b949e">OpenClaw Channel Connectors (21 platforms)</text>
+
+  <rect x="845" y="616" width="45" height="22" rx="3" fill="#002d0a" stroke="#56d364" stroke-width="0.5"/>
+  <text x="868" y="631" text-anchor="middle" font-size="8" fill="#56d364">TG</text>
+  <rect x="895" y="616" width="45" height="22" rx="3" fill="#002d0a" stroke="#56d364" stroke-width="0.5"/>
+  <text x="918" y="631" text-anchor="middle" font-size="8" fill="#56d364">DC</text>
+  <rect x="945" y="616" width="45" height="22" rx="3" fill="#002d0a" stroke="#56d364" stroke-width="0.5"/>
+  <text x="968" y="631" text-anchor="middle" font-size="8" fill="#56d364">SL</text>
+  <rect x="995" y="616" width="45" height="22" rx="3" fill="#002d0a" stroke="#56d364" stroke-width="0.5"/>
+  <text x="1018" y="631" text-anchor="middle" font-size="8" fill="#56d364">WA</text>
+  <rect x="1045" y="616" width="45" height="22" rx="3" fill="#002d0a" stroke="#56d364" stroke-width="0.5"/>
+  <text x="1068" y="631" text-anchor="middle" font-size="8" fill="#56d364">SIG</text>
+  <rect x="1095" y="616" width="45" height="22" rx="3" fill="#002d0a" stroke="#56d364" stroke-width="0.5"/>
+  <text x="1118" y="631" text-anchor="middle" font-size="8" fill="#56d364">+16</text>
+
+  <!-- Training label -->
+  <rect x="845" y="648" width="310" height="28" rx="5" fill="#161b22" stroke="#d29922" stroke-width="1"/>
+  <text x="1000" y="660" text-anchor="middle" font-size="9" font-weight="600" fill="#d29922">Local Training (GPU)</text>
+  <text x="1000" y="671" text-anchor="middle" font-size="8" fill="#8b949e">Ollama export · HuggingFace push · vLLM · llama.cpp</text>
+
+  <!-- Azure TTS -->
+  <rect x="845" y="686" width="145" height="24" rx="5" fill="#161b22" stroke="#6e7681" stroke-width="1"/>
+  <text x="918" y="702" text-anchor="middle" font-size="9" fill="#8b949e">Azure TTS (AZURE_SPEECH_KEY)</text>
+
+  <!-- Marketplace API -->
+  <rect x="1000" y="686" width="155" height="24" rx="5" fill="#161b22" stroke="#6e7681" stroke-width="1"/>
+  <text x="1078" y="702" text-anchor="middle" font-size="9" fill="#8b949e">KiloCode Marketplace API</text>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       Connection arrows — Extension Host → AI Providers
+  ════════════════════════════════════════════════════════════════ -->
+  <line x1="570" y1="185" x2="830" y2="560" stroke="#6e7681" stroke-width="1" stroke-dasharray="4,4"/>
+  <polygon points="826,558 834,558 830,565" fill="#6e7681"/>
+  <text x="700" y="420" font-size="9" fill="#6e7681" transform="rotate(-30, 700, 420)">RoutingService selects provider</text>
+
+  <!-- Arrow Hermes → AI Providers -->
+  <line x1="800" y1="535" x2="830" y2="535" stroke="#388bfd" stroke-width="1.5"/>
+  <polygon points="828,531 836,535 828,539" fill="#388bfd"/>
+
+  <!-- Arrow ZeroClaw → AI Providers -->
+  <line x1="800" y1="680" x2="845" y2="680" stroke="#f85149" stroke-width="1.5"/>
+  <polygon points="843,676 851,680 843,684" fill="#f85149"/>
+
+  <!-- OpenClaw → AI Providers -->
+  <line x1="220" y1="540" x2="845" y2="600" stroke="#56d364" stroke-width="1" stroke-dasharray="4,4"/>
+  <polygon points="841,597 849,598 844,604" fill="#56d364"/>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       ENV VAR LEGEND
+  ════════════════════════════════════════════════════════════════ -->
+  <rect x="20" y="760" width="560" height="125" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+  <text x="300" y="779" text-anchor="middle" font-size="11" font-weight="600" fill="#e6edf3">Key Environment Variables</text>
+
+  <rect x="35" y="787" width="8" height="8" rx="1" fill="#388bfd"/>
+  <text x="50" y="796" font-size="9" fill="#8b949e">HERMES_API_KEY</text>
+  <text x="155" y="796" font-size="9" fill="#6e7681">— Hermes Bridge auth (+ KILOCODE_API_KEY, MINIMAX_API_KEY fallbacks)</text>
+
+  <rect x="35" y="803" width="8" height="8" rx="1" fill="#f0883e"/>
+  <text x="50" y="812" font-size="9" fill="#8b949e">KILO_HUB_BASE_URL</text>
+  <text x="175" y="812" font-size="9" fill="#d29922">⚠</text>
+  <text x="185" y="812" font-size="9" fill="#6e7681">CANONICAL (also: HUB_URL, KILO_HUB_BASE — migrate these)</text>
+
+  <rect x="35" y="819" width="8" height="8" rx="1" fill="#f0883e"/>
+  <text x="50" y="828" font-size="9" fill="#8b949e">KILO_HUB_TOKEN</text>
+  <text x="155" y="828" font-size="9" fill="#6e7681">— Hub API bearer token</text>
+
+  <rect x="35" y="835" width="8" height="8" rx="1" fill="#8b949e"/>
+  <text x="50" y="844" font-size="9" fill="#8b949e">AZURE_SPEECH_KEY / AZURE_SPEECH_REGION</text>
+  <text x="295" y="844" font-size="9" fill="#6e7681">— Azure Cognitive Services TTS</text>
+
+  <rect x="35" y="851" width="8" height="8" rx="1" fill="#8b949e"/>
+  <text x="50" y="860" font-size="9" fill="#8b949e">GITHUB_TOKEN / GH_TOKEN</text>
+  <text x="195" y="860" font-size="9" fill="#6e7681">— GitHub API for PR operations</text>
+
+  <rect x="35" y="867" width="8" height="8" rx="1" fill="#a371f7"/>
+  <text x="50" y="876" font-size="9" fill="#8b949e">SHIBA_ENDPOINT</text>
+  <text x="140" y="876" font-size="9" fill="#6e7681">— Shiba memory RAG override (default: localhost:7002)</text>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       Port legend
+  ════════════════════════════════════════════════════════════════ -->
+  <rect x="600" y="760" width="570" height="125" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+  <text x="885" y="779" text-anchor="middle" font-size="11" font-weight="600" fill="#e6edf3">Port / URL Quick Reference</text>
+
+  <text x="615" y="796" font-size="9" fill="#79c0ff">:18789</text>
+  <text x="660" y="796" font-size="9" fill="#8b949e">Hermes Bridge API + OpenClaw Gateway</text>
+  <text x="870" y="796" font-size="9" fill="#79c0ff">:8095</text>
+  <text x="905" y="796" font-size="9" fill="#8b949e">Hub (ops) — canonical</text>
+
+  <text x="615" y="812" font-size="9" fill="#79c0ff">:8082</text>
+  <text x="660" y="812" font-size="9" fill="#8b949e">Hub (auto-update service)</text>
+  <text x="870" y="812" font-size="9" fill="#79c0ff">:8000</text>
+  <text x="905" y="812" font-size="9" fill="#8b949e">Hub (services watchdog)</text>
+
+  <text x="615" y="828" font-size="9" fill="#a371f7">:7002</text>
+  <text x="660" y="828" font-size="9" fill="#8b949e">Shiba Memory RAG (default)</text>
+  <text x="870" y="828" font-size="9" fill="#56d364">:11434</text>
+  <text x="920" y="828" font-size="9" fill="#8b949e">Ollama (local)</text>
+
+  <text x="615" y="844" font-size="9" fill="#56d364">:1234</text>
+  <text x="660" y="844" font-size="9" fill="#8b949e">LM Studio (local)</text>
+  <text x="870" y="844" font-size="9" fill="#6e7681">dynamic</text>
+  <text x="920" y="844" font-size="9" fill="#8b949e">KiloCode CLI backend</text>
+
+  <text x="615" y="860" font-size="9" fill="#8b949e">https://hermes.daveai.tech</text>
+  <text x="780" y="860" font-size="9" fill="#6e7681">Remote Hub (fallback)</text>
+  <text x="870" y="860" font-size="9" fill="#8b949e">https://api.kilo.ai</text>
+  <text x="950" y="860" font-size="9" fill="#6e7681">Marketplace API</text>
+
+  <text x="615" y="876" font-size="9" fill="#8b949e">localhost:18789/webchat</text>
+  <text x="760" y="876" font-size="9" fill="#6e7681">OpenClaw WebChat UI</text>
+
+</svg>

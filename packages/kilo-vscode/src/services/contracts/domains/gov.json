@@ -1,0 +1,19 @@
+{
+  "id": "gov",
+  "name": "Government / Public Sector",
+  "keywords": ["government", "fedramp", "fisma", "public sector", "gsa", "ato"],
+  "commonNFRs": [
+    "FedRAMP-aligned controls baseline",
+    "FIPS 140-2/3 cryptographic modules",
+    "Full audit log to a tamper-evident sink",
+    "Section 508 / WCAG 2.1 AA accessibility"
+  ],
+  "regulations": ["FedRAMP", "FISMA", "NIST 800-53", "Section 508", "ATO process"],
+  "antipatterns": [
+    "Cloud region outside FedRAMP boundary",
+    "BYOD without MDM",
+    "Skipping POA&M tracking",
+    "Untested incident-response playbook"
+  ],
+  "suggestedTemplates": ["compliance-prd"]
+}

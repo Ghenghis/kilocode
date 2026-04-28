@@ -1,0 +1,115 @@
+# SLSA L3 Release Workflow — VS Code Extension (.vsix)
+#
+# Adoption target: KiloCode itself ships its .vsix through this exact
+# workflow ("eat our own dogfood" per Anchor 6).
+# SLSA spec:    https://slsa.dev/spec/v1.0/
+# in-toto v1.0: https://github.com/in-toto/attestation/tree/main/spec
+
+name: release-vsix
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      digest: ${{ steps.hash.outputs.digest }}
+      artifact: ${{ steps.pack.outputs.artifact }}
+    steps:
+      # actions/checkout@v4.1.7  (2024-07-23)
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+        with:
+          persist-credentials: false
+
+      # actions/setup-node@v4.0.3  (2024-07-22)
+      - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install
+        run: npm ci
+
+      - name: Compile + lint
+        run: npm run package --if-present
+
+      - name: Package .vsix
+        id: pack
+        run: |
+          set -euo pipefail
+          npx --yes @vscode/vsce@2.31.1 package --out dist-release/
+          ARTIFACT=$(ls dist-release/*.vsix | head -n1)
+          echo "artifact=${ARTIFACT}" >> "$GITHUB_OUTPUT"
+
+      - name: Compute sha256 digest
+        id: hash
+        run: |
+          set -euo pipefail
+          DIGEST=$(sha256sum "${{ steps.pack.outputs.artifact }}" | base64 -w0)
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
+
+      # actions/upload-artifact@v4.3.6  (2024-08-05)
+      - uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a
+        with:
+          name: vsix-release
+          path: dist-release/*.vsix
+          if-no-files-found: error
+          retention-days: 7
+
+  provenance:
+    needs: [build]
+    permissions:
+      id-token: write
+      contents: write
+      actions: read
+    # slsa-framework/slsa-github-generator v2.0.0  (2024-06-26)
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@5a775b367a56d5bd118a224a811bba288150a563
+    with:
+      base64-subjects: ${{ needs.build.outputs.digest }}
+      upload-assets: true
+      provenance-name: provenance.intoto.jsonl
+
+  publish:
+    needs: [build, provenance]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      # actions/download-artifact@v4.1.8  (2024-09-09)
+      - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
+        with:
+          name: vsix-release
+          path: dist-release
+
+      # sigstore/cosign-installer@v3.6.0  (2024-08-29)
+      - uses: sigstore/cosign-installer@4959ce089c2fe283b1654b3d70d8cd4a4e8f96e5
+        with:
+          cosign-release: "v2.4.0"
+
+      - name: Sign .vsix (keyless OIDC)
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          set -euo pipefail
+          ART=$(ls dist-release/*.vsix | head -n1)
+          cosign sign-blob --yes \
+            --output-signature "${ART}.sig" \
+            --output-certificate "${ART}.pem" \
+            "${ART}"
+
+      # softprops/action-gh-release@v2.0.8  (2024-08-25)
+      - uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191
+        with:
+          files: |
+            dist-release/*.vsix
+            dist-release/*.sig
+            dist-release/*.pem
+          fail_on_unmatched_files: true

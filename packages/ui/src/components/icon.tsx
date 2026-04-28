@@ -110,6 +110,28 @@ const icons = {
   layers: `<path d="M10 2.5L2.5 6.25L10 10L17.5 6.25L10 2.5Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 13.75L10 17.5L17.5 13.75" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 10L10 13.75L17.5 10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>`,
   models: `<path fill-rule="evenodd" clip-rule="evenodd" d="M17.5 10C12.2917 10 10 12.2917 10 17.5C10 12.2917 7.70833 10 2.5 10C7.70833 10 10 7.70833 10 2.5C10 7.70833 12.2917 10 17.5 10Z" stroke="currentColor"/>`,
   discard: `<path d="M7.5 5L4.167 8.333L7.5 11.667M4.583 8.333h6.667a4.167 4.167 0 0 1 4.167 4.167" stroke="currentColor" stroke-linecap="square"/>`,
+  // Aliases / additions for chat-tab + new settings-tab features
+  x: `<path d="M3.75 3.75L16.25 16.25M16.25 3.75L3.75 16.25" stroke="currentColor" stroke-linecap="square"/>`,
+  pin: `<path d="M10 2.5v6M5 8.5h10l-2 4H7l-2-4zM10 12.5v5" stroke="currentColor" stroke-linecap="square"/>`,
+  robot: `<rect x="4" y="6" width="12" height="10" stroke="currentColor" rx="1"/><path d="M10 2v4M7 10h.5M12.5 10h.5M7 13h6" stroke="currentColor" stroke-linecap="square"/>`,
+  "thumbs-up": `<path d="M7 9V17H4V9H7ZM7 9L10 2H11C12 2 12.5 2.5 12.5 4V8H17C18 8 18.5 9 18.3 10L17 16C16.8 16.7 16 17 15.5 17H7" stroke="currentColor" stroke-linecap="square"/>`,
+  "thumbs-down": `<path d="M13 11V3H16V11H13ZM13 11L10 18H9C8 18 7.5 17.5 7.5 16V12H3C2 12 1.5 11 1.7 10L3 4C3.2 3.3 4 3 4.5 3H13" stroke="currentColor" stroke-linecap="square"/>`,
+  "split-horizontal": `<path d="M2.5 10H17.5M2.5 2.5H17.5V17.5H2.5V2.5Z" stroke="currentColor" stroke-linecap="square"/>`,
+  spinner: `<path d="M10 2.5V5M10 15V17.5M17.5 10H15M5 10H2.5M15.3 4.7L13.5 6.5M6.5 13.5L4.7 15.3M15.3 15.3L13.5 13.5M6.5 6.5L4.7 4.7" stroke="currentColor" stroke-linecap="round"/>`,
+  "arrow-down": `<path fill-rule="evenodd" clip-rule="evenodd" d="M9.99991 17.7588L3.90771 11.6666L4.7916 10.7827L9.37492 15.366V2.5h1.25v12.866l4.5833-4.5833.8838.8838-6.0922 6.0922Z" fill="currentColor"/>`,
+  bookmark: `<path d="M5 2.5h10v15l-5-3.75-5 3.75v-15z" stroke="currentColor" stroke-linejoin="round"/>`,
+  "external-link": `<path d="M7.91602 2.9165H2.91602V17.0832H17.0827V12.0832M12.0827 2.9165H17.0827V7.9165M9.58268 10.4165L16.666 3.33317" stroke="currentColor" stroke-linecap="square"/>`,
+  "rotate-ccw": `<path d="M5.83333 4.16406L2.5 7.4974L5.83333 10.8307M3.33333 7.4974H17.9167V15.4141H10" stroke="currentColor" stroke-linecap="square"/>`,
+  diff: `<path d="M2.08325 3.75H11.2499M14.5833 3.75H17.9166M2.08325 10L7.08325 10M10.4166 10L17.9166 10M2.08325 16.25L8.74992 16.25M12.0833 16.25L17.9166 16.25" stroke="currentColor" stroke-linecap="square" stroke-linejoin="round"/>`,
+  search: `<path d="M13 13L10.6418 10.6418M11.9552 7.47761C11.9552 9.95053 9.95053 11.9552 7.47761 11.9552C5.0047 11.9552 3 9.95053 3 7.47761C3 5.0047 5.0047 3 7.47761 3C9.95053 3 11.9552 5.0047 11.9552 7.47761Z" stroke="currentColor" stroke-linecap="square" vector-effect="non-scaling-stroke"/>`,
+  filter: `<path d="M2.5 4h15l-6 7v6l-3-1.5V11l-6-7z" stroke="currentColor" stroke-linejoin="round"/>`,
+  refresh: `<path d="M5.83333 4.16406L2.5 7.4974L5.83333 10.8307M3.33333 7.4974H17.9167V15.4141H10" stroke="currentColor" stroke-linecap="square"/>`,
+  zap: `<path d="M11 2.5L4 11h5l-1 7 7-9h-5l1-6.5z" stroke="currentColor" stroke-linejoin="round"/>`,
+  "chevron-up": `<path d="M6.6665 11.6666L9.99984 8.33325L13.3332 11.6666" stroke="currentColor" stroke-linecap="square"/>`,
+  pause: `<path d="M6 4v12M14 4v12" stroke="currentColor" stroke-linecap="square" stroke-width="2"/>`,
+  file: `<path d="M12.5 2.917H7.5V17.083H16.667V7.083L12.5 2.917ZM12.5 2.917V7.083H16.667" stroke="currentColor" stroke-linecap="square"/>`,
+  globe: `<circle cx="10" cy="10" r="7.5" stroke="currentColor"/><path d="M2.5 10h15M10 2.5C12 5 13 7.5 13 10s-1 5-3 7.5C8 15 7 12.5 7 10s1-5 3-7.5z" stroke="currentColor"/>`,
+  tools: `<path d="M5 8l-2.5 2.5 7 7L12 15l-7-7zM12.5 2.5l-3 3 5 5 3-3-5-5z" stroke="currentColor" stroke-linejoin="round"/>`,
 }
 
 export interface IconProps extends ComponentProps<"svg"> {

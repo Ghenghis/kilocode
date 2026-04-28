@@ -102,10 +102,36 @@ export interface MemoryDiagnosticResult {
   errors: string[]
 }
 
+export interface MemoryAutoCompactConfig {
+  enabled: boolean
+  threshold: number
+}
+
 interface MemoryStore {
   entries: MemoryEntry[]
   writeHistory: WriteHistoryRecord[]
   permissions: AgentPermission[]
+  tags?: Record<string, string[]>
+  autoCompact?: MemoryAutoCompactConfig
+}
+
+export interface BulkOperationResult {
+  requested: number
+  affected: number
+  missing: string[]
+}
+
+export interface ExportPayload {
+  version: 1
+  exportedAt: number
+  entries: MemoryEntry[]
+  tags?: Record<string, string[]>
+}
+
+export interface ImportSummary {
+  imported: number
+  skipped: number
+  errors: string[]
 }
 
 export interface WriteHistoryRecord {

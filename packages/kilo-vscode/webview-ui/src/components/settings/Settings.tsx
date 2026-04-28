@@ -27,6 +27,10 @@ import MemoryTab from "./MemoryTab"
 import TrainingTab from "./TrainingTab"
 import GovernanceTab from "./GovernanceTab"
 import HubTab from "./HubTab"
+import OpenClawTab from "./OpenClawTab"
+import AgentBackendsTab from "./AgentBackendsTab"
+import WorkstationTab from "./WorkstationTab"
+import ContractStudioTab from "./ContractStudioTab"
 import SettingsCommandPalette from "./SettingsCommandPalette"
 
 import CommitMessageTab from "./CommitMessageTab"
@@ -49,7 +53,7 @@ const Settings: Component<SettingsProps> = (props) => {
   const session = useSession()
   const [active, setActive] = createSignal(props.tab ?? "models")
   const [errorExpanded, setErrorExpanded] = createSignal(false)
-  // kilocode_change: command palette (Cmd/Ctrl+K) for fuzzy-search across all 24 tabs
+  // kilocode_change: command palette (Cmd/Ctrl+K) for fuzzy-search across all 28 tabs
   const [paletteOpen, setPaletteOpen] = createSignal(false)
   const onGlobalKey = (e: KeyboardEvent): void => {
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
@@ -133,7 +137,7 @@ const Settings: Component<SettingsProps> = (props) => {
           type="text"
           value={tabFilter()}
           onInput={(e) => setTabFilter(e.currentTarget.value)}
-          placeholder="Filter settings tabs… (24 tabs available)"
+          placeholder="Filter settings tabs… (28 tabs available)"
           aria-label="Filter settings tabs"
           style={{
             width: "100%",
@@ -233,6 +237,22 @@ const Settings: Component<SettingsProps> = (props) => {
             <Icon name="server" />
             <span class="label">Hub</span>
           </Tabs.Trigger>
+          <Tabs.Trigger value="openclaw">
+            <Icon name="robot" />
+            <span class="label">OpenClaw</span>
+          </Tabs.Trigger>
+          <Tabs.Trigger value="agentBackends">
+            <Icon name="layers" />
+            <span class="label">Agent Backends</span>
+          </Tabs.Trigger>
+          <Tabs.Trigger value="workstation">
+            <Icon name="server" />
+            <span class="label">Workstation</span>
+          </Tabs.Trigger>
+          <Tabs.Trigger value="contracts">
+            <Icon name="edit" />
+            <span class="label">Contract Studio</span>
+          </Tabs.Trigger>
           <Tabs.Trigger value="speech">
             <Icon name="speech-bubble" />
             <span class="label">Speech</span>
@@ -331,6 +351,22 @@ const Settings: Component<SettingsProps> = (props) => {
         <Tabs.Content value="hub">
           <h3>Hub — Operations Surface</h3>
           <HubTab />
+        </Tabs.Content>
+        <Tabs.Content value="openclaw">
+          <h3>OpenClaw — Local AI Gateway</h3>
+          <OpenClawTab />
+        </Tabs.Content>
+        <Tabs.Content value="agentBackends">
+          <h3>Agent Backends</h3>
+          <AgentBackendsTab />
+        </Tabs.Content>
+        <Tabs.Content value="workstation">
+          <h3>Workstation Profile</h3>
+          <WorkstationTab />
+        </Tabs.Content>
+        <Tabs.Content value="contracts">
+          <h3>Contract Markdowns Studio</h3>
+          <ContractStudioTab />
         </Tabs.Content>
         <Tabs.Content value="speech">
           <h3>Speech</h3>

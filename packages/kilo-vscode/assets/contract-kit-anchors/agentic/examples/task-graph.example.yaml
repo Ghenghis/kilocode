@@ -1,0 +1,162 @@
+# Example task-graph.yaml for the "Vintage Cameras Marketplace" project.
+# Validates against ../task-graph.schema.json AND the structural rules in
+# task-graph-valid.ts (no cycles, all dependsOn ids resolve, every leaf has
+# acceptance criteria).
+version: "0.1.0"
+
+tasks:
+  - id: T-001
+    title: Bootstrap monorepo + tsconfig + lint + CI skeleton
+    dependsOn: []
+    acceptanceCriteria: |
+      Given a fresh checkout, When `npm install && npm run check` is run,
+      Then it exits 0 with lint, typecheck, and unit-test stubs in place.
+    assigneeRole: devops
+    estimatedHours: 4
+
+  - id: T-002
+    title: Provision Postgres + Meilisearch local docker-compose stack
+    dependsOn: [T-001]
+    acceptanceCriteria: |
+      `docker compose up` brings up Postgres 16 and Meilisearch with seeded
+      schemas. Cites ADR-0002.
+    assigneeRole: devops
+    estimatedHours: 3
+
+  - id: T-003
+    title: Implement listing schema + migrations
+    dependsOn: [T-002]
+    acceptanceCriteria: |
+      Migrations create listings, photos, condition_grades, sellers tables
+      with foreign keys + indexes per REQ-001.
+    assigneeRole: backend-eng
+    estimatedHours: 6
+
+  - id: T-004
+    title: Listing creation API (POST /listings)
+    dependsOn: [T-003]
+    acceptanceCriteria: |
+      POST rejects payloads with <3 photos or missing condition grade
+      (REQ-001 AC #2). Returns 201 + listing id on success.
+    assigneeRole: backend-eng
+    estimatedHours: 5
+
+  - id: T-005
+    title: Image upload pipeline to Cloudflare R2 with signed URLs
+    dependsOn: [T-003]
+    acceptanceCriteria: |
+      Uploads enforce 12-image cap per listing (RISK-004) and preserve EXIF
+      where present (REQ-001 AC #3). Cites ADR-0003.
+    assigneeRole: backend-eng
+    estimatedHours: 6
+
+  - id: T-006
+    title: Catalog search index sync from Postgres to Meilisearch
+    dependsOn: [T-003]
+    acceptanceCriteria: |
+      A change in `listings` propagates to the search index within 30s p95.
+    assigneeRole: backend-eng
+    estimatedHours: 5
+
+  - id: T-007
+    title: Search API with brand-synonym dictionary
+    dependsOn: [T-006]
+    acceptanceCriteria: |
+      Given 50k seeded listings, queries with up to two filters return
+      under 300ms at p95 (REQ-002 AC #1) and resolve brand synonyms
+      (REQ-002 AC #2).
+    assigneeRole: backend-eng
+    estimatedHours: 6
+
+  - id: T-008
+    title: Offer + counter-offer flow with 72h expiry job
+    dependsOn: [T-004]
+    acceptanceCriteria: |
+      Submitting an offer notifies seller within 60s (REQ-003 AC #1) and
+      a scheduled job reverts expired offers (REQ-003 AC #2).
+    assigneeRole: backend-eng
+    estimatedHours: 7
+
+  - id: T-009
+    title: Stripe Connect escrow integration
+    dependsOn: [T-008]
+    acceptanceCriteria: |
+      Successful payments park funds in Stripe escrow per ADR-0001;
+      disputes within 7 days freeze release (REQ-004 AC #2).
+    assigneeRole: backend-eng
+    estimatedHours: 10
+
+  - id: T-010
+    title: Buyer-seller messaging with PII redaction filter
+    dependsOn: [T-004]
+    acceptanceCriteria: |
+      Outbound notification previews strip phone numbers and email
+      addresses (REQ-005 AC #1, RISK-003).
+    assigneeRole: backend-eng
+    estimatedHours: 5
+
+  - id: T-011
+    title: Frontend listing-creation wizard
+    dependsOn: [T-004, T-005]
+    acceptanceCriteria: |
+      A new seller can complete a listing in under 4 minutes on a clean
+      session (constraint: time-to-first-listing). WCAG 2.2 AA validated.
+    assigneeRole: frontend-eng
+    estimatedHours: 8
+
+  - id: T-012
+    title: Frontend search + filter UI
+    dependsOn: [T-007]
+    acceptanceCriteria: |
+      Implements faceted filters (brand, format, era, condition, price)
+      meeting REQ-002 latency budget end-to-end.
+    assigneeRole: frontend-eng
+    estimatedHours: 7
+
+  - id: T-013
+    title: Admin moderation queue with audit log
+    dependsOn: [T-004]
+    acceptanceCriteria: |
+      Approve/Reject actions write immutable audit rows
+      (REQ-007 AC #1). Admin UI lists pending listings oldest-first.
+    assigneeRole: frontend-eng
+    estimatedHours: 6
+
+  - id: T-014
+    title: E2E Playwright suite covering buyer + seller golden paths
+    dependsOn: [T-011, T-012, T-009, T-010, T-013]
+    acceptanceCriteria: |
+      Trace artifacts uploaded per Anchor 3; suite covers list-create,
+      search, offer-accept, escrow-release, message-send.
+    assigneeRole: qa
+    estimatedHours: 8
+
+  - id: T-015
+    title: Threat model + OWASP LLM Top 10 risk register seed
+    dependsOn: [T-001]
+    acceptanceCriteria: |
+      Risk register covers RISK-001..005 from agent-spec and seeds
+      OWASP LLM Top 10 mapping per Anchor 4.
+    assigneeRole: security
+    estimatedHours: 5
+
+edges:
+  - { from: T-001, to: T-002 }
+  - { from: T-001, to: T-015 }
+  - { from: T-002, to: T-003 }
+  - { from: T-003, to: T-004 }
+  - { from: T-003, to: T-005 }
+  - { from: T-003, to: T-006 }
+  - { from: T-004, to: T-008 }
+  - { from: T-004, to: T-010 }
+  - { from: T-004, to: T-011 }
+  - { from: T-004, to: T-013 }
+  - { from: T-005, to: T-011 }
+  - { from: T-006, to: T-007 }
+  - { from: T-007, to: T-012 }
+  - { from: T-008, to: T-009 }
+  - { from: T-009, to: T-014 }
+  - { from: T-010, to: T-014 }
+  - { from: T-011, to: T-014 }
+  - { from: T-012, to: T-014 }
+  - { from: T-013, to: T-014 }

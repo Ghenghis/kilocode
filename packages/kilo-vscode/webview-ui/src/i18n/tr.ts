@@ -1098,6 +1098,7 @@ export const dict = {
   "settings.notifications.errorSound.description": "Hata oluştuğunda çalınacak ses",
   "settings.notifications.sound.default": "Varsayılan",
   "settings.notifications.sound.none": "Yok",
+  "settings.notifications.quietHours": "Quiet hours",
 
   "settings.experimental.share.title": "Paylaşım Modu",
   "settings.experimental.share.description": "Oturum paylaşımının nasıl davranacağı",
@@ -1129,6 +1130,7 @@ export const dict = {
   "settings.experimental.remote.hint": "Geçiş yapmak için sohbette /remote kullanın",
   "settings.experimental.toolToggles": "Araç Açma/Kapatma",
 
+  "settings.agentBehaviour.color": "UI accent color",
   "settings.agentBehaviour.defaultAgent.title": "Varsayılan Ajan",
   "settings.agentBehaviour.defaultAgent.description": "Belirtilmediğinde kullanılacak ajan",
   "settings.agentBehaviour.availableAgents": "Mevcut Ajanlar",
@@ -1261,6 +1263,13 @@ export const dict = {
   "settings.context.prune.description": "Sıkıştırma sırasında eski araç çıktılarını kaldır",
   "settings.context.watcherPatterns": "Dosya İzleyici Yok Sayma Kalıpları",
   "settings.context.watcherPatterns.description": "İzleyicinin yok sayması gereken dosyalar için glob kalıpları",
+  "settings.context.contextWindow": "Context window",
+  "settings.context.contextWindowHint": "Tokens kept in context for the model",
+  "settings.context.fileLimits": "File size & count limits",
+  "settings.context.rulesFiles": "Rules files",
+  "settings.context.createRulesFile": "Create rules file",
+  "settings.context.mentionCheatsheet": "@mention cheatsheet",
+  "settings.context.systemPromptPreview": "Preview system prompt",
 
   "settings.commitMessage.title": "Commit Message",
   "settings.commitMessage.override.title": "Özel prompt Kullan",

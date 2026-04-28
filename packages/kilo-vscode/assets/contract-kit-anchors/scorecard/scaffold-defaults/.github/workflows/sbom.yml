@@ -1,0 +1,58 @@
+# =============================================================================
+# SBOM workflow — Contract Kit Creator scaffold default
+# -----------------------------------------------------------------------------
+# Generates a CycloneDX + SPDX Software Bill of Materials on every release and
+# uploads it as a release asset + artifact. Required for OpenSSF Scorecard
+# `SBOM` check (10/10) and CISA SBOM-consumption guidance.
+#
+# Pinned action SHAs (review and bump approximately every 90 days):
+#
+#   actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11           # v4.1.1
+#   anchore/sbom-action@7ccf588e3cf3cc2611714c2eeae48550fbc17552        # v0.15.10
+#   actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3    # v4.3.1
+#   softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v2.0.4
+# =============================================================================
+
+name: SBOM
+
+on:
+  release:
+    types:
+      - published
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  sbom:
+    name: Generate SPDX SBOM
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required to attach SBOM to releases.
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          persist-credentials: false
+
+      - name: Generate SPDX SBOM
+        uses: anchore/sbom-action@7ccf588e3cf3cc2611714c2eeae48550fbc17552 # v0.15.10
+        with:
+          path: .
+          format: spdx-json
+          output-file: sbom.spdx.json
+          artifact-name: sbom.spdx.json
+          upload-artifact: true
+          upload-release-assets: ${{ github.event_name == 'release' }}
+
+      - name: Upload SBOM artifact (push runs)
+        if: github.event_name != 'release'
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
+        with:
+          name: sbom-spdx
+          path: sbom.spdx.json
+          retention-days: 90

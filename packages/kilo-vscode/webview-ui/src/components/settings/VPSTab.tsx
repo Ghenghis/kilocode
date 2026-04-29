@@ -313,73 +313,81 @@ const VPSTab: Component = () => {
   }
 
   // ── Message handler ──────────────────────────────────
-  const unsubscribe = onMessage((msg) => {
-    switch (msg.type) {
-      case "vpsServersLoaded":
-        setServers(msg.servers as VPSServer[])
-        break
-      case "vpsMetricsLoaded":
-        setMetrics(msg.metrics as VPSMetrics)
-        break
-      case "vpsServicesLoaded":
-        setServices(msg.services as ServiceInfo[])
-        break
-      case "vpsContainersLoaded":
-        setContainers(msg.containers as DockerContainer[])
-        break
-      case "vpsDeployHistoryLoaded":
-        setDeployHistory(msg.history as DeployEntry[])
-        break
-      case "vpsBackupStatus":
-        setBackupStatus(msg.status as "none" | "available" | "in-progress")
-        break
-      case "vpsServerAdded": {
-        const added = msg.server as VPSServer
-        setServers((prev) => [...prev, added])
-        break
-      }
-      case "vpsServerUpdated": {
-        const updated = msg.server as VPSServer
-        setServers((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
-        break
-      }
-      case "vpsServerRemoved": {
-        const removedId = msg.serverId as string
-        setServers((prev) => prev.filter((s) => s.id !== removedId))
-        // Wave 10-E fix: also drop the per-server pingResults entry so dead
-        // serverIds don't linger in the map for the lifetime of the tab.
-        setPingResults((prev) => {
-          if (!(removedId in prev)) return prev
-          const { [removedId]: _, ...rest } = prev
-          return rest
-        })
-        if (selectedServerId() === removedId) {
-          setSelectedServerId(null)
-          setMetrics(null)
-          setServices([])
-          setContainers([])
+  // Registered inside onMount (not at body scope) so:
+  //  a) the listener is attached after DOM mount, consistent with the rest of
+  //     the codebase (ZeroClawTab, MarketplaceView, etc.)
+  //  b) onCleanup inside onMount is always paired with the subscription
+  // The listener onMount runs before the requestVpsServers onMount below, so
+  // the extension response can never arrive before we're listening.
+  onMount(() => {
+    const unsubscribe = onMessage((msg) => {
+      switch (msg.type) {
+        case "vpsServersLoaded":
+          setServers(msg.servers as VPSServer[])
+          break
+        case "vpsMetricsLoaded":
+          setMetrics(msg.metrics as VPSMetrics)
+          break
+        case "vpsServicesLoaded":
+          setServices(msg.services as ServiceInfo[])
+          break
+        case "vpsContainersLoaded":
+          setContainers(msg.containers as DockerContainer[])
+          break
+        case "vpsDeployHistoryLoaded":
+          setDeployHistory(msg.history as DeployEntry[])
+          break
+        case "vpsBackupStatus":
+          setBackupStatus(msg.status as "none" | "available" | "in-progress")
+          break
+        case "vpsServerAdded": {
+          const added = msg.server as VPSServer
+          setServers((prev) => [...prev, added])
+          break
         }
-        break
+        case "vpsServerUpdated": {
+          const updated = msg.server as VPSServer
+          setServers((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
+          break
+        }
+        case "vpsServerRemoved": {
+          const removedId = msg.serverId as string
+          setServers((prev) => prev.filter((s) => s.id !== removedId))
+          // Wave 10-E fix: also drop the per-server pingResults entry so dead
+          // serverIds don't linger in the map for the lifetime of the tab.
+          setPingResults((prev) => {
+            if (!(removedId in prev)) return prev
+            const { [removedId]: _, ...rest } = prev
+            return rest
+          })
+          if (selectedServerId() === removedId) {
+            setSelectedServerId(null)
+            setMetrics(null)
+            setServices([])
+            setContainers([])
+          }
+          break
+        }
+        case "vpsServerPingResult": {
+          // Server reachability probe — used by the inline Ping button + the 30s
+          // auto-ping sweep. Stored per-server so each row can show a fresh badge.
+          const r = msg as unknown as { serverId: string; ok: boolean; responseMs?: number }
+          if (!r.serverId) break
+          setPingResults((prev) => ({
+            ...prev,
+            [r.serverId]: { ok: r.ok, responseMs: r.responseMs, ts: Date.now() },
+          }))
+          // Reflect online/offline in the row's status badge for instant feedback,
+          // even before the next vpsServersLoaded refresh from the backend.
+          setServers((prev) =>
+            prev.map((s) => (s.id === r.serverId ? { ...s, status: r.ok ? "online" : "offline" } : s)),
+          )
+          break
+        }
       }
-      case "vpsServerPingResult": {
-        // Server reachability probe — used by the inline Ping button + the 30s
-        // auto-ping sweep. Stored per-server so each row can show a fresh badge.
-        const r = msg as unknown as { serverId: string; ok: boolean; responseMs?: number }
-        if (!r.serverId) break
-        setPingResults((prev) => ({
-          ...prev,
-          [r.serverId]: { ok: r.ok, responseMs: r.responseMs, ts: Date.now() },
-        }))
-        // Reflect online/offline in the row's status badge for instant feedback,
-        // even before the next vpsServersLoaded refresh from the backend.
-        setServers((prev) =>
-          prev.map((s) => (s.id === r.serverId ? { ...s, status: r.ok ? "online" : "offline" } : s)),
-        )
-        break
-      }
-    }
+    })
+    onCleanup(unsubscribe)
   })
-  onCleanup(unsubscribe)
 
   // Visibility-gated polling: don't ping servers or refresh metrics while the
   // panel is hidden. Saves a postMessage per server every 30s.
@@ -413,21 +421,27 @@ const VPSTab: Component = () => {
   createEffect(() => {
     setHasServers(servers().length > 0)
   })
-  createEffect(() => {
-    if (pingTimer) clearInterval(pingTimer)
-    if (!hasServers()) return
-    const sweep = () => {
-      // Read servers() inside the closure so the snapshot is fresh per tick,
-      // but the effect itself doesn't re-subscribe to per-server changes.
-      for (const s of servers()) {
-        postMessage({ type: "vpsServerPing", serverId: s.id } as never)
+  // { defer: true } — skip the initial run on mount (hasServers is false until
+  // the first vpsServersLoaded reply, but using defer makes it explicit that
+  // the sweep should never fire during reactive evaluation — only after the
+  // server inventory has been received and the hasServers signal changes).
+  createEffect(
+    on([hasServers, isVisible], () => {
+      if (pingTimer) clearInterval(pingTimer)
+      if (!hasServers()) return
+      const sweep = () => {
+        // Read servers() inside the closure so the snapshot is fresh per tick,
+        // but the effect itself doesn't re-subscribe to per-server changes.
+        for (const s of servers()) {
+          postMessage({ type: "vpsServerPing", serverId: s.id } as never)
+        }
       }
-    }
-    if (isVisible()) sweep() // immediate first pass on mount / inventory change
-    pingTimer = setInterval(() => {
-      if (isVisible()) sweep()
-    }, 30_000)
-  })
+      if (isVisible()) sweep() // immediate first pass on inventory change
+      pingTimer = setInterval(() => {
+        if (isVisible()) sweep()
+      }, 30_000)
+    }, { defer: true }),
+  )
 
   onCleanup(() => {
     if (refreshTimer) clearInterval(refreshTimer)

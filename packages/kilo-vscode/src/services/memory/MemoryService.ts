@@ -212,6 +212,7 @@ export class MemoryService implements vscode.Disposable {
   private savePending = false
   private saveTimer: ReturnType<typeof setTimeout> | undefined
   private pingTimer: ReturnType<typeof setInterval> | undefined
+  private _startupTimer: ReturnType<typeof setTimeout> | undefined
 
   // ── Cross-agent recall traces ──
   private recallTraces: AgentRecallTrace[] = []
@@ -267,7 +268,7 @@ export class MemoryService implements vscode.Disposable {
     this.log.info("MemoryService initialized")
 
     // Auto-attach to Hermes/Shiba endpoint after a short delay so activation is not blocked.
-    setTimeout(() => {
+    this._startupTimer = setTimeout(() => {
       void this.autoConnect().catch((err: unknown) => {
         this.log.error("autoConnect failed", err)
       })
@@ -1017,6 +1018,8 @@ export class MemoryService implements vscode.Disposable {
   // ─── Dispose ─────────────────────────────────────────
 
   dispose(): void {
+    clearTimeout(this._startupTimer)
+    this._startupTimer = undefined
     if (this.saveTimer) {
       clearTimeout(this.saveTimer)
       this.saveTimer = undefined

@@ -105,18 +105,24 @@ const LABEL_CAP = 24
 /**
  * Build a map of child session ID → label by scanning tool parts in the
  * family for task tool metadata. Pure function — no store dependency.
+ *
+ * @param getParts - Per-message-ID accessor. Callers should pass a function
+ *   that reads `store.parts[msgId]` rather than the whole `store.parts` proxy
+ *   so that reactive memos only subscribe to the specific part slots accessed,
+ *   not the entire parts record (avoids O(M×P) invalidation on every streaming
+ *   part update).
  */
 export function buildFamilyLabels(
   family: Set<string>,
   messages: Record<string, CostMessage[]>,
-  parts: Record<string, TaskPart[]>,
+  getParts: (msgId: string) => TaskPart[] | undefined,
 ): Map<string, string> {
   const labels = new Map<string, string>()
   for (const sid of family) {
     const msgs = messages[sid]
     if (!msgs) continue
     for (const msg of msgs) {
-      const list = parts[msg.id]
+      const list = getParts(msg.id)
       if (!list) continue
       for (const p of list) {
         if (p.type !== "tool") continue

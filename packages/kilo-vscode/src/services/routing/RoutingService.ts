@@ -125,6 +125,7 @@ export class RoutingService implements vscode.Disposable {
   private circuitTimers: Map<string, ReturnType<typeof setTimeout>> = new Map()
   private healthTimer: ReturnType<typeof setInterval> | undefined
   private retryBudgetTimer: ReturnType<typeof setInterval> | undefined
+  private _startupTimer: ReturnType<typeof setTimeout> | undefined
   private readonly listeners = new Set<() => void>()
   private readonly secrets: vscode.SecretStorage
   private readonly log = KiloLogger.for("RoutingService")
@@ -142,7 +143,7 @@ export class RoutingService implements vscode.Disposable {
     this.initializeProviders()
     // Run initial health check immediately so Ollama/LM Studio don't stay stuck on "offline"
     // if they're actually running. Delayed by 1s to let extension activation finish.
-    setTimeout(() => {
+    this._startupTimer = setTimeout(() => {
       void this.runHealthChecks().catch((err) => this.log.warn("Initial health check failed", err))
     }, 1000)
     this.healthTimer = setInterval(() => {
@@ -786,6 +787,8 @@ export class RoutingService implements vscode.Disposable {
   // ── Dispose ──────────────────────────────────────────────
 
   dispose(): void {
+    clearTimeout(this._startupTimer)
+    this._startupTimer = undefined
     if (this.healthTimer) {
       clearInterval(this.healthTimer)
       this.healthTimer = undefined

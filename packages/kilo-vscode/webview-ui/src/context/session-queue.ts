@@ -97,6 +97,7 @@ export function stableMessageTurns(next: MessageTurn[], prev: MessageTurn[] = []
 }
 
 function active(messages: Message[]) {
+  const msgById = new Map(messages.map((m) => [m.id, m]))
   for (let i = messages.length - 1; i >= 0; i -= 1) {
     const msg = messages[i]
     if (!msg || msg.role !== "assistant") continue
@@ -104,7 +105,7 @@ function active(messages: Message[]) {
     if (msg.error) continue
     if (msg.finish && !["tool-calls", "unknown"].includes(msg.finish)) continue
     if (!msg.parentID) break
-    const parent = messages.find((item) => item.id === msg.parentID)
+    const parent = msgById.get(msg.parentID)
     if (parent?.role === "user") return parent.id
     break
   }

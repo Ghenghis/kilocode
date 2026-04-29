@@ -2074,11 +2074,20 @@ export const SessionProvider: ParentComponent = (props) => {
     return buildFamilyCosts(sessionFamily(id), store.messages)
   })
 
-  /** Child session labels — only reads store.parts (not message costs). */
+  /**
+   * Child session labels — reads store.parts lazily via a per-message accessor.
+   *
+   * Passing a getter `(msgId) => store.parts[msgId]` instead of the whole
+   * `store.parts` proxy means SolidJS only tracks the specific part-list slots
+   * that are actually accessed during this memo's run. Previously, passing
+   * `store.parts as any` subscribed to the entire parts proxy, so every
+   * `partUpdated` streaming event invalidated this memo and triggered an
+   * O(M×P) walk over all family messages and parts.
+   */
   const familyLabels = createMemo<Map<string, string>>(() => {
     const id = currentSessionID()
     if (!id) return new Map()
-    return buildFamilyLabels(sessionFamily(id), store.messages as any, store.parts as any)
+    return buildFamilyLabels(sessionFamily(id), store.messages as any, (msgId: string) => store.parts[msgId] as any)
   })
 
   /** Combined cost breakdown with labels. */

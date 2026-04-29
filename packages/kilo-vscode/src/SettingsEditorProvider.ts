@@ -152,11 +152,13 @@ export class SettingsEditorProvider implements vscode.Disposable {
 
     // Navigate to the target view on every webviewReady (including after
     // "Developer: Reload Webviews" which re-creates the JS context).
+    let panelDisposed = false
     const readyDisposable = panel.webview.onDidReceiveMessage((msg) => {
       if (msg.type === "webviewReady") {
-        // Small delay to let KiloProvider's own webviewReady handler finish first
+        // Small delay to let KiloProvider's own webviewReady handler finish first.
+        // Guard against posting to a disposed panel if the 50ms window overlaps disposal.
         setTimeout(() => {
-          provider.postMessage({ type: "navigate", view, tab: this.tabs.get(view) })
+          if (!panelDisposed) provider.postMessage({ type: "navigate", view, tab: this.tabs.get(view) })
         }, 50)
       }
     })
@@ -174,6 +176,7 @@ export class SettingsEditorProvider implements vscode.Disposable {
     const title = PANEL_TITLES[view]
     panel.onDidDispose(() => {
       console.log(`[Kilo New] ${title} panel disposed`)
+      panelDisposed = true
       closePanelDisposable.dispose()
       readyDisposable.dispose()
       tabDisposable.dispose()

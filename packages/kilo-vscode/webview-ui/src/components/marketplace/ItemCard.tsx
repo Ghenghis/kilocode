@@ -1,4 +1,4 @@
-import { Show, JSX, createSignal, onMount } from "solid-js"
+import { Show, JSX, createSignal, onMount, onCleanup } from "solid-js"
 import { Button } from "@kilocode/kilo-ui/button"
 import { Card } from "@kilocode/kilo-ui/card"
 import { Tag } from "@kilocode/kilo-ui/tag"
@@ -27,8 +27,19 @@ export const ItemCard = (props: Props) => {
   const [clamped, setClamped] = createSignal(false)
   let ref: HTMLParagraphElement | undefined
 
+  // Use ResizeObserver (fires after paint, async) instead of reading scrollHeight/clientHeight
+  // synchronously in onMount. With ~200 ItemCards rendering at once, the synchronous read
+  // would force ~200 consecutive layout reflows — this moves that work off the critical path.
   onMount(() => {
-    if (ref && ref.scrollHeight > ref.clientHeight) setClamped(true)
+    if (!ref) return
+    const observer = new ResizeObserver(() => {
+      if (ref && ref.scrollHeight > ref.clientHeight) {
+        setClamped(true)
+        observer.disconnect()
+      }
+    })
+    observer.observe(ref)
+    onCleanup(() => observer.disconnect())
   })
 
   const openLink = (url: string) => {

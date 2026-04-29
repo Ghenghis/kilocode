@@ -25,6 +25,7 @@ interface PRBridgeHost {
 interface PanelLike {
   readonly visible: boolean
   onDidChangeVisibility(cb: (visible: boolean) => void): Disposable
+  onDidDispose?: (cb: () => void) => void
 }
 
 export class PRStatusBridge {
@@ -53,9 +54,12 @@ export class PRStatusBridge {
   /** Wire visibility tracking to a panel — pauses polling when hidden. */
   attachPanel(panel: PanelLike): void {
     this.poller.setVisible(panel.visible)
-    panel.onDidChangeVisibility((v) => {
+    // Store the disposable so it can be cleaned up when the panel is disposed.
+    // Without this, each attachPanel call leaks a permanent onDidChangeViewState listener.
+    const d = panel.onDidChangeVisibility((v) => {
       this.poller.setVisible(v)
     })
+    panel.onDidDispose?.(() => d.dispose())
   }
 
   /** Replay cached PR statuses to a freshly-connected webview. */

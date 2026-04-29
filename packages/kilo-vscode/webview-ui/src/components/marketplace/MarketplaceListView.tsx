@@ -1,4 +1,4 @@
-import { createSignal, createMemo, For, Show } from "solid-js"
+import { createSignal, createMemo, For, Show, onCleanup } from "solid-js"
 import { TextField } from "@kilocode/kilo-ui/text-field"
 import { Select } from "@kilocode/kilo-ui/select"
 import { Tag } from "@kilocode/kilo-ui/tag"
@@ -33,6 +33,16 @@ interface Props {
 export const MarketplaceListView = (props: Props) => {
   const { t } = useLanguage()
   const [search, setSearch] = createSignal("")
+  // Debounced search: filter list only after 150ms of no typing to avoid
+  // a full O(N) refilter + Solid reconciliation on every keystroke.
+  const [debouncedSearch, setDebouncedSearch] = createSignal("")
+  let _searchDebounce = 0
+  const handleSearch = (v: string) => {
+    setSearch(v)
+    clearTimeout(_searchDebounce)
+    _searchDebounce = window.setTimeout(() => setDebouncedSearch(v), 150)
+  }
+  onCleanup(() => clearTimeout(_searchDebounce))
   const [status, setStatus] = createSignal<StatusOption>({ value: "all", label: t("marketplace.filter.all") })
   const [tags, setTags] = createSignal<string[]>([])
 
@@ -69,7 +79,7 @@ export const MarketplaceListView = (props: Props) => {
   }
 
   const filtered = createMemo(() => {
-    const q = search().toLowerCase()
+    const q = debouncedSearch().toLowerCase()
     const s = status().value
     const active = tags()
     return props.items.filter((item) => {
@@ -92,7 +102,7 @@ export const MarketplaceListView = (props: Props) => {
     <div class="marketplace-list">
       <div class="marketplace-filters">
         <div class="marketplace-search-field">
-          <TextField placeholder={props.searchPlaceholder} value={search()} onChange={setSearch} />
+          <TextField placeholder={props.searchPlaceholder} value={search()} onChange={handleSearch} />
         </div>
         <Select
           options={options()}

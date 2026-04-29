@@ -144,28 +144,22 @@ function deriveAgentRuntimes(
         entry.stepsCompleted++
       }
       if (p.type === "tool") {
-        const tp = p as ToolPart
+        const tp = p as ToolPart & { state: { input?: { description?: string } } }
         if (tp.state.status === "error") entry.hasError = true
         if (tp.state.status === "pending" || tp.state.status === "running") entry.queueDepth++
         const toolName = tp.tool
         if (!entry.recentTools.includes(toolName)) {
           entry.recentTools = [toolName, ...entry.recentTools].slice(0, 5)
         }
+        // Capture subtask description from task tool input (merged from second loop)
+        if (tp.tool === "task" && tp.state.input?.description) {
+          entry.taskDescription = String(tp.state.input.description).slice(0, 80)
+        }
       }
       if (p.type === "text") {
         const textP = p as { type: "text"; text: string }
         if (textP.text && textP.text.length > 4 && !entry.taskDescription) {
           entry.taskDescription = textP.text.slice(0, 80)
-        }
-      }
-    }
-
-    // Also extract subtask descriptions
-    for (const p of ps) {
-      if (p.type === "tool") {
-        const tp = p as ToolPart & { state: { input?: { description?: string } } }
-        if (tp.tool === "task" && tp.state.input?.description) {
-          entry.taskDescription = String(tp.state.input.description).slice(0, 80)
         }
       }
     }
@@ -355,6 +349,10 @@ export const AgentStatusPanel: Component<AgentStatusPanelProps> = (props) => {
   const messages = () => session.messages()
 
   const allParts = createMemo(() => {
+    // When the panel is collapsed only the header badge needs data, which derives
+    // from busyAgentName() rather than parts. Skip the O(M) parts subscription
+    // entirely to avoid triggering a full runtimes rebuild on every streaming part.
+    if (props.collapsed) return {} as Record<string, Part[]>
     const msgs = messages()
     const result: Record<string, Part[]> = {}
     for (const m of msgs) {

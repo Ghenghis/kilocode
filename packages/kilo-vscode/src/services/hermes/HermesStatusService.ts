@@ -108,8 +108,17 @@ export class HermesStatusService implements vscode.Disposable {
     }
 
     // Enabled — start the ping loop if not running.
+    //
+    // NOTE: the callback intentionally re-reads `this.client` on every tick
+    // rather than capturing it from the enclosing scope. If `setClient()` is
+    // called after the interval has been scheduled, the new client must be
+    // used on the very next tick. Skipping ticks while `this.client` is
+    // `undefined` is also intentional — it covers the brief window between
+    // construction and the first `setClient()` call from the host.
     if (!this.timer) {
       this.timer = setInterval(() => {
+        const client = this.client
+        if (!client) return
         void this.refresh()
       }, 30_000)
     }

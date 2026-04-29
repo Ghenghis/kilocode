@@ -52,7 +52,7 @@ class TestFetchCanonicalSettings:
     async def test_fetch_calls_settings_url(self) -> None:
         mock_response = {"providers": ["openai"], "default_model": "gpt-4"}
         
-        with patch("hub.routers.settings._req", new_callable=AsyncMock) as mock_req:
+        with patch("backend.webui.hub.routers.settings._req", new_callable=AsyncMock) as mock_req:
             mock_req.return_value = mock_response
             result = await _fetch_canonical_settings()
             
@@ -131,7 +131,7 @@ class TestCanonicalEndpointContract:
             "default": {"temperature": 0.7},
         }
         
-        with patch("hub.routers.settings._req", new_callable=AsyncMock) as mock_req:
+        with patch("backend.webui.hub.routers.settings._req", new_callable=AsyncMock) as mock_req:
             mock_req.return_value = mock_settings
             
             # Simulate the endpoint logic
@@ -177,7 +177,7 @@ class TestIntegrationFlow:
         # 1. Fetch canonical
         mock_settings = {"provider": "openai", "model": "gpt-4"}
         
-        with patch("hub.routers.settings._req", new_callable=AsyncMock) as mock_req:
+        with patch("backend.webui.hub.routers.settings._req", new_callable=AsyncMock) as mock_req:
             mock_req.return_value = mock_settings
             canonical = await _fetch_canonical_settings()
             canonical_hash = _compute_version_hash(canonical)

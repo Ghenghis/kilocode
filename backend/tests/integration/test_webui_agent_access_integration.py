@@ -182,7 +182,7 @@ class TestSaveLoadStateRoundTrip(unittest.TestCase):
                 )
 
                 # Save state to a temp path
-                import webui.control_center as cc_module
+                import backend.webui.control_center as cc_module
                 original_path = cc_module._WEBUI_STATE_PATH
                 cc_module._WEBUI_STATE_PATH = state_path
                 try:
@@ -207,7 +207,7 @@ class TestSaveLoadStateRoundTrip(unittest.TestCase):
         app = _make_app()
         api = AgentAccessAPI(app)
 
-        import webui.control_center as cc_module
+        import backend.webui.control_center as cc_module
         original_path = cc_module._WEBUI_STATE_PATH
         cc_module._WEBUI_STATE_PATH = Path("/nonexistent/path/webui_state.json")
         try:

@@ -21,7 +21,7 @@ class TestDynamicOverlapCalculation:
         """Test overlap calculation with low complexity blocks (10%)."""
         from backend.blockchain_audit import AuditChain
 
-        with patch("src.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_blockchain):
+        with patch("backend.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_blockchain):
             chain = AuditChain(audit_config)
             chain.blockchain = mock_blockchain
 
@@ -32,7 +32,7 @@ class TestDynamicOverlapCalculation:
         """Test overlap calculation with medium complexity blocks (50%)."""
         from backend.blockchain_audit import AuditChain
 
-        with patch("src.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_blockchain):
+        with patch("backend.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_blockchain):
             chain = AuditChain(audit_config)
             chain.blockchain = mock_blockchain
 
@@ -43,7 +43,7 @@ class TestDynamicOverlapCalculation:
         """Test overlap calculation with high complexity blocks (90%)."""
         from backend.blockchain_audit import AuditChain
 
-        with patch("src.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_blockchain):
+        with patch("backend.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_blockchain):
             chain = AuditChain(audit_config)
             chain.blockchain = mock_blockchain
 
@@ -54,7 +54,7 @@ class TestDynamicOverlapCalculation:
         """Test overlap calculation at lowest boundary."""
         from backend.blockchain_audit import AuditChain
 
-        with patch("src.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_blockchain):
+        with patch("backend.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_blockchain):
             chain = AuditChain(audit_config)
             chain.blockchain = mock_blockchain
 
@@ -65,7 +65,7 @@ class TestDynamicOverlapCalculation:
         """Test overlap calculation at highest boundary."""
         from backend.blockchain_audit import AuditChain
 
-        with patch("src.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_blockchain):
+        with patch("backend.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_blockchain):
             chain = AuditChain(audit_config)
             chain.blockchain = mock_blockchain
 
@@ -76,7 +76,7 @@ class TestDynamicOverlapCalculation:
         """Test that overlap calculation is deterministic."""
         from backend.blockchain_audit import AuditChain
 
-        with patch("src.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_blockchain):
+        with patch("backend.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_blockchain):
             chain = AuditChain(audit_config)
             chain.blockchain = mock_blockchain
 
@@ -91,7 +91,7 @@ class TestDynamicOverlapCalculation:
         """Test that overlap respects configured min/max limits."""
         from backend.blockchain_audit import AuditChain
 
-        with patch("src.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_blockchain):
+        with patch("backend.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_blockchain):
             chain = AuditChain(default_audit_config)
             chain.blockchain = mock_blockchain
 
@@ -152,7 +152,7 @@ class TestLinearChainVerification:
         empty_mock.length = 0
         empty_mock.is_valid_chain = MagicMock(return_value=True)
 
-        with patch("src.blockchain_audit.audit_chain.BlockchainClient", return_value=empty_mock):
+        with patch("backend.blockchain_audit.audit_chain.BlockchainClient", return_value=empty_mock):
             chain = AuditChain(audit_config)
             chain.blockchain = empty_mock
 
@@ -172,7 +172,7 @@ class TestLinearChainVerification:
         single_mock.head = block
         single_mock.is_valid_chain = MagicMock(return_value=True)
 
-        with patch("src.blockchain_audit.audit_chain.BlockchainClient", return_value=single_mock):
+        with patch("backend.blockchain_audit.audit_chain.BlockchainClient", return_value=single_mock):
             chain = AuditChain(audit_config)
             chain.blockchain = single_mock
 
@@ -247,7 +247,7 @@ class TestRecursiveDoubleCheck:
         mock_chain.length = 0
         mock_chain.is_valid_chain = MagicMock(return_value=True)
 
-        with patch("src.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_chain):
+        with patch("backend.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_chain):
             chain = AuditChain(config)
             chain.blockchain = mock_chain
 

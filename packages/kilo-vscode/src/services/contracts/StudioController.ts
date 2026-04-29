@@ -40,6 +40,13 @@ export interface StudioControllerContext {
    * this required once the ProviderAdapter lands.
    */
   routing?: RoutingService
+  /**
+   * When the host webview is disposed, this flag is flipped to `true`.
+   * Long-running streaming handlers (e.g. `contract:generate`) check this
+   * before each `postMessage` call so they break out of their async iterator
+   * and abort the underlying LLM request instead of pulling tokens forever.
+   */
+  disposed?: boolean
   // Future: extensionContext, hermes, governance, etc. — Sprint 3+.
   [key: string]: unknown
 }
@@ -315,12 +322,22 @@ export async function handleContractMessage(
         const ac = new AbortController()
         const req: DocGenRequest = { intent, mode, templateId }
         try {
+          // If the webview is disposed mid-stream, the loop must terminate
+          // — otherwise it pulls LLM tokens forever and `postMessage`
+          // throws/silently fails. We check `ctx.disposed` before every
+          // post and abort the AbortController in `finally` so the
+          // underlying LLM request is cancelled even on early exit.
           for await (const delta of docgen.generate(req, ac.signal)) {
+            if (ctx.disposed) break
             ctx.postMessage({ type: "contract:generate:delta", ...delta })
           }
-          ctx.postMessage({ type: "contract:generate:done" })
+          if (!ctx.disposed) ctx.postMessage({ type: "contract:generate:done" })
         } catch (err) {
-          postError(ctx, type, "generate-failed", err instanceof Error ? err.message : String(err))
+          if (!ctx.disposed) {
+            postError(ctx, type, "generate-failed", err instanceof Error ? err.message : String(err))
+          }
+        } finally {
+          ac.abort()
         }
         return true
       }

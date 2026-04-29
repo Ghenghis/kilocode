@@ -37,6 +37,15 @@ def _reachable(url: str) -> bool:
         return False
 
 
+# Skip the entire VPS-dependent block when the SSH tunnel is not active.
+# These tests require: ssh -L 18081:localhost:8081 -L 18082:... root@VPS
+_VPS_TUNNEL_ACTIVE = _reachable(f"{RUNTIME_URL}/health") or _reachable(f"{SETTINGS_URL}/health")
+pytestmark = pytest.mark.skipif(
+    not _VPS_TUNNEL_ACTIVE,
+    reason="VPS SSH tunnel not active (ports 18081/18082/18091/18095 unreachable)",
+)
+
+
 # ─── Runtime (port 8081) ────────────────────────────────────────────────────
 
 def test_runtime_health():

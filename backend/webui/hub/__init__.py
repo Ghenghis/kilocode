@@ -61,7 +61,7 @@ def create_app(base_url: str = "http://localhost:8095") -> FastAPI:
     _pipeline_router = pipeline.create_router()
 
     # KOM needs references to pipeline_events list and kc_agents dict from agents router
-    from hub.routers.agents import _PIPELINE_EVENTS as _ape, _AGENTS as _kca
+    from backend.webui.hub.routers.agents import _PIPELINE_EVENTS as _ape, _AGENTS as _kca
     _kom_router = kom.create_router(pipeline_events=_ape, kc_agents=_kca)
 
     app.include_router(discord.create_router())

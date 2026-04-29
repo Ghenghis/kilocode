@@ -1462,4 +1462,51 @@ export const dict = {
   "settings.agentBehaviour.permissions.hint":
     "Kurallar sırayla değerlendirilir — son eşleşen kural kazanır. Bu, CLI arka ucundan çözümlenen kural kümesidir.",
   "settings.agentBehaviour.editMode.save": "Tamam",
+  "studio.gates.summary.passing": "{{passing}} of {{total}} gates passing", // TODO: translate
+  "studio.gates.summary.score": "score {{score}}", // TODO: translate
+  "studio.gates.row.whyExpand": "Why this matters", // TODO: translate
+  "studio.gates.row.whyCollapse": "Hide details", // TODO: translate
+  "studio.gates.row.whyHeading": "Why this matters.", // TODO: translate
+  "studio.gates.row.howHeading": "How to fix.", // TODO: translate
+  "studio.gates.row.applyFix": "Apply suggested fix", // TODO: translate
+  "studio.gates.row.override": "Override with reason", // TODO: translate
+  "studio.gates.row.overrideTooltip": "Skip this gate with a written reason. The reason is saved to the audit log.", // TODO: translate
+  "studio.gates.row.overridePrompt": "Reason for override (audit-logged):", // TODO: translate
+  "studio.gates.row.overridePlaceholder": "e.g. Risk accepted by Jane Doe — see ADR-0014.", // TODO: translate
+  "studio.gates.row.overrideSave": "Save override", // TODO: translate
+  "studio.gates.row.overrideCancel": "Cancel", // TODO: translate
+  "studio.gates.status.passing": "Passing", // TODO: translate
+  "studio.gates.status.warn": "Needs attention", // TODO: translate
+  "studio.gates.status.failing": "Failing", // TODO: translate
+  "studio.gates.category.truth": "Truth — is the doc honest and consistent?", // TODO: translate
+  "studio.gates.category.proof": "Proof — can we show the work is done?", // TODO: translate
+  "studio.gates.category.safety": "Safety — does it handle AI risks?", // TODO: translate
+  "studio.gates.category.compliance": "Compliance — is it ready for buyers and auditors?", // TODO: translate
+  "studio.empty.title": "Describe what you want to build", // TODO: translate
+  "studio.empty.subtitle": "Plain English is fine. The studio will ask three follow-up questions, then turn your idea into a contract you can hand to an AI agent.", // TODO: translate
+  "studio.empty.placeholder": "Example: I want to build a marketplace where people buy and sell vintage cameras…", // TODO: translate
+  "studio.empty.tryExamples": "Don't know where to start? Try one of these example projects:", // TODO: translate
+  "studio.empty.example.marketplace": "Marketplace", // TODO: translate
+  "studio.empty.example.internalTool": "Internal tool", // TODO: translate
+  "studio.empty.example.mobileApp": "Mobile app", // TODO: translate
+  "studio.empty.example.aiAssistant": "AI assistant", // TODO: translate
+  "studio.empty.example.ecommerce": "E-commerce store", // TODO: translate
+  "studio.empty.example.personalBlog": "Personal blog", // TODO: translate
+  "studio.empty.cta": "Get started", // TODO: translate
+  "studio.empty.ctaPending": "Getting started…", // TODO: translate
+  "studio.empty.privacy": "We never share your idea outside this workspace.", // TODO: translate
+  "studio.signoff.summary": "{{approved}} of {{total}} acceptance items approved", // TODO: translate
+  "studio.signoff.signingAs": "signing as {{user}}", // TODO: translate
+  "studio.signoff.notSignedIn": "not signed in", // TODO: translate
+  "studio.signoff.empty": "No acceptance criteria found in this contract yet. Add a 'Given / When / Then' block and the studio will list it here.", // TODO: translate
+  "studio.signoff.row.viewTrace": "View test recording", // TODO: translate
+  "studio.signoff.row.viewTraceTooltip": "Open the recording of the test that backs this acceptance item.", // TODO: translate
+  "studio.signoff.row.approve": "Approve", // TODO: translate
+  "studio.signoff.row.reject": "Needs work", // TODO: translate
+  "studio.signoff.status.approved": "Approved", // TODO: translate
+  "studio.signoff.status.awaiting": "Awaiting sign-off", // TODO: translate
+  "studio.signoff.status.rejected": "Rejected — needs work", // TODO: translate
+  "studio.signoff.story": "Story:", // TODO: translate
+  "studio.signoff.lastAction": "Last action by", // TODO: translate
+  "studio.signoff.approvedBy": "Approved by", // TODO: translate
 }

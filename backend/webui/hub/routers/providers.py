@@ -118,7 +118,7 @@ def _detect_from_env() -> list[dict]:
             det["provider_id"] = pid
             results.append(det)
     # Also detect from PROVIDER_HEALTH_URLS config
-    from hub.config import (LM_STUDIO_URL, OLLAMA_URL, LITELLM_URL)
+    from backend.webui.hub.config import (LM_STUDIO_URL, OLLAMA_URL, LITELLM_URL)
     for pid, url in [("lmstudio", LM_STUDIO_URL), ("ollama", OLLAMA_URL), ("litellm", LITELLM_URL)]:
         if url and not any(r.get("provider_id") == pid for r in results):
             det = detect_provider(url)

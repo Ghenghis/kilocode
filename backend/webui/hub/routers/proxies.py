@@ -89,7 +89,7 @@ def create_router() -> APIRouter:
             return name, {"ok": "error" not in r, "data": r}
 
         async def chk_discord():
-            from hub.routers.discord import _BOT_META
+            from backend.webui.hub.routers.discord import _BOT_META
             async def probe(bot, meta):
                 port = BOT_BASE_PORT + meta["port_offset"]
                 r = await _req("GET", f"http://{VPS_HOST}:{port}/health")

@@ -43,7 +43,7 @@ def _run(coro):
 
 
 def _make_integration(config=None):
-    from integration import ContractKitIntegration
+    from backend.integration import ContractKitIntegration
     return ContractKitIntegration(config=config)
 
 
@@ -51,7 +51,7 @@ def _initialized(config=None):
     """Create and initialize a ContractKitIntegration with all external deps mocked."""
     integration = _make_integration(config=config)
     with patch.object(_core.EventBus, "connect", new_callable=AsyncMock), \
-         patch("integration.ZeroClawAdapter", _ConcreteZeroClawAdapter):
+         patch("backend.integration.ZeroClawAdapter", _ConcreteZeroClawAdapter):
         _run(integration.initialize())
     return integration
 

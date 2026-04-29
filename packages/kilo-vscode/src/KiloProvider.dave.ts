@@ -41,6 +41,15 @@ import { handleRoutingRealWebviewMessage } from "./kilo-provider/handlers/routin
 import { handleZeroClawRealWebviewMessage } from "./kilo-provider/handlers/zeroclaw-webview"
 import { handleGovernanceRealWebviewMessage } from "./kilo-provider/handlers/governance-webview"
 import { handleTrainingWebviewMessage as handleTrainingRealWebviewMessage } from "./kilo-provider/handlers/training-webview"
+import { handleOpenClawWebviewMessage } from "./kilo-provider/handlers/openclaw-webview"
+import {
+  handleTestMcpTool,
+  handleTestNotification,
+  handleTestProviderKey,
+  type TestMcpToolRequest,
+  type TestNotificationRequest,
+  type TestProviderKeyRequest,
+} from "./kilo-provider/handlers/test-diagnostics"
 import { handleContractMessage } from "./services/contracts"
 
 export class DaveProviderExtensions {
@@ -224,6 +233,7 @@ export class DaveProviderExtensions {
       if (await handleZeroClawRealWebviewMessage(message, realCtx as never)) return true
       if (await handleGovernanceRealWebviewMessage(message, realCtx as never)) return true
       if (await handleTrainingRealWebviewMessage(message, realCtx as never)) return true
+      if (await handleOpenClawWebviewMessage(message, realCtx as never)) return true
       if (await handleContractMessage(message, realCtx as never)) return true
     } catch (err) {
       console.warn("[KiloProvider.dave] real-backend handler error (non-fatal):", err)
@@ -1034,6 +1044,43 @@ export class DaveProviderExtensions {
           break
         }
 
+        // ─── canary.10 test/diagnostic handlers ────────────────────────
+        // NotificationsTab → testNotification, ProvidersTab → testProviderKey,
+        // AgentBehaviourTab → testMcpTool. test-diagnostics.ts owns the
+        // implementation; we just wire the dispatch here.
+        case "testMcpTool": {
+          const provider = this.provider as unknown as {
+            client?: import("@kilocode/sdk/v2/client").KiloClient | null
+            getProjectDirectory?: (sessionId?: string) => string | undefined
+            currentSession?: { id?: string }
+          }
+          const workspaceDir =
+            provider.getProjectDirectory?.(provider.currentSession?.id) ??
+            vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ??
+            process.cwd()
+          await handleTestMcpTool(
+            provider.client ?? undefined,
+            workspaceDir,
+            (msg) => this.postMessage(msg as never),
+            m as TestMcpToolRequest,
+          )
+          break
+        }
+        case "testNotification": {
+          await handleTestNotification(
+            (msg) => this.postMessage(msg as never),
+            m as TestNotificationRequest,
+          )
+          break
+        }
+        case "testProviderKey": {
+          await handleTestProviderKey(
+            (msg) => this.postMessage(msg as never),
+            m as TestProviderKeyRequest,
+          )
+          break
+        }
+
         case "previewSystemPrompt": {
           // Render the active system-prompt template with current variables
           // so the settings → Context tab can show the user what the model
@@ -1377,7 +1424,14 @@ function isV4MessageType(type: string): boolean {
     // Owned by the dave overlay so the upstream KiloProvider stays byte-identical
     // to the kilocode baseline; the dave switch reads the active session/model
     // and posts back `systemPromptPreview`.
-    type === "previewSystemPrompt"
+    type === "previewSystemPrompt" ||
+    // OpenClaw local AI gateway (OpenClawTab → openclaw-webview handler)
+    type.startsWith("openclaw") ||
+    // canary.10 test/diagnostic messages (Notifications/Providers/AgentBehaviour tabs
+    // → test-diagnostics handler)
+    type === "testMcpTool" ||
+    type === "testNotification" ||
+    type === "testProviderKey"
   )
 }
 

@@ -308,7 +308,7 @@ class TestAgentAccessAPISaveLoadState:
 
         # Redirect the state path to tmp_path
         state_file = tmp_path / "webui_state.json"
-        import webui.control_center as cc_module
+        import backend.webui.control_center as cc_module
         original_path = cc_module._WEBUI_STATE_PATH
         cc_module._WEBUI_STATE_PATH = state_file
 
@@ -335,7 +335,7 @@ class TestAgentAccessAPISaveLoadState:
     def test_load_missing_file_returns_error(self, monkeypatch, tmp_path):
         monkeypatch.setenv("WEBUI_AGENT_TOKEN", "tok")
 
-        import webui.control_center as cc_module
+        import backend.webui.control_center as cc_module
         original_path = cc_module._WEBUI_STATE_PATH
         cc_module._WEBUI_STATE_PATH = tmp_path / "no_such_file.json"
 

@@ -89,6 +89,20 @@ const HermesTab: Component = () => {
     vscode.postMessage({ type: "hermes.listLocalAgents" })
   }
 
+  // Track ad-hoc setTimeout handles spawned by user actions (saveKey,
+  // submitTask, clearKey, saveUrl) so they're cancelled on unmount. Without
+  // this the timer fires after the component is gone and either calls
+  // setSignal-on-unmounted-component (warning) or postMessage on a dead
+  // VS Code webview bridge.
+  const pendingTimers = new Set<ReturnType<typeof setTimeout>>()
+  const trackTimeout = (fn: () => void, ms: number): void => {
+    const handle = setTimeout(() => {
+      pendingTimers.delete(handle)
+      fn()
+    }, ms)
+    pendingTimers.add(handle)
+  }
+
   onMount(() => {
     requestStatus()
     requestLocalAgents()
@@ -97,6 +111,11 @@ const HermesTab: Component = () => {
 
     window.addEventListener("message", onMessage)
     onCleanup(() => window.removeEventListener("message", onMessage))
+
+    onCleanup(() => {
+      for (const t of pendingTimers) clearTimeout(t)
+      pendingTimers.clear()
+    })
   })
 
   // ── Message handler ────────────────────────────────────────────────────────
@@ -129,7 +148,7 @@ const HermesTab: Component = () => {
       }
       case "hermesError": {
         setError((msg.message as string) ?? "Unknown error")
-        setTimeout(() => setError(null), 5000)
+        trackTimeout(() => setError(null), 5000)
         setToggling(false)
         setPinging(false)
         setSavingKey(false)
@@ -159,12 +178,12 @@ const HermesTab: Component = () => {
     setSavingKey(true)
     vscode.postMessage({ type: "hermesSetApiKey", key: k })
     setApiKeyInput("")
-    setTimeout(() => { setSavingKey(false); requestStatus() }, 1200)
+    trackTimeout(() => { setSavingKey(false); requestStatus() }, 1200)
   }
 
   const clearKey = () => {
     vscode.postMessage({ type: "hermesClearApiKey" })
-    setTimeout(requestStatus, 800)
+    trackTimeout(requestStatus, 800)
   }
 
   const saveUrl = () => {
@@ -172,7 +191,7 @@ const HermesTab: Component = () => {
     if (!url) return
     vscode.postMessage({ type: "hermesUpdateConfig", key: "baseUrl", value: url })
     setUrlDirty(false)
-    setTimeout(requestStatus, 500)
+    trackTimeout(requestStatus, 500)
   }
 
   const saveApproval = () => {
@@ -200,7 +219,7 @@ const HermesTab: Component = () => {
       ...(agentId ? { agent_id_hint: agentId } : {}),
     })
     setAgentPrompt("")
-    setTimeout(() => { setSubmitting(false); vscode.postMessage({ type: "requestHermesTasks" }) }, 1500)
+    trackTimeout(() => { setSubmitting(false); vscode.postMessage({ type: "requestHermesTasks" }) }, 1500)
   }
 
   const refreshTasks = () => {

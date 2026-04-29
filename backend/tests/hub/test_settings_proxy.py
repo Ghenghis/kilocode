@@ -6,7 +6,7 @@ We mock the _req function to simulate the canonical service responses.
 from unittest.mock import patch, AsyncMock
 
 # Patch target: where _req is imported INTO, not where it's defined
-_PATCH_REQ = "hub.routers.settings._req"
+_PATCH_REQ = "backend.webui.hub.routers.settings._req"
 
 _MOCK_SPEECH = {
     "enabled": False, "provider": "openai", "volume": 80,

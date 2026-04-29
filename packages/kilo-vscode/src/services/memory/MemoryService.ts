@@ -229,7 +229,16 @@ export class MemoryService implements vscode.Disposable {
   private readonly remoteWriteTimeoutMs = 5000
   private readonly remoteRecallTimeoutMs = 3000
   private remoteRetryQueue: MemoryEntry[] = []
-  private isFlushingRetryQueue = false
+  /**
+   * Serialises concurrent {@link flushRemoteRetryQueue} calls. The previous
+   * boolean-guard approach was racy: between checking `isFlushingRetryQueue`
+   * and setting it to `true` an `await` could yield, allowing a second caller
+   * to enter and corrupt the queue. Storing the in-flight promise itself lets
+   * other callers `await` the existing flush instead of starting a new one.
+   *
+   * Fixed in Wave 2 race-conditions PR.
+   */
+  private currentFlush: Promise<void> | null = null
 
   private readonly _onConnectionChanged = new vscode.EventEmitter<MemoryConnection>()
   readonly onConnectionChanged = this._onConnectionChanged.event
@@ -1285,27 +1294,55 @@ export class MemoryService implements vscode.Disposable {
     }
   }
 
-  /** Flush any queued retries, one at a time. Safe to call repeatedly. */
+  /**
+   * Flush any queued retries, one at a time. Safe to call repeatedly and
+   * concurrently — concurrent callers reuse the in-flight flush promise
+   * rather than racing to mutate the queue.
+   *
+   * Fixed in Wave 2 race-conditions PR; see GovernanceService.test.ts pattern
+   * for testing serialized flush.
+   */
   private async flushRemoteRetryQueue(): Promise<void> {
-    if (this.isFlushingRetryQueue) return
+    // Reuse an in-flight flush if one is already running. This atomic
+    // check-or-await pattern replaces the previous boolean guard, which
+    // could be defeated by an `await` interleaving between the read and
+    // the write.
+    const inflight = this.currentFlush
+    if (inflight) return inflight
+
     if (!this.isRemoteEndpointConnected()) return
     if (this.remoteRetryQueue.length === 0) return
 
-    this.isFlushingRetryQueue = true
-    try {
-      while (this.remoteRetryQueue.length > 0 && this.isRemoteEndpointConnected()) {
-        const entry = this.remoteRetryQueue[0]
-        const url = `${this.normaliseEndpoint(this.connection.endpoint)}/write`
-        const ok = await this.postJson(url, this.entryToWritePayload(entry), this.remoteWriteTimeoutMs)
-        if (!ok) {
-          // Stop draining on first failure; keep the queue intact for the next attempt.
-          break
+    // Capture the endpoint once at the start of the flush. If the user
+    // reconfigures `this.connection.endpoint` mid-flush, we want to fail
+    // the in-flight writes against the *original* endpoint (so we don't
+    // blame the new one) and let the next call pick up the new endpoint.
+    const flushEndpoint = this.connection.endpoint
+
+    const run = async (): Promise<void> => {
+      try {
+        while (
+          this.remoteRetryQueue.length > 0 &&
+          this.isRemoteEndpointConnected() &&
+          this.connection.endpoint === flushEndpoint
+        ) {
+          const entry = this.remoteRetryQueue[0]
+          const url = `${this.normaliseEndpoint(flushEndpoint)}/write`
+          const ok = await this.postJson(url, this.entryToWritePayload(entry), this.remoteWriteTimeoutMs)
+          if (!ok) {
+            // Stop draining on first failure; keep the queue intact for the
+            // next attempt. We don't blame the (possibly new) endpoint.
+            break
+          }
+          this.remoteRetryQueue.shift()
         }
-        this.remoteRetryQueue.shift()
+      } finally {
+        this.currentFlush = null
       }
-    } finally {
-      this.isFlushingRetryQueue = false
     }
+
+    this.currentFlush = run()
+    return this.currentFlush
   }
 
   /** Test-only accessor for the retry queue depth. */

@@ -4,7 +4,7 @@ Hub v2 — SSE Event Bus.
 Any router can call emit(event_type, payload) to broadcast to all SSE subscribers.
 
 Usage in a router:
-    from hub.event_bus import emit
+    from backend.webui.hub.event_bus import emit
     emit("hermes.status.changed", {"status": "online"})
 
 Clients subscribe via:

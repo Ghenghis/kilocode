@@ -185,7 +185,7 @@ def create_router() -> APIRouter:
                     found.append(repair)
 
         # Check for stale providers (circuit breakers open)
-        from hub.config import PROVIDER_HEALTH_URLS
+        from backend.webui.hub.config import PROVIDER_HEALTH_URLS
         # We just create repair entries — actual health is checked by provider router
         emit("repair.scan.complete", {"found": len(found)})
         return JSONResponse({"ok": True, "found": len(found), "repairs": found})

@@ -226,7 +226,11 @@ const HubTab: Component = () => {
   let tickTimer: ReturnType<typeof setInterval> | null = null
 
   const refresh = async () => {
-    if (loading()) return
+    // Abort any in-flight fetch batch before starting a new one.
+    // No loading() guard here — the abort clears the previous request,
+    // so a new call is always safe and the guard was causing onMount's
+    // scheduleNext() to be silently dropped when the visibility createEffect
+    // fired first.
     abortCtl?.abort()
     abortCtl = new AbortController()
     setLoading(true)
@@ -297,13 +301,17 @@ const HubTab: Component = () => {
     }, { defer: true }),
   )
 
-  // Re-fetch immediately when the panel becomes visible again so the user
-  // sees fresh data the moment they return to the tab.
-  createEffect(() => {
-    if (isVisible()) {
-      void refresh()
-    }
-  })
+  // Re-fetch when the document becomes visible again (e.g. user switches back
+  // to VS Code from another application). { defer: true } is critical — without
+  // it this effect fires immediately on every component mount, bypassing the
+  // 150 ms debounce and causing 6 fetches per tab click regardless of how
+  // quickly the user moves on. With defer it only reacts to visibility
+  // *changes* (false→true); the initial fetch is handled by onMount.
+  createEffect(
+    on(isVisible, (visible) => {
+      if (visible) void refresh()
+    }, { defer: true }),
+  )
 
   onCleanup(() => {
     abortCtl?.abort()

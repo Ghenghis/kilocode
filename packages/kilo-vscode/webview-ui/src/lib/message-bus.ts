@@ -53,6 +53,77 @@ function getApi(): VSCodeAPI {
   return cachedApi
 }
 
+// ── Instrumentation (off by default) ────────────────────────────────────────
+//
+// Enable from the DevTools console with:
+//
+//     window.__KILO_MSG_TRACE__ = true
+//
+// Disable with:
+//
+//     window.__KILO_MSG_TRACE__ = false
+//
+// While enabled, every outgoing postMessage and every incoming extension
+// message is logged with a high-resolution timestamp, the message `type`,
+// and (for outgoing) the call site if a stack is available. The trace is
+// also pushed into `window.__KILO_MSG_LOG__` (a ring buffer capped at
+// 2000 entries) so a frozen webview can be inspected post-mortem by
+// reading the buffer once VS Code becomes responsive again.
+//
+// Used by docs/FREEZE_DIAGNOSTIC.md to capture exact send/receive sequence
+// while reproducing the freeze.
+
+interface TraceEntry {
+  t: number // ms since page load (performance.now)
+  dir: "out" | "in"
+  type: string
+  payload: unknown
+}
+
+const TRACE_BUFFER_MAX = 2000
+const traceBuffer: TraceEntry[] = []
+
+declare global {
+  interface Window {
+    __KILO_MSG_TRACE__?: boolean
+    __KILO_MSG_LOG__?: TraceEntry[]
+    __KILO_MSG_LOG_CLEAR__?: () => void
+    __KILO_MSG_LOG_DUMP__?: () => string
+  }
+}
+
+function isTracing(): boolean {
+  return typeof window !== "undefined" && window.__KILO_MSG_TRACE__ === true
+}
+
+function recordTrace(dir: "out" | "in", type: string, payload: unknown): void {
+  const entry: TraceEntry = {
+    t: typeof performance !== "undefined" ? performance.now() : Date.now(),
+    dir,
+    type,
+    payload,
+  }
+  traceBuffer.push(entry)
+  if (traceBuffer.length > TRACE_BUFFER_MAX) traceBuffer.shift()
+  // Cheap-formatted console line, easy to grep in DevTools.
+  // eslint-disable-next-line no-console
+  console.debug(`[msg-trace ${dir.toUpperCase()} +${entry.t.toFixed(1)}ms]`, type, payload)
+}
+
+if (typeof window !== "undefined") {
+  // Expose live buffer + helpers. Off-by-default flag means no traffic until
+  // the user opts in from DevTools.
+  window.__KILO_MSG_LOG__ = traceBuffer
+  window.__KILO_MSG_LOG_CLEAR__ = () => {
+    traceBuffer.length = 0
+  }
+  window.__KILO_MSG_LOG_DUMP__ = () => {
+    return traceBuffer
+      .map((e) => `${e.t.toFixed(1)}\t${e.dir}\t${e.type}`)
+      .join("\n")
+  }
+}
+
 // ── Subscription / fan-out ──────────────────────────────────────────────────
 
 type MessageHandler = (message: ExtensionMessage) => void
@@ -68,6 +139,10 @@ function ensureListenerInstalled(): void {
 
 function dispatchEvent(event: MessageEvent): void {
   const msg = event.data as ExtensionMessage
+  if (isTracing()) {
+    const t = (msg as { type?: string } | undefined)?.type ?? "<no-type>"
+    recordTrace("in", t, msg)
+  }
   // Iterate over a snapshot so a handler that unsubscribes during dispatch
   // doesn't disturb the iteration order.
   const snapshot = Array.from(handlers)
@@ -113,6 +188,10 @@ export function __resetMessageBus(): void {
  * but doesn't require a Solid context so plain modules can use it.
  */
 export function postMessage(message: WebviewMessage): void {
+  if (isTracing()) {
+    const t = (message as { type?: string } | undefined)?.type ?? "<no-type>"
+    recordTrace("out", t, message)
+  }
   getApi().postMessage(message)
 }
 
@@ -143,6 +222,10 @@ export function postMessageDebounced(message: WebviewMessage, key: string, ms = 
   }
   const timer = setTimeout(() => {
     pendingDebounced.delete(key)
+    if (isTracing()) {
+      const t = (message as { type?: string } | undefined)?.type ?? "<no-type>"
+      recordTrace("out", `${t} [debounced:${key}]`, message)
+    }
     getApi().postMessage(message)
   }, ms)
   pendingDebounced.set(key, { timer, message })

@@ -13,7 +13,8 @@
 
 import { Component, createSignal, onMount, onCleanup, For, Show } from "solid-js"
 import { useVSCode } from "../../context/vscode"
-import { subscribeToMessages, postMessageDebounced } from "../../lib/message-bus"
+import { subscribeToMessages, postMessageDebounced, cancelDebounced } from "../../lib/message-bus"
+import { useDocumentVisible } from "../../hooks/useDocumentVisible"
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -81,6 +82,11 @@ const HermesTab: Component = () => {
   const [localAgents, setLocalAgents] = createSignal<LocalAgent[]>([])
   const [selectedAgentId, setSelectedAgentId] = createSignal<string>("")
 
+  // Visibility-gated polling: when the Settings panel is hidden (user switched
+  // to a different VS Code panel) we skip the 30s status sweep so we don't
+  // wake the extension host with redundant requestHermesStatus traffic.
+  const isVisible = useDocumentVisible()
+
   // ── Load status on mount ───────────────────────────────────────────────────
   // Use the shared bus's debounced poster for status pings: when the Settings
   // panel opens, every tab's onMount fires almost simultaneously and floods
@@ -111,7 +117,12 @@ const HermesTab: Component = () => {
   onMount(() => {
     requestStatus()
     requestLocalAgents()
-    const interval = setInterval(requestStatus, 30_000)
+    // Only fire the periodic refresh while the webview is actually visible.
+    // VS Code dispatches `visibilitychange` whenever the panel is hidden,
+    // and `useDocumentVisible` keeps `isVisible()` in sync.
+    const interval = setInterval(() => {
+      if (isVisible()) requestStatus()
+    }, 30_000)
     onCleanup(() => clearInterval(interval))
 
     // Subscribe via the shared bus so this tab's listener doesn't compound
@@ -123,6 +134,11 @@ const HermesTab: Component = () => {
     onCleanup(() => {
       for (const t of pendingTimers) clearTimeout(t)
       pendingTimers.clear()
+      // Cancel any pending debounced sends so they don't fire after the
+      // webview bridge for this tab is gone (would no-op via the shared API
+      // singleton, but the trace + timer wakeup cost is still real).
+      cancelDebounced("hermes:requestStatus")
+      cancelDebounced("hermes:listLocalAgents")
     })
   })
 

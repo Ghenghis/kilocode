@@ -3,7 +3,7 @@ import { Switch } from "@kilocode/kilo-ui/switch"
 import { Card } from "@kilocode/kilo-ui/card"
 import { Button } from "@kilocode/kilo-ui/button"
 import { useVSCode } from "../../context/vscode"
-import { postMessageDebounced } from "../../lib/message-bus"
+import { postMessageDebounced, cancelDebounced } from "../../lib/message-bus"
 import type { ExtensionMessage } from "../../types/messages"
 import SettingsRow from "./SettingsRow"
 
@@ -352,6 +352,29 @@ const RoutingTab: Component = () => {
   const [ruleTestResult, setRuleTestResult] = createSignal<{ provider: string; rule: string } | null>(null)
   const [testingRule, setTestingRule] = createSignal(false)
 
+  // Track ad-hoc safety-bailout setTimeout handles so they're cancelled on
+  // unmount. Without this, clicking "Test Connection" or "Test Rule" then
+  // switching tabs leaves a 10-15s timer alive holding a closure that calls
+  // setTestingProvider(null) / setTestingRule(false) on a destroyed component.
+  // Wave 7 deferred: previously had 2 raw setTimeouts with no cleanup.
+  const pendingTimers = new Set<ReturnType<typeof setTimeout>>()
+  const trackTimeout = (fn: () => void, ms: number): ReturnType<typeof setTimeout> => {
+    const handle = setTimeout(() => {
+      pendingTimers.delete(handle)
+      fn()
+    }, ms)
+    pendingTimers.add(handle)
+    return handle
+  }
+  onCleanup(() => {
+    for (const t of pendingTimers) clearTimeout(t)
+    pendingTimers.clear()
+    // Cancel any pending debounced sends — fixes the "click 5 tabs and the
+    // last requestRoutingState fires from 4 dead tabs after they unmount"
+    // class of phantom traffic.
+    cancelDebounced("routing:requestState")
+  })
+
   // ── Message Handler ──────────────────────────────────────
   const unsubscribe = vscode.onMessage((msg: ExtensionMessage) => {
     const m = msg as unknown as Record<string, unknown>
@@ -436,7 +459,7 @@ const RoutingTab: Component = () => {
     vscode.postMessage({ type: "routingTestProvider", providerId: pid } as never)
     // Safety timeout: if backend never responds (hung fetch, network issue),
     // clear the "Testing..." state after 15 seconds so the button becomes clickable again.
-    setTimeout(() => {
+    trackTimeout(() => {
       if (testingProvider() === pid) {
         console.warn("[RoutingTab] Test timeout for", pid, "— clearing testing state")
         setTestingProvider(null)
@@ -513,7 +536,7 @@ const RoutingTab: Component = () => {
     setRuleTestResult(null)
     vscode.postMessage({ type: "routingTestRule", prompt: rulePrompt() } as never)
     // Safety timeout: if the backend never replies (service down), reset.
-    setTimeout(() => {
+    trackTimeout(() => {
       if (testingRule()) setTestingRule(false)
     }, 10_000)
   }

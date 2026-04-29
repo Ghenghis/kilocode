@@ -355,6 +355,27 @@ const AgentBackendsTab: Component = () => {
   const [yoloMode, setYoloMode] = createSignal(false)
   const [auditLog, setAuditLog] = createSignal(true)
 
+  // Track ad-hoc setTimeout handles spawned by user actions (testBackendCard,
+  // testOpenHands, testGoose, YOLO checklist animation) so they're cancelled on
+  // unmount. Wave 7 deferred: previous code called `onCleanup()` inside event
+  // handlers, but Solid's onCleanup is a no-op outside a reactive scope, so
+  // those timers leaked across every tab remount. Each "click 5 tabs" cycle
+  // accumulated 6+ live timers per tab visit, plus 6 more per YOLO toggle,
+  // each holding a closure that calls setSignal on a destroyed component.
+  const pendingTimers = new Set<ReturnType<typeof setTimeout>>()
+  const trackTimeout = (fn: () => void, ms: number): ReturnType<typeof setTimeout> => {
+    const handle = setTimeout(() => {
+      pendingTimers.delete(handle)
+      fn()
+    }, ms)
+    pendingTimers.add(handle)
+    return handle
+  }
+  onCleanup(() => {
+    for (const t of pendingTimers) clearTimeout(t)
+    pendingTimers.clear()
+  })
+
   // Derived
   const backends = createMemo(() => backend.state().backends)
   const profiles = createMemo(() => backend.state().profiles)
@@ -367,32 +388,30 @@ const AgentBackendsTab: Component = () => {
 
   const testOpenHands = () => {
     setOpenhandsTestStatus("testing")
-    setTimeout(() => {
+    trackTimeout(() => {
       // TODO Phase 2: real fetch to openhandsServerUrl/health
       setOpenhandsTestStatus("ok")
-      setTimeout(() => setOpenhandsTestStatus("idle"), 3000)
+      trackTimeout(() => setOpenhandsTestStatus("idle"), 3000)
     }, 1200)
   }
 
   const testGoose = () => {
     setGooseTestStatus("testing")
-    setTimeout(() => {
+    trackTimeout(() => {
       // TODO Phase 2: real goose CLI version check
       setGooseTestStatus("ok")
-      setTimeout(() => setGooseTestStatus("idle"), 3000)
+      trackTimeout(() => setGooseTestStatus("idle"), 3000)
     }, 1200)
   }
 
   const testBackendCard = (backendId: string) => {
     setCardTestStatus((prev) => ({ ...prev, [backendId]: "testing" }))
-    const id = setTimeout(() => {
+    trackTimeout(() => {
       setCardTestStatus((prev) => ({ ...prev, [backendId]: "ok" }))
-      const resetId = setTimeout(() => {
+      trackTimeout(() => {
         setCardTestStatus((prev) => ({ ...prev, [backendId]: "idle" }))
       }, 3000)
-      onCleanup(() => clearTimeout(resetId))
     }, 1400)
-    onCleanup(() => clearTimeout(id))
   }
 
   // ── Profile editor helpers ─────────────────────────────────────────────────
@@ -1173,14 +1192,13 @@ const AgentBackendsTab: Component = () => {
                       if (on) {
                         // Animate checklist items in sequence
                         YOLO_UNLOCKS.forEach((_, i) => {
-                          const id = setTimeout(() => {
+                          trackTimeout(() => {
                             setYoloChecked((prev) => {
                               const next = [...prev]
                               next[i] = true
                               return next
                             })
                           }, i * 120)
-                          onCleanup(() => clearTimeout(id))
                         })
                       } else {
                         setYoloChecked(YOLO_UNLOCKS.map(() => false))

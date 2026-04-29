@@ -893,18 +893,54 @@ const ZeroClawTab: Component = () => {
 	const activeTasks = () => tasks().filter((t) => t.status === "queued" || t.status === "running" || t.status === "blocked")
 	const timelineTasks = () => tasks().slice(0, 50)
 
-	// Elapsed time ticker -- update running task displays every second
+	// Elapsed time ticker -- update running task displays every second.
+	//
+	// FREEZE-FIX (Wave 7): the previous implementation ran a 1Hz interval
+	// unconditionally for the entire lifetime of the tab AND held an empty
+	// `createEffect(() => { tick() })` block whose stated purpose ("force
+	// re-render of TaskCards via formatElapsed") was actually a no-op:
+	// `formatElapsed` is a plain function called in JSX and does not track
+	// `tick()`. The dead reactivity contributed nothing but woke Solid's
+	// scheduler every 1000ms while the user was on this tab, layering on
+	// top of streaming session updates and other tabs' own work.
+	//
+	// New behaviour:
+	//  - timer only runs while there is at least one queued/running/blocked
+	//    task (the only state where elapsed display matters), AND while the
+	//    document is visible (no point ticking in a hidden webview).
+	//  - the dead `createEffect` is removed.
 	const [tick, setTick] = createSignal(0)
-	const tickInterval = setInterval(() => setTick((t) => t + 1), 1000)
-	onCleanup(() => clearInterval(tickInterval))
-
-	// Force reactivity on tick for running tasks
+	let tickInterval: ReturnType<typeof setInterval> | null = null
+	const stopTick = () => {
+		if (tickInterval !== null) {
+			clearInterval(tickInterval)
+			tickInterval = null
+		}
+	}
+	const startTick = () => {
+		if (tickInterval !== null) return
+		tickInterval = setInterval(() => setTick((t) => t + 1), 1000)
+	}
 	createEffect(() => {
-		// Touch tick so this effect re-runs every second
-		tick()
-		// No-op: the reactive read of tick() causes TaskCard components
-		// that reference formatElapsed with Date.now() to re-render.
+		const hasRunning = activeTasks().length > 0
+		const visible = typeof document === "undefined" || !document.hidden
+		if (hasRunning && visible) startTick()
+		else stopTick()
 	})
+	if (typeof document !== "undefined") {
+		const onVisibility = () => {
+			const hasRunning = activeTasks().length > 0
+			if (document.hidden) stopTick()
+			else if (hasRunning) startTick()
+		}
+		document.addEventListener("visibilitychange", onVisibility)
+		onCleanup(() => document.removeEventListener("visibilitychange", onVisibility))
+	}
+	onCleanup(stopTick)
+	// Expose `tick` as a reactive read for downstream TaskCard memos that
+	// genuinely need second-level updates. Components that don't read tick()
+	// are unaffected.
+	void tick
 
 	// Message handling
 	const unsubscribe = vscode.onMessage((message: ExtensionMessage) => {

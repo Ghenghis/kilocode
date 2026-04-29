@@ -17,6 +17,7 @@
 
 import { Component, createSignal, createEffect, onCleanup, Show, For } from "solid-js"
 import { useVSCode } from "../../context/vscode"
+import { useDocumentVisible } from "../../hooks/useDocumentVisible"
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -217,11 +218,19 @@ const HubTab: Component = () => {
     }
   }
 
+  // Visibility-gated polling: skip the auto-refresh chain + the 5s tick while
+  // the user has switched away from the Settings panel — there is nothing in
+  // the DOM that depends on `_now()` or `summary()` until they come back.
+  const isVisible = useDocumentVisible()
+
   const scheduleNext = () => {
     if (timer) clearTimeout(timer)
     if (!autoRefresh()) return
     timer = setTimeout(async () => {
-      await refresh()
+      // If the panel was hidden when the timer fired, skip the network call
+      // and reschedule cheaply. The user will get a fresh refresh on re-show
+      // (the visibility effect below kicks one immediately).
+      if (isVisible()) await refresh()
       scheduleNext()
     }, intervalMs())
   }
@@ -235,8 +244,20 @@ const HubTab: Component = () => {
     scheduleNext()
   })
 
-  // Tick "now" every 5s so relative-time labels update
-  tickTimer = setInterval(() => setNow(Date.now()), 5000)
+  // Re-fetch immediately when the panel becomes visible again so the user
+  // sees fresh data the moment they return to the tab.
+  createEffect(() => {
+    if (isVisible()) {
+      void refresh()
+    }
+  })
+
+  // Tick "now" every 5s so relative-time labels update — but only while
+  // visible; the labels aren't observed when hidden, and the wake-up cost
+  // adds up at 28 tabs.
+  tickTimer = setInterval(() => {
+    if (isVisible()) setNow(Date.now())
+  }, 5000)
 
   onCleanup(() => {
     abortCtl?.abort()

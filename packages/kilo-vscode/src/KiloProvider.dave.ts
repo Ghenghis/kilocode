@@ -67,6 +67,13 @@ export class DaveProviderExtensions {
   private hermesStatusSvc: import("./services/hermes").HermesStatusService | null = null
   private hermesClientSvc: import("./services/hermes").HermesClient | null = null
 
+  // Disposers for the SSH / ZeroClaw / Routing event listeners registered in
+  // setV4Services(). Tracked so re-calls of setV4Services() do not stack
+  // duplicate listeners — each duplicate would cause an extra postMessage
+  // per service emit, and after several tab-panel-deserializations + settings
+  // openings the message bus saturates and the webview freezes.
+  private v4Disposers: Array<() => void> = []
+
   constructor(private readonly provider: KiloProvider) {}
 
   /** Forward to provider's postMessage — kept private here for symmetry with the original code. */
@@ -158,9 +165,22 @@ export class DaveProviderExtensions {
     this.workstationProfile = services.workstation
     if (services.discovery) this.discoveryService = services.discovery
 
+    // ── Idempotency guard ────────────────────────────────────────────────
+    // Every prior listener registered on a previous setV4Services() call
+    // must be removed before we register fresh ones. Otherwise every
+    // service emit fires N copies of the postMessage, and the webview
+    // message bus saturates after a handful of re-registrations (which
+    // happen on tab-panel deserialization, settings panel open, and
+    // discovery completion). This is the actual fix for the user-reported
+    // "click 5 tabs → freeze" symptom.
+    for (const dispose of this.v4Disposers) {
+      try { dispose() } catch { /* listener may have been auto-disposed */ }
+    }
+    this.v4Disposers = []
+
     // Bridge SSH service events to the webview
     if (services.ssh && typeof services.ssh.onChange === "function") {
-      services.ssh.onChange((event: Record<string, unknown>) => {
+      const sshHandler = (event: Record<string, unknown>) => {
         switch (event.type) {
           case "connectionStatus":
             this.postMessage({ type: "sshConnectionStatus", profileName: event.profileName, status: event.status, error: event.error } as never)
@@ -178,22 +198,55 @@ export class DaveProviderExtensions {
             this.postMessage({ type: "sshError", error: event.error } as never)
             break
         }
-      })
+      }
+      const off = services.ssh.onChange(sshHandler)
+      // SSHService.onChange may return an unsubscribe function or void.
+      // If void, fall back to removing via a possible offChange hook; if
+      // neither exists, we can't unsubscribe and accept the leak (but the
+      // count is bounded to one per service per setV4Services call).
+      if (typeof off === "function") {
+        this.v4Disposers.push(off as () => void)
+      } else if (typeof (services.ssh as unknown as { offChange?: (h: typeof sshHandler) => void }).offChange === "function") {
+        const offChange = (services.ssh as unknown as { offChange: (h: typeof sshHandler) => void }).offChange
+        this.v4Disposers.push(() => offChange(sshHandler))
+      }
     }
 
     // Bridge ZeroClaw status events to webview
     if (services.zeroClaw) {
-      services.zeroClaw.onStatusChange((event) => {
+      const zcHandler = (event: { task: unknown }) => {
         this.postMessage({ type: "zeroClawTaskUpdated", task: event.task } as never)
-      })
+      }
+      const off = services.zeroClaw.onStatusChange(zcHandler)
+      if (typeof off === "function") {
+        this.v4Disposers.push(off as () => void)
+      } else if (typeof (services.zeroClaw as unknown as { offStatusChange?: (h: typeof zcHandler) => void }).offStatusChange === "function") {
+        const offStatusChange = (services.zeroClaw as unknown as { offStatusChange: (h: typeof zcHandler) => void }).offStatusChange
+        this.v4Disposers.push(() => offStatusChange(zcHandler))
+      }
     }
 
     // Bridge routing state changes
     if (services.routing) {
-      services.routing.onChange(() => {
+      const routingHandler = () => {
         this.postMessage({ type: "routingProvidersLoaded", providers: services.routing.getProviders() } as never)
-      })
+      }
+      const off = services.routing.onChange(routingHandler)
+      if (typeof off === "function") {
+        this.v4Disposers.push(off as () => void)
+      } else if (typeof (services.routing as unknown as { offChange?: (h: typeof routingHandler) => void }).offChange === "function") {
+        const offChange = (services.routing as unknown as { offChange: (h: typeof routingHandler) => void }).offChange
+        this.v4Disposers.push(() => offChange(routingHandler))
+      }
     }
+  }
+
+  /** Dispose all V4 service event listeners. Called from extension deactivate. */
+  dispose(): void {
+    for (const off of this.v4Disposers) {
+      try { off() } catch { /* listener already disposed */ }
+    }
+    this.v4Disposers = []
   }
 
   // ──────────────────────────────────────────────────────────────────

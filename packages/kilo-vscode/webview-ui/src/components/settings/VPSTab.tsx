@@ -3,6 +3,7 @@ import { Card } from "@kilocode/kilo-ui/card"
 import { Button } from "@kilocode/kilo-ui/button"
 import { Switch } from "@kilocode/kilo-ui/switch"
 import { useVSCode } from "../../context/vscode"
+import { useDocumentVisible } from "../../hooks/useDocumentVisible"
 import SettingsRow from "./SettingsRow"
 
 // ─── Types ───────────────────────────────────────────────
@@ -373,12 +374,16 @@ const VPSTab: Component = () => {
   })
   onCleanup(unsubscribe)
 
+  // Visibility-gated polling: don't ping servers or refresh metrics while the
+  // panel is hidden. Saves a postMessage per server every 30s.
+  const isVisible = useDocumentVisible()
+
   // ── Auto-refresh effect ──────────────────────────────
   createEffect(() => {
     if (refreshTimer) clearInterval(refreshTimer)
     if (autoRefresh() && selectedServerId()) {
       refreshTimer = setInterval(() => {
-        requestMetrics()
+        if (isVisible()) requestMetrics()
       }, refreshInterval() * 1000)
     }
   })
@@ -386,16 +391,30 @@ const VPSTab: Component = () => {
   // ── 30s auto-ping sweep ─────────────────────────────
   // Fires `vpsServerPing` for every registered server on a 30s cadence so the
   // inventory's status column is "live" without the user having to click each row.
+  //
+  // IMPORTANT: this effect must NOT depend on `servers()` directly — every
+  // ping result mutates the servers signal (status flips online/offline),
+  // which would re-fire this effect and immediately call `sweep()` again,
+  // turning the 30s interval into a busy-loop. We snapshot the inventory
+  // length via a separate signal that only changes on add/remove.
+  const [hasServers, setHasServers] = createSignal(false)
+  createEffect(() => {
+    setHasServers(servers().length > 0)
+  })
   createEffect(() => {
     if (pingTimer) clearInterval(pingTimer)
-    if (servers().length === 0) return
+    if (!hasServers()) return
     const sweep = () => {
+      // Read servers() inside the closure so the snapshot is fresh per tick,
+      // but the effect itself doesn't re-subscribe to per-server changes.
       for (const s of servers()) {
         postMessage({ type: "vpsServerPing", serverId: s.id } as never)
       }
     }
-    sweep() // immediate first pass on mount / inventory change
-    pingTimer = setInterval(sweep, 30_000)
+    if (isVisible()) sweep() // immediate first pass on mount / inventory change
+    pingTimer = setInterval(() => {
+      if (isVisible()) sweep()
+    }, 30_000)
   })
 
   onCleanup(() => {

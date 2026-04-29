@@ -1,5 +1,6 @@
 import * as vscode from "vscode"
 import { randomUUID } from "crypto"
+import { spawn, execFileSync, execSync, type ChildProcess } from "child_process"
 import { KiloLogger } from "../KiloLogger"
 
 // ─── Types ───────────────────────────────────────────────
@@ -22,6 +23,13 @@ export interface ZeroClawTask {
 	riskLevel: RiskLevel
 	workspaceScope: string[]
 	networkPolicy: NetworkPolicy
+	/**
+	 * Optional allowlist of host substrings (e.g. "github.com",
+	 * "https://registry.npmjs.org") consulted only when
+	 * `networkPolicy === "allowlist"`. URLs in the command must match at
+	 * least one allowlist entry; otherwise execution is refused.
+	 */
+	networkAllowlist?: string[]
 	writePolicy: WritePolicy
 	limits: TaskLimits
 	status: TaskStatus
@@ -29,6 +37,12 @@ export interface ZeroClawTask {
 	logs: string[]
 	changedFiles: string[]
 	artifacts: string[]
+	/**
+	 * Structured diff artifacts captured during medium-risk buffered
+	 * execution. Each entry contains the patch produced by `git diff`
+	 * for a single changed file, used by the webview for review/discard.
+	 */
+	diffArtifacts: Artifact[]
 	requiresApproval: boolean
 	approvedBy?: string
 	createdAt: number
@@ -42,6 +56,7 @@ export interface TaskSubmission {
 	riskLevel: RiskLevel
 	workspaceScope: string
 	networkPolicy: NetworkPolicy
+	networkAllowlist?: string[]
 	writePolicy: WritePolicy
 	limits: TaskLimits
 }
@@ -56,6 +71,17 @@ export interface Artifact {
 	name: string
 	path: string
 	type: "file" | "diff" | "log" | "screenshot"
+	/**
+	 * Alias for `type` — the spec for medium-risk diff artifacts uses
+	 * `kind`. We keep both so existing consumers see the old field while
+	 * new diff-aware UIs can rely on the new name.
+	 */
+	kind?: "file" | "diff" | "log" | "screenshot"
+	/**
+	 * Inline content (e.g. unified-diff patch text). Populated for
+	 * `kind: "diff"` artifacts produced by medium-risk execution.
+	 */
+	content?: string
 	sizeBytes: number
 	createdAt: number
 }
@@ -74,6 +100,33 @@ type StatusListener = (event: TaskStatusEvent) => void
 
 const HISTORY_STATE_KEY = "zeroclaw.executionHistory"
 const MAX_HISTORY = 200
+
+/**
+ * Per-task cap on captured stdout+stderr bytes. Anything beyond this is
+ * dropped and replaced with a single truncation marker, preventing a
+ * runaway child from exhausting extension memory.
+ */
+const MAX_LOG_CAPTURE_BYTES = 10 * 1024 * 1024 // 10 MB
+
+/**
+ * Substrings flagged by the network-pattern detector. Tokens are
+ * matched against `/\b<token>\b/i` (or against any URL scheme for the
+ * `http(s)://` entries) so e.g. "ncurses" does not trigger on "nc".
+ */
+const NETWORK_PATTERN_TOKENS: ReadonlyArray<{ token: string; pattern: RegExp }> = [
+	{ token: "curl", pattern: /\bcurl\b/i },
+	{ token: "wget", pattern: /\bwget\b/i },
+	{ token: "npm install", pattern: /\bnpm\s+(install|i|add)\b/i },
+	{ token: "pip install", pattern: /\bpip[\d.]*\s+install\b/i },
+	{ token: "go get", pattern: /\bgo\s+get\b/i },
+	{ token: "cargo install", pattern: /\bcargo\s+install\b/i },
+	{ token: "git clone", pattern: /\bgit\s+clone\b/i },
+	{ token: "ssh", pattern: /\bssh\b/i },
+	{ token: "scp", pattern: /\bscp\b/i },
+	{ token: "nc", pattern: /\bnc\b/i },
+	{ token: "netcat", pattern: /\bnetcat\b/i },
+	{ token: "http://", pattern: /\bhttps?:\/\/\S+/i },
+]
 
 // ─── Service ─────────────────────────────────────────────
 
@@ -95,6 +148,12 @@ export class ZeroClawService implements vscode.Disposable {
 	private readonly listeners = new Set<StatusListener>()
 	private readonly disposables: vscode.Disposable[] = []
 	private readonly terminals = new Map<string, vscode.Terminal>()
+	/** Active child processes for spawn-based capture path (Gap 1). */
+	private readonly children = new Map<string, ChildProcess>()
+	/** Bytes appended to a task's logs via stdio capture; capped at MAX_LOG_CAPTURE_BYTES. */
+	private readonly logCaptureBytes = new Map<string, number>()
+	/** Whether a truncation marker has already been appended for a task. */
+	private readonly logTruncated = new Set<string>()
 	private readonly executionTimers = new Map<string, ReturnType<typeof setTimeout>>()
 	private readonly maxRetries: number = 3
 	private processing = false
@@ -152,12 +211,16 @@ export class ZeroClawService implements vscode.Disposable {
 			riskLevel: submission.riskLevel,
 			workspaceScope: scopeParts,
 			networkPolicy: submission.networkPolicy,
+			networkAllowlist: submission.networkAllowlist
+				? [...submission.networkAllowlist]
+				: undefined,
 			writePolicy: submission.writePolicy,
 			limits: { ...submission.limits },
 			status: "queued",
 			logs: [],
 			changedFiles: [],
 			artifacts: [],
+			diffArtifacts: [],
 			requiresApproval: submission.riskLevel === "high",
 			createdAt: Date.now(),
 			retryCount: 0,
@@ -198,6 +261,18 @@ export class ZeroClawService implements vscode.Disposable {
 			if (terminal) {
 				terminal.dispose()
 				this.terminals.delete(taskId)
+			}
+			const child = this.children.get(taskId)
+			if (child) {
+				try {
+					child.kill("SIGKILL")
+				} catch (err) {
+					this.log.warn("Failed to kill child during cancel", {
+						taskId,
+						error: err instanceof Error ? err.message : String(err),
+					})
+				}
+				this.children.delete(taskId)
 			}
 			this.transitionStatus(taskId, "failed")
 			this.appendLog(taskId, "[ZeroClaw] Task cancelled while running")
@@ -378,6 +453,7 @@ export class ZeroClawService implements vscode.Disposable {
 					name: path.basename(filePath),
 					path: filePath,
 					type: artifactType,
+					kind: artifactType,
 					sizeBytes: stat.size,
 					createdAt: stat.birthtimeMs || stat.mtimeMs,
 				})
@@ -499,10 +575,12 @@ export class ZeroClawService implements vscode.Disposable {
 
 		return task.artifacts.map((filePath) => {
 			const ext = path.extname(filePath).toLowerCase()
+			const t = this.classifyArtifact(ext, filePath)
 			return {
 				name: path.basename(filePath),
 				path: filePath,
-				type: this.classifyArtifact(ext, filePath),
+				type: t,
+				kind: t,
 				sizeBytes: 0, // Unknown without fs stat; use collectArtifacts for accurate data
 				createdAt: task.createdAt,
 			}
@@ -520,6 +598,16 @@ export class ZeroClawService implements vscode.Disposable {
 			terminal.dispose()
 		}
 		this.terminals.clear()
+		for (const child of this.children.values()) {
+			try {
+				child.kill("SIGKILL")
+			} catch {
+				// Best-effort: child may already be gone.
+			}
+		}
+		this.children.clear()
+		this.logCaptureBytes.clear()
+		this.logTruncated.clear()
 		for (const timer of this.executionTimers.values()) {
 			clearTimeout(timer)
 		}
@@ -592,8 +680,8 @@ export class ZeroClawService implements vscode.Disposable {
 	}
 
 	/**
-	 * Low risk: auto-execute in a VS Code terminal.
-	 * Network/write policies still apply but execution is immediate.
+	 * Low risk: auto-execute via a captured child process. stdout/stderr
+	 * are streamed into `task.logs` (subject to MAX_LOG_CAPTURE_BYTES).
 	 */
 	private async executeLowRisk(task: ZeroClawTask): Promise<void> {
 		this.transitionStatus(task.taskId, "running")
@@ -602,13 +690,16 @@ export class ZeroClawService implements vscode.Disposable {
 		this.appendLog(task.taskId, `[ZeroClaw] Write policy: ${task.writePolicy}`)
 		this.appendLog(task.taskId, `[ZeroClaw] Scope: ${task.workspaceScope.join(", ") || "(workspace)"}`)
 
-		await this.runInTerminal(task)
+		if (!this.enforceNetworkPolicy(task)) return
+		await this.runWithSpawn(task)
 	}
 
 	/**
-	 * Medium risk: execute but buffer changes for diff review.
-	 * The task runs but writes go to a staging area; the user must
-	 * approve the diff before changes land.
+	 * Medium risk: execute via spawn (so we can capture logs), then
+	 * compute a git-status-based diff of the workspace and surface each
+	 * change as an `Artifact` in `task.diffArtifacts`. The task is
+	 * transitioned to `blocked` so the user can review the diff before
+	 * keeping or discarding the changes.
 	 */
 	private async executeMediumRisk(task: ZeroClawTask): Promise<void> {
 		this.transitionStatus(task.taskId, "running")
@@ -617,11 +708,19 @@ export class ZeroClawService implements vscode.Disposable {
 
 		// Force buffered write policy for medium risk regardless of user setting
 		task.writePolicy = "buffered"
-		await this.runInTerminal(task)
 
-		// After terminal execution, if the task completed successfully,
-		// transition to blocked so the user can review the diff
+		if (!this.enforceNetworkPolicy(task)) return
+
+		// Snapshot the dirty file set before running — so we can diff
+		// only the files the task itself touched.
+		const beforeStatus = this.gitStatusSnapshot(task)
+
+		await this.runWithSpawn(task)
+
+		// Only generate diffs for tasks that actually completed; failed
+		// tasks were already rolled back / transitioned by runWithSpawn.
 		if (task.status === "completed") {
+			this.captureDiffArtifacts(task, beforeStatus)
 			this.transitionStatus(task.taskId, "blocked")
 			task.requiresApproval = true
 			this.appendLog(task.taskId, "[ZeroClaw] Buffered changes ready for diff review")
@@ -630,13 +729,436 @@ export class ZeroClawService implements vscode.Disposable {
 	}
 
 	/**
-	 * High risk: executes only after approval was granted.
+	 * High risk: executes only after approval was granted. Uses the
+	 * VS Code terminal path so the operator can watch potentially
+	 * dangerous output live.
 	 */
 	private async executeApproved(task: ZeroClawTask): Promise<void> {
 		this.transitionStatus(task.taskId, "running")
 		this.appendLog(task.taskId, `[ZeroClaw] Approved execution started (by ${task.approvedBy ?? "unknown"})`)
 
+		if (!this.enforceNetworkPolicy(task)) return
 		await this.runInTerminal(task)
+	}
+
+	// ─── Gap 3: Network policy enforcement ─────────────────
+
+	/**
+	 * Inspect a command for substrings that imply network access.
+	 * The match list is intentionally heuristic; real network policy
+	 * enforcement requires OS-level firewall hooks which are not
+	 * available cross-platform from a VS Code extension. This static
+	 * helper exists primarily so tests and the webview can preview
+	 * the same decision the service will make at execution time.
+	 */
+	static detectNetworkPatterns(command: string): { hasNetwork: boolean; matches: string[] } {
+		const matches: string[] = []
+		for (const { token, pattern } of NETWORK_PATTERN_TOKENS) {
+			const m = command.match(pattern)
+			if (!m) continue
+			// For URL hits, surface the actual URL; otherwise the token.
+			matches.push(token === "http://" ? m[0] : token)
+		}
+		return { hasNetwork: matches.length > 0, matches }
+	}
+
+	/**
+	 * Extract every URL (http/https) from a command string.
+	 * Used by the allowlist check — a URL is "allowed" if any
+	 * allowlist entry is a substring of the URL (so callers can pass
+	 * either a host, a host+path prefix, or the full URL).
+	 */
+	private static extractUrls(command: string): string[] {
+		const urls: string[] = []
+		const re = /\bhttps?:\/\/\S+/gi
+		let m: RegExpExecArray | null
+		while ((m = re.exec(command)) !== null) {
+			// Strip trailing punctuation that's commonly adjacent to URLs
+			// in shell pipelines (quotes, semicolons, parens).
+			urls.push(m[0].replace(/[)'";]+$/g, ""))
+		}
+		return urls
+	}
+
+	/**
+	 * Apply the task's `networkPolicy` to its command. Returns `true`
+	 * when execution may proceed and `false` when the task was refused
+	 * (in which case it has already been transitioned to "failed").
+	 *
+	 * NOTE: This is best-effort, command-string-based filtering — not a
+	 * sandbox. A determined task author can bypass it via shell
+	 * indirection. For real isolation use OS-level firewalls / network
+	 * namespaces. See gap-3 doc comment for details.
+	 */
+	private enforceNetworkPolicy(task: ZeroClawTask): boolean {
+		if (task.networkPolicy === "open") {
+			return true
+		}
+
+		const { hasNetwork, matches } = ZeroClawService.detectNetworkPatterns(task.description)
+
+		if (task.networkPolicy === "deny") {
+			if (hasNetwork) {
+				const reason = `[ZeroClaw] Refused: command appears to access network but networkPolicy=deny (matched: ${matches.join(", ")})`
+				this.log.warn("Network policy denied execution", { taskId: task.taskId, matches })
+				this.appendLog(task.taskId, reason)
+				task.exitCode = -1
+				this.transitionStatus(task.taskId, "failed")
+				this.persistHistory()
+				return false
+			}
+			return true
+		}
+
+		if (task.networkPolicy === "allowlist") {
+			const urls = ZeroClawService.extractUrls(task.description)
+			const allowlist = task.networkAllowlist ?? []
+			const offenders = urls.filter(
+				(url) => !allowlist.some((entry) => entry.length > 0 && url.includes(entry)),
+			)
+			if (offenders.length > 0) {
+				const reason = `[ZeroClaw] Refused: URL(s) not in allowlist (offending: ${offenders.join(", ")})`
+				this.log.warn("Network allowlist rejected URLs", {
+					taskId: task.taskId,
+					offenders,
+					allowlist,
+				})
+				this.appendLog(task.taskId, reason)
+				task.exitCode = -1
+				this.transitionStatus(task.taskId, "failed")
+				this.persistHistory()
+				return false
+			}
+			return true
+		}
+
+		return true
+	}
+
+	// ─── Gap 1: Spawn-based execution with stdio capture ────
+
+	/**
+	 * Run a task via `child_process.spawn` so that stdout and stderr
+	 * can be streamed back into `task.logs`. This is the path used for
+	 * low and medium-risk tasks where the operator does not need a
+	 * live terminal but does want a complete capture of output.
+	 *
+	 * The shell is selected to mirror `runInTerminal`: `cmd.exe /c` on
+	 * Windows, `/bin/bash -c` elsewhere. Per-task capture is capped at
+	 * MAX_LOG_CAPTURE_BYTES; further chunks are dropped and a single
+	 * truncation marker is appended so callers can see what happened.
+	 *
+	 * Timeouts are enforced by `startExecutionTimer`, which now
+	 * `child.kill('SIGKILL')`s instead of disposing a terminal.
+	 */
+	private async runWithSpawn(task: ZeroClawTask): Promise<void> {
+		const shellPath = process.platform === "win32" ? "cmd.exe" : "/bin/bash"
+		const shellFlagArg = process.platform === "win32" ? "/c" : "-c"
+
+		const envVars: NodeJS.ProcessEnv = {
+			...process.env,
+			ZEROCLAW_TASK_ID: task.taskId,
+			ZEROCLAW_RISK_LEVEL: task.riskLevel,
+			ZEROCLAW_NETWORK_POLICY: task.networkPolicy,
+			ZEROCLAW_WRITE_POLICY: task.writePolicy,
+			ZEROCLAW_TIMEOUT_SEC: String(task.limits.timeoutSec),
+			ZEROCLAW_MEMORY_MB: String(task.limits.memoryMb),
+			ZEROCLAW_CPU: String(task.limits.cpu),
+		}
+
+		const timeoutMs = task.limits.timeoutSec * 1000
+		this.appendLog(task.taskId, `[ZeroClaw] Spawning ${shellPath} ${shellFlagArg} <command>`)
+
+		let child: ChildProcess
+		try {
+			child = spawn(shellPath, [shellFlagArg, task.description], {
+				cwd: task.projectPath || undefined,
+				env: envVars,
+				stdio: ["ignore", "pipe", "pipe"],
+				windowsHide: true,
+			})
+		} catch (err) {
+			const msg = err instanceof Error ? err.message : String(err)
+			this.appendLog(task.taskId, `[ZeroClaw] Failed to spawn shell: ${msg}`)
+			task.exitCode = -1
+			this.transitionStatus(task.taskId, "failed")
+			this.persistHistory()
+			return
+		}
+
+		this.children.set(task.taskId, child)
+		this.logCaptureBytes.set(task.taskId, 0)
+		this.startExecutionTimer(task.taskId, timeoutMs)
+
+		const captureChunk = (chunk: Buffer | string, channel: "stdout" | "stderr") => {
+			const text = typeof chunk === "string" ? chunk : chunk.toString("utf8")
+			const used = this.logCaptureBytes.get(task.taskId) ?? 0
+			if (used >= MAX_LOG_CAPTURE_BYTES) return
+
+			const remaining = MAX_LOG_CAPTURE_BYTES - used
+			const allowed = text.length <= remaining ? text : text.slice(0, remaining)
+			if (allowed.length > 0) {
+				const lines = allowed.split(/\r?\n/)
+				for (const line of lines) {
+					if (line.length === 0) continue
+					this.appendLog(task.taskId, `[${channel}] ${line}`)
+				}
+			}
+			this.logCaptureBytes.set(task.taskId, used + allowed.length)
+
+			if (allowed.length < text.length && !this.logTruncated.has(task.taskId)) {
+				this.logTruncated.add(task.taskId)
+				this.appendLog(task.taskId, "[ZeroClaw] Output truncated at 10MB")
+			}
+		}
+
+		child.stdout?.on("data", (c) => captureChunk(c, "stdout"))
+		child.stderr?.on("data", (c) => captureChunk(c, "stderr"))
+
+		const exitInfo = await new Promise<{ code: number | null; signal: NodeJS.Signals | null; error?: Error }>(
+			(resolve) => {
+				let settled = false
+				const settle = (v: { code: number | null; signal: NodeJS.Signals | null; error?: Error }) => {
+					if (settled) return
+					settled = true
+					resolve(v)
+				}
+				child.on("error", (error) => settle({ code: null, signal: null, error }))
+				child.on("close", (code, signal) => settle({ code, signal }))
+			},
+		)
+
+		this.clearExecutionTimer(task.taskId)
+		this.children.delete(task.taskId)
+		this.logCaptureBytes.delete(task.taskId)
+		this.logTruncated.delete(task.taskId)
+
+		if (exitInfo.error) {
+			this.appendLog(task.taskId, `[ZeroClaw] Child process error: ${exitInfo.error.message}`)
+			task.exitCode = -1
+			if (task.status === "running") {
+				this.rollbackTask(task.taskId)
+				this.transitionStatus(task.taskId, "failed")
+			}
+			this.persistHistory()
+			return
+		}
+
+		if (exitInfo.signal === "SIGKILL" || exitInfo.signal === "SIGTERM") {
+			// startExecutionTimer's auto-cancel path will already have
+			// transitioned the task; just record the exit cause.
+			this.appendLog(task.taskId, `[ZeroClaw] Child terminated by signal ${exitInfo.signal}`)
+			task.exitCode = -1
+			if (task.status === "running") {
+				this.rollbackTask(task.taskId)
+				this.transitionStatus(task.taskId, "failed")
+			}
+			this.persistHistory()
+			return
+		}
+
+		if (task.status !== "running") {
+			// Cancelled or already failed externally; honor that decision.
+			this.persistHistory()
+			return
+		}
+
+		task.exitCode = exitInfo.code ?? 0
+		if (task.exitCode === 0) {
+			this.appendLog(task.taskId, "[ZeroClaw] Task execution completed")
+			this.transitionStatus(task.taskId, "completed")
+		} else {
+			this.appendLog(task.taskId, `[ZeroClaw] Task exited with code ${task.exitCode}`)
+			this.rollbackTask(task.taskId)
+			this.transitionStatus(task.taskId, "failed")
+		}
+		this.persistHistory()
+	}
+
+	// ─── Gap 2: Medium-risk diff capture & buffer review ────
+
+	/**
+	 * Snapshot the current dirty-file set in the task's project so the
+	 * post-execution diff can ignore files that were already dirty
+	 * before the task ran. Returns a Set of porcelain paths or `null`
+	 * if the project is not a git repository.
+	 */
+	private gitStatusSnapshot(task: ZeroClawTask): Set<string> | null {
+		const cwd = task.projectPath || undefined
+		try {
+			const out = execFileSync("git", ["status", "--porcelain"], {
+				cwd,
+				timeout: 10000,
+				encoding: "utf-8",
+			})
+			const paths = new Set<string>()
+			for (const line of out.split(/\r?\n/)) {
+				if (line.length < 4) continue
+				paths.add(line.slice(3).trim())
+			}
+			return paths
+		} catch (err) {
+			const msg = err instanceof Error ? err.message : String(err)
+			this.log.info("git status snapshot failed (non-git project?)", {
+				taskId: task.taskId,
+				error: msg,
+			})
+			return null
+		}
+	}
+
+	/**
+	 * Run `git status --porcelain` after the task, diff each newly
+	 * dirty file, and append the resulting patches to
+	 * `task.diffArtifacts` as `kind: "diff"` Artifact records. The
+	 * file paths are also added to `task.changedFiles` for later
+	 * rollback / discard. No-op (with an info log) if the project
+	 * isn't a git repo or no changes were detected.
+	 */
+	private captureDiffArtifacts(task: ZeroClawTask, before: Set<string> | null): void {
+		const cwd = task.projectPath || undefined
+
+		let after: Set<string>
+		try {
+			const out = execFileSync("git", ["status", "--porcelain"], {
+				cwd,
+				timeout: 10000,
+				encoding: "utf-8",
+			})
+			after = new Set<string>()
+			for (const line of out.split(/\r?\n/)) {
+				if (line.length < 4) continue
+				after.add(line.slice(3).trim())
+			}
+		} catch (err) {
+			const msg = err instanceof Error ? err.message : String(err)
+			this.appendLog(task.taskId, `[ZeroClaw] Could not capture diff (git unavailable): ${msg}`)
+			return
+		}
+
+		const newlyDirty = [...after].filter((p) => !before?.has(p))
+		if (newlyDirty.length === 0) {
+			this.appendLog(task.taskId, "[ZeroClaw] No file changes detected — empty diff")
+			return
+		}
+
+		const now = Date.now()
+		for (const filePath of newlyDirty) {
+			let patch = ""
+			try {
+				patch = execFileSync("git", ["diff", "--", filePath], {
+					cwd,
+					timeout: 10000,
+					encoding: "utf-8",
+				})
+			} catch (err) {
+				const msg = err instanceof Error ? err.message : String(err)
+				this.log.warn("git diff failed for changed path", {
+					taskId: task.taskId,
+					filePath,
+					error: msg,
+				})
+				patch = `[ZeroClaw] git diff failed for ${filePath}: ${msg}`
+			}
+
+			// Untracked files don't show up in `git diff` — fall back to
+			// a synthetic diff so the artifact is non-empty.
+			if (patch.length === 0) {
+				patch = `--- /dev/null\n+++ b/${filePath}\n[ZeroClaw] new file (untracked) — content not embedded`
+			}
+
+			const path = require("path") as typeof import("path")
+			const artifact: Artifact = {
+				name: path.basename(filePath),
+				path: filePath,
+				type: "diff",
+				kind: "diff",
+				content: patch,
+				sizeBytes: Buffer.byteLength(patch, "utf8"),
+				createdAt: now,
+			}
+			task.diffArtifacts.push(artifact)
+			if (!task.changedFiles.includes(filePath)) {
+				task.changedFiles.push(filePath)
+			}
+		}
+		this.appendLog(
+			task.taskId,
+			`[ZeroClaw] Captured ${newlyDirty.length} diff artifact(s) for review`,
+		)
+	}
+
+	/**
+	 * Accept the buffered changes for a medium-risk task. Because the
+	 * spawn already wrote files to disk, the buffer is virtual — this
+	 * just transitions the task to "completed" and returns the diff
+	 * artifacts so the caller can persist or display them.
+	 */
+	applyBufferedChanges(taskId: string): Artifact[] | undefined {
+		const task = this.tasks.get(taskId)
+		if (!task) return undefined
+		if (task.status !== "blocked" || task.writePolicy !== "buffered") {
+			this.log.warn("applyBufferedChanges called on non-buffered task", {
+				taskId,
+				status: task.status,
+				writePolicy: task.writePolicy,
+			})
+			return undefined
+		}
+
+		this.appendLog(taskId, "[ZeroClaw] Buffered changes accepted")
+		task.requiresApproval = false
+		this.transitionStatus(taskId, "completed")
+		this.persistHistory()
+		return [...task.diffArtifacts]
+	}
+
+	/**
+	 * Discard the buffered changes for a medium-risk task by running
+	 * `git checkout -- <path>` for every diff artifact path. Best
+	 * effort: failures are logged but do not throw. Transitions the
+	 * task to "failed" once the revert is complete.
+	 */
+	discardBufferedChanges(taskId: string): boolean {
+		const task = this.tasks.get(taskId)
+		if (!task) return false
+		if (task.status !== "blocked" || task.writePolicy !== "buffered") {
+			this.log.warn("discardBufferedChanges called on non-buffered task", {
+				taskId,
+				status: task.status,
+				writePolicy: task.writePolicy,
+			})
+			return false
+		}
+
+		const cwd = task.projectPath || undefined
+		let reverted = 0
+		let failed = 0
+
+		for (const artifact of task.diffArtifacts) {
+			try {
+				execFileSync("git", ["checkout", "--", artifact.path], {
+					cwd,
+					timeout: 10000,
+					stdio: "pipe",
+				})
+				reverted++
+				this.appendLog(taskId, `[ZeroClaw] Reverted: ${artifact.path}`)
+			} catch (err) {
+				failed++
+				const msg = err instanceof Error ? err.message : String(err)
+				this.appendLog(taskId, `[ZeroClaw] Failed to revert ${artifact.path}: ${msg}`)
+			}
+		}
+
+		this.appendLog(
+			taskId,
+			`[ZeroClaw] Discard complete: ${reverted} reverted, ${failed} failed`,
+		)
+		task.requiresApproval = false
+		this.transitionStatus(taskId, "failed")
+		this.persistHistory()
+		return failed === 0
 	}
 
 	/**
@@ -754,7 +1276,6 @@ export class ZeroClawService implements vscode.Disposable {
 		this.appendLog(taskId, `[ZeroClaw] Files to rollback: ${task.changedFiles.join(", ")}`)
 
 		// Attempt git-based rollback in the task's project directory
-		const { execSync } = require("child_process") as typeof import("child_process")
 		const cwd = task.projectPath || undefined
 
 		try {
@@ -774,7 +1295,6 @@ export class ZeroClawService implements vscode.Disposable {
 				// kilocode_change: shell-quoting filePath was insufficient — backticks /
 				// $() / non-ASCII could still break out. Switched to execFileSync which
 				// passes args directly to the OS exec call without shell interpolation.
-				const { execFileSync } = require("child_process") as typeof import("child_process")
 				execFileSync("git", ["checkout", "--", filePath], { cwd, timeout: 10000, stdio: "pipe" })
 				restoredCount++
 				this.log.info("File restored during rollback", { taskId, filePath })
@@ -842,7 +1362,8 @@ export class ZeroClawService implements vscode.Disposable {
 
 	/**
 	 * Start an execution timeout timer for a task. If the timer fires,
-	 * the task is auto-cancelled.
+	 * any active spawn child is SIGKILLed, any active terminal is
+	 * disposed, and the task is transitioned to "failed".
 	 */
 	private startExecutionTimer(taskId: string, timeoutMs: number): void {
 		this.clearExecutionTimer(taskId)
@@ -851,6 +1372,17 @@ export class ZeroClawService implements vscode.Disposable {
 			const task = this.tasks.get(taskId)
 			if (task && task.status === "running") {
 				this.appendLog(taskId, `[ZeroClaw] Execution timeout enforced after ${timeoutMs}ms`)
+				const child = this.children.get(taskId)
+				if (child) {
+					try {
+						child.kill("SIGKILL")
+					} catch (err) {
+						this.log.warn("Failed to SIGKILL child on timeout", {
+							taskId,
+							error: err instanceof Error ? err.message : String(err),
+						})
+					}
+				}
 				this.cancel(taskId)
 			}
 			this.executionTimers.delete(taskId)

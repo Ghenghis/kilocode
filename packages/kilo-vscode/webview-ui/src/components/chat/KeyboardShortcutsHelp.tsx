@@ -7,7 +7,6 @@
  * Provides:
  *  - ShortcutRegistryProvider — context provider + global keydown listener
  *  - KeyboardShortcutsHelp — the modal itself (rendered from AppContent)
- *  - SkipLinks — visually-hidden "Skip to…" links for accessibility
  */
 
 import {
@@ -290,19 +289,3 @@ export const KeyboardShortcutsHelp: Component = () => {
   )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Skip links (accessibility)
-// ─────────────────────────────────────────────────────────────────────────────
-
-export const SkipLinks: Component = () => {
-  return (
-    <div class="skip-links" aria-label="Skip navigation">
-      <a class="skip-link" href="#chat-main">
-        Skip to chat
-      </a>
-      <a class="skip-link" href="#settings-main">
-        Skip to settings
-      </a>
-    </div>
-  )
-}

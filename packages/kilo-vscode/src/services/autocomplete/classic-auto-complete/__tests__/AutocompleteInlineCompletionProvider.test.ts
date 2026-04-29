@@ -10,7 +10,78 @@ import {
   CostTrackingCallback,
 } from "../AutocompleteInlineCompletionProvider"
 import { FillInAtCursorSuggestion } from "../../types"
-import { MockTextDocument } from "../../../mocking/MockTextDocument"
+// Inline stub for the missing `../../../mocking/MockTextDocument` helper. The
+// original helper file is not present in the current source tree; this minimal
+// shape is enough to satisfy the `vscode.TextDocument`-typed parameters that
+// the tests below pass into the autocomplete provider.
+class MockTextDocument {
+  public readonly fileName: string
+  public readonly languageId: string = "typescript"
+  public readonly version: number = 1
+  public readonly isUntitled: boolean = false
+  public readonly isDirty: boolean = false
+  public readonly isClosed: boolean = false
+  public readonly eol: number = 1
+  public readonly notebook: unknown = undefined
+  private content: string
+  constructor(
+    public readonly uri: vscode.Uri,
+    content: string,
+  ) {
+    this.content = content
+    this.fileName = (uri as { fsPath?: string }).fsPath ?? String(uri)
+  }
+  get lineCount(): number {
+    return this.content.split("\n").length
+  }
+  getText(_range?: vscode.Range): string {
+    return this.content
+  }
+  updateContent(next: string): void {
+    this.content = next
+  }
+  lineAt(line: number): { text: string; lineNumber: number; range: vscode.Range; rangeIncludingLineBreak: vscode.Range; firstNonWhitespaceCharacterIndex: number; isEmptyOrWhitespace: boolean } {
+    const text = this.content.split("\n")[line] ?? ""
+    const start = new vscode.Position(line, 0)
+    const end = new vscode.Position(line, text.length)
+    const range = new vscode.Range(start, end)
+    return {
+      text,
+      lineNumber: line,
+      range,
+      rangeIncludingLineBreak: range,
+      firstNonWhitespaceCharacterIndex: text.length - text.trimStart().length,
+      isEmptyOrWhitespace: text.trim().length === 0,
+    }
+  }
+  offsetAt(position: vscode.Position): number {
+    const lines = this.content.split("\n")
+    let offset = 0
+    for (let i = 0; i < position.line && i < lines.length; i++) offset += lines[i].length + 1
+    return offset + position.character
+  }
+  positionAt(offset: number): vscode.Position {
+    const lines = this.content.split("\n")
+    let remaining = offset
+    for (let i = 0; i < lines.length; i++) {
+      if (remaining <= lines[i].length) return new vscode.Position(i, remaining)
+      remaining -= lines[i].length + 1
+    }
+    return new vscode.Position(lines.length - 1, lines[lines.length - 1]?.length ?? 0)
+  }
+  getWordRangeAtPosition(): vscode.Range | undefined {
+    return undefined
+  }
+  validateRange(range: vscode.Range): vscode.Range {
+    return range
+  }
+  validatePosition(position: vscode.Position): vscode.Position {
+    return position
+  }
+  save(): Thenable<boolean> {
+    return Promise.resolve(true)
+  }
+}
 import { AutocompleteModel } from "../../AutocompleteModel"
 import { AutocompleteTelemetry } from "../AutocompleteTelemetry"
 import * as AutocompleteContextProviderModule from "../getProcessedSnippets"
@@ -29,9 +100,12 @@ vi.mock("../../../../core/ignore/RooIgnoreController", () => {
 // Mock AutocompleteTelemetry class - don't mock it, let it be created normally
 // The tests will create real instances or null as needed
 
-// Mock vscode InlineCompletionTriggerKind enum and event listeners
-vi.mock("vscode", async () => {
-  const actual = await vi.importActual<typeof vscode>("vscode")
+// Mock vscode InlineCompletionTriggerKind enum and event listeners.
+// NOTE: Bun's `vi` shim does not implement `vi.importActual`. We extend the
+// preloaded shared vscode mock by spreading it instead of importing the real
+// module via `vi.importActual<typeof vscode>("vscode")`.
+vi.mock("vscode", () => {
+  const actual = vscode as unknown as Record<string, any>
   return {
     ...actual,
     InlineCompletionTriggerKind: {
@@ -55,15 +129,15 @@ vi.mock("vscode", async () => {
       }
     },
     window: {
-      ...actual.window,
+      ...(actual.window ?? {}),
       onDidChangeTextEditorSelection: vi.fn(() => ({ dispose: vi.fn() })),
     },
     workspace: {
-      ...actual.workspace,
+      ...(actual.workspace ?? {}),
       onDidChangeTextDocument: vi.fn(() => ({ dispose: vi.fn() })),
     },
     commands: {
-      ...actual.commands,
+      ...(actual.commands ?? {}),
       registerCommand: vi.fn(() => ({ dispose: vi.fn() })),
     },
   }

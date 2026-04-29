@@ -7,6 +7,7 @@ import { useVSCode } from "../../context/vscode"
 import { useConfig } from "../../context/config"
 import type { ConnectionState, ExtensionMessage } from "../../types/messages"
 import { buildExport, parseImport, MAX_IMPORT_SIZE } from "./settings-io"
+import { subscribeToMessages } from "../../lib/message-bus"
 
 export interface AboutKiloCodeTabProps {
   port: number | null
@@ -27,9 +28,10 @@ const AboutKiloCodeTab: Component<AboutKiloCodeTabProps> = (props) => {
     vscode.postMessage({ type: "openExternal", url })
   }
 
-  // Listen for globalConfigLoaded response
-  const handler = (event: MessageEvent) => {
-    const msg = event.data as ExtensionMessage
+  // Listen for globalConfigLoaded response via the shared message bus to
+  // avoid attaching a per-component window listener.
+  const handler = (raw: unknown) => {
+    const msg = raw as ExtensionMessage
     if (msg.type !== "globalConfigLoaded" || !exporting()) return
     setExporting(false)
     epoch++
@@ -43,8 +45,7 @@ const AboutKiloCodeTab: Component<AboutKiloCodeTabProps> = (props) => {
     a.click()
     URL.revokeObjectURL(url)
   }
-  window.addEventListener("message", handler)
-  onCleanup(() => window.removeEventListener("message", handler))
+  onCleanup(subscribeToMessages(handler))
 
   // ----- Export -----
   const handleExport = () => {

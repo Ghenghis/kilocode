@@ -26,6 +26,7 @@ import { Component, createSignal, createMemo, For, Show, onMount, onCleanup, cre
 import { Icon } from "@kilocode/kilo-ui/icon"
 import { Button } from "@kilocode/kilo-ui/button"
 import { useVSCode } from "../../../context/vscode"
+import { subscribeToMessages } from "../../../lib/message-bus"
 import {
   CATEGORY_ORDER,
   CATEGORY_TITLES,
@@ -182,8 +183,8 @@ const GatesPanel: Component<GatesPanelProps> = (props) => {
 
   // ── Host wiring ────────────────────────────────────────────────────────
 
-  const onMessage = (event: MessageEvent) => {
-    const msg = event.data as { type?: unknown } & RubricResultWire
+  const onMessage = (raw: unknown) => {
+    const msg = raw as { type?: unknown } & RubricResultWire
     if (!msg || msg.type !== "contract:rubric:result") return
     if (props.docPath && msg.docPath && msg.docPath !== props.docPath) return
     setIssues(msg.issues ?? [])
@@ -205,14 +206,15 @@ const GatesPanel: Component<GatesPanelProps> = (props) => {
     }, DEBOUNCE_MS)
   })
 
+  let unsubscribe: (() => void) | undefined
   onMount(() => {
-    window.addEventListener("message", onMessage)
+    unsubscribe = subscribeToMessages(onMessage)
     if (props.docPath) {
       post({ type: "contract:rubric:score", docPath: props.docPath })
     }
   })
   onCleanup(() => {
-    window.removeEventListener("message", onMessage)
+    unsubscribe?.()
     if (debounceTimer) clearTimeout(debounceTimer)
   })
 

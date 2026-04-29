@@ -17,6 +17,7 @@
 import { Component, createSignal, For, Show, createMemo, createEffect, onMount, onCleanup } from "solid-js"
 import { useVSCode } from "../../context/vscode"
 import { fetchLivePricing, formatPrice, type ModelPricing, FALLBACK_PRICING } from "../../utils/pricing-service"
+import { subscribeToMessages, postMessageDebounced } from "../../lib/message-bus"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -732,8 +733,8 @@ const OpenClawTab: Component = () => {
   // ── Extension → webview message listener ──────────────────────────────────
   // Reconciles optimistic UI state with real responses from
   // src/kilo-provider/handlers/openclaw-webview.ts.
-  const onExtensionMessage = (event: MessageEvent) => {
-    const msg = (event?.data ?? {}) as Record<string, unknown>
+  const onExtensionMessage = (raw: unknown) => {
+    const msg = (raw ?? {}) as Record<string, unknown>
     const type = msg.type as string | undefined
     if (typeof type !== "string" || !type.startsWith("openclaw")) return
 
@@ -861,8 +862,11 @@ const OpenClawTab: Component = () => {
   }
 
   onMount(() => {
-    window.addEventListener("message", onExtensionMessage)
-    onCleanup(() => window.removeEventListener("message", onExtensionMessage))
+    // Subscribe via the shared message bus instead of attaching a fresh
+    // window listener. With ~28 settings tabs all listening for extension
+    // events, the per-message dispatch cost was previously O(N tabs).
+    const unsubscribe = subscribeToMessages(onExtensionMessage)
+    onCleanup(unsubscribe)
   })
 
   // ── Render ─────────────────────────────────────────────────────────────────

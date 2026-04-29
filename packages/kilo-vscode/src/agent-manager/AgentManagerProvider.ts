@@ -206,7 +206,10 @@ export class AgentManagerProvider implements Disposable {
       this.statsPoller.setVisible(visible)
     })
 
-    ctx.sessions.onFollowupAdopted((session, directory) => {
+    // Capture the unsubscribe so the listener is detached when the panel
+    // disposes. Previously this was a fire-and-forget subscription that
+    // accumulated one closure per panel attach across the host's lifetime.
+    const unsubscribeFollowup = ctx.sessions.onFollowupAdopted((session, directory) => {
       this.adoptFollowupInWorktree(session, directory)
     })
 
@@ -223,6 +226,11 @@ export class AgentManagerProvider implements Disposable {
         this.prBridge.poller.stop()
         this.diffs.stop()
         this.panel = undefined
+      }
+      try {
+        unsubscribeFollowup()
+      } catch {
+        // Defensive — host may already have torn down the underlying provider.
       }
       ctx.sessions.dispose()
     })

@@ -1,5 +1,6 @@
 import { Component, createSignal, For, Show, onCleanup, onMount } from "solid-js"
 import { useVSCode } from "../../context/vscode"
+import { postMessageDebounced } from "../../lib/message-bus"
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -311,9 +312,11 @@ const GovernanceTab: Component = () => {
 	})
 	onCleanup(unsub)
 
-	// Request initial state — use requestGovernanceState to get full snapshot
+	// Request initial state — use requestGovernanceState to get full snapshot.
+	// Debounced so multiple tabs opened in quick succession don't pile up
+	// duplicate request messages on the extension host.
 	onMount(() => {
-		postMessage({ type: "requestGovernanceState" } as never)
+		postMessageDebounced({ type: "requestGovernanceState" } as never, "governance:requestState", 50)
 	})
 
 	// ── Section toggle ─────────────────────────────────

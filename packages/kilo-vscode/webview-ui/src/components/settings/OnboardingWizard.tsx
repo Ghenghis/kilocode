@@ -1,5 +1,6 @@
 import { Component, createSignal, createEffect, For, Show, onCleanup, onMount } from "solid-js"
 import { useVSCode } from "../../context/vscode"
+import { subscribeToMessages } from "../../lib/message-bus"
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -72,8 +73,8 @@ const OnboardingWizard: Component<{ onFinish?: () => void }> = (props) => {
 
   // ─── Message handling ───────────────────────────────────
 
-  const handleMessage = (event: MessageEvent) => {
-    const msg = event.data as { type: string; [k: string]: unknown }
+  const handleMessage = (raw: unknown) => {
+    const msg = raw as { type: string; [k: string]: unknown }
     switch (msg.type) {
       case "discoveryComplete": {
         const r = msg.result as DiscoveryResult
@@ -97,14 +98,15 @@ const OnboardingWizard: Component<{ onFinish?: () => void }> = (props) => {
     }
   }
 
+  let unsubscribe: (() => void) | undefined
   onMount(() => {
-    window.addEventListener("message", handleMessage)
+    unsubscribe = subscribeToMessages(handleMessage)
     // Trigger discovery
     vscode.postMessage({ type: "triggerDiscovery" })
   })
 
   onCleanup(() => {
-    window.removeEventListener("message", handleMessage)
+    unsubscribe?.()
   })
 
   // ─── Actions ───────────────────────────────────────────

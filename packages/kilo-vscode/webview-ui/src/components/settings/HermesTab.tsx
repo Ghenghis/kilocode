@@ -13,6 +13,7 @@
 
 import { Component, createSignal, onMount, onCleanup, For, Show } from "solid-js"
 import { useVSCode } from "../../context/vscode"
+import { subscribeToMessages, postMessageDebounced } from "../../lib/message-bus"
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -81,12 +82,16 @@ const HermesTab: Component = () => {
   const [selectedAgentId, setSelectedAgentId] = createSignal<string>("")
 
   // ── Load status on mount ───────────────────────────────────────────────────
+  // Use the shared bus's debounced poster for status pings: when the Settings
+  // panel opens, every tab's onMount fires almost simultaneously and floods
+  // the extension host with status-request messages. Coalescing under a
+  // stable key drops the duplicates that pile up within ~50ms.
   const requestStatus = () => {
-    vscode.postMessage({ type: "requestHermesStatus" })
+    postMessageDebounced({ type: "requestHermesStatus" }, "hermes:requestStatus", 50)
   }
 
   const requestLocalAgents = () => {
-    vscode.postMessage({ type: "hermes.listLocalAgents" })
+    postMessageDebounced({ type: "hermes.listLocalAgents" } as never, "hermes:listLocalAgents", 50)
   }
 
   // Track ad-hoc setTimeout handles spawned by user actions (saveKey,
@@ -109,8 +114,11 @@ const HermesTab: Component = () => {
     const interval = setInterval(requestStatus, 30_000)
     onCleanup(() => clearInterval(interval))
 
-    window.addEventListener("message", onMessage)
-    onCleanup(() => window.removeEventListener("message", onMessage))
+    // Subscribe via the shared bus so this tab's listener doesn't compound
+    // dispatch cost across the other 27 settings tabs that listen for
+    // extension messages.
+    const unsubscribe = subscribeToMessages(onMessage as (m: unknown) => void)
+    onCleanup(unsubscribe)
 
     onCleanup(() => {
       for (const t of pendingTimers) clearTimeout(t)
@@ -119,8 +127,9 @@ const HermesTab: Component = () => {
   })
 
   // ── Message handler ────────────────────────────────────────────────────────
-  const onMessage = (event: MessageEvent) => {
-    const msg = event.data as Record<string, unknown>
+  // Receives the unwrapped message payload directly from the shared bus.
+  const onMessage = (raw: unknown) => {
+    const msg = raw as Record<string, unknown>
     switch (msg.type) {
       case "hermesStatusUpdate": {
         const s = msg.status as HermesStatus

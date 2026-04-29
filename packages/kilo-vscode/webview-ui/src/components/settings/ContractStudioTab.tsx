@@ -39,6 +39,7 @@ import { Component, createSignal, For, Show, onMount, onCleanup } from "solid-js
 import { Icon } from "@kilocode/kilo-ui/icon"
 import { Button } from "@kilocode/kilo-ui/button"
 import { useVSCode } from "../../context/vscode"
+import { subscribeToMessages } from "../../lib/message-bus"
 import GatesPanel from "./contract-studio/GatesPanel"
 import SignOffPanel from "./contract-studio/SignOffPanel"
 import EmptyState from "./contract-studio/EmptyState"
@@ -150,8 +151,9 @@ const ContractStudioTab: Component = () => {
   }
 
   // ── Incoming message handler ──────────────────────────────────────────
-  const onMessage = (event: MessageEvent) => {
-    const msg = event.data as { type?: unknown; [k: string]: unknown }
+  // Receives the unwrapped message payload directly from the shared bus.
+  const onMessage = (raw: unknown) => {
+    const msg = raw as { type?: unknown; [k: string]: unknown }
     if (!isContractMessage(msg?.type)) return
     switch (msg.type) {
       case "contract:list:result": {
@@ -205,11 +207,12 @@ const ContractStudioTab: Component = () => {
     }
   }
 
+  let unsubscribe: (() => void) | undefined
   onMount(() => {
-    window.addEventListener("message", onMessage)
+    unsubscribe = subscribeToMessages(onMessage)
     refreshList()
   })
-  onCleanup(() => window.removeEventListener("message", onMessage))
+  onCleanup(() => unsubscribe?.())
 
   // ── Render ────────────────────────────────────────────────────────────
   return (

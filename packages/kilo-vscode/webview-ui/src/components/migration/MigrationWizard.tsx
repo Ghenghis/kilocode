@@ -12,6 +12,7 @@ import { useDialog } from "@kilocode/kilo-ui/context/dialog"
 import { showToast } from "@kilocode/kilo-ui/toast"
 import { useVSCode } from "../../context/vscode"
 import { useLanguage } from "../../context/language"
+import { subscribeToMessages } from "../../lib/message-bus"
 import SessionMigrationProgress, { type SessionMigrationProgressState } from "./SessionMigrationProgress"
 import SessionMigrationSummary from "./SessionMigrationSummary"
 import ForceReimportDialog from "./ForceReimportDialog"
@@ -227,8 +228,13 @@ const MigrationWizard: Component<MigrationWizardProps> = (props) => {
   // ---------------------------------------------------------------------------
 
   onMount(() => {
-    const handler = (event: MessageEvent) => {
-      const msg = event.data
+    const handler = (raw: unknown) => {
+      // The bus delivers the raw message data; downstream code narrows via
+      // the `type` discriminant before reading branch-specific fields. Using
+      // `any` here matches the prior `event.data` behaviour so the existing
+      // discriminated-union casts below still type-check.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const msg = raw as any
       if (msg?.type === "legacyMigrationData") {
         const data = (msg as LegacyMigrationDataMessage).data
         setProviders(data.providers)
@@ -304,9 +310,9 @@ const MigrationWizard: Component<MigrationWizardProps> = (props) => {
       }
     }
 
-    window.addEventListener("message", handler)
+    const unsubscribe = subscribeToMessages(handler)
     vscode.postMessage({ type: "requestLegacyMigrationData" })
-    onCleanup(() => window.removeEventListener("message", handler))
+    onCleanup(unsubscribe)
   })
 
   // ---------------------------------------------------------------------------

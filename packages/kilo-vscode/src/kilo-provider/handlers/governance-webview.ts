@@ -35,6 +35,7 @@
 
 import * as vscode from "vscode"
 import * as fs from "fs"
+import * as fsp from "fs/promises"
 import * as path from "path"
 
 // ─── Hub URL resolution ───────────────────────────────────────────────────
@@ -88,25 +89,11 @@ function workspaceFolderForDefaults(): string | undefined {
 }
 
 /**
- * Load the canonical default 4-tier governance state from
- * `<workspace>/.kilo/governance.json`. Falls back to a hard-coded skeleton
- * (matching the same 4-tier model) if the file is missing or unreadable.
+ * Hard-coded skeleton governance state — matches the 4-tier model from
+ * `.kilo/governance.json`. Used as a last resort when the workspace file is
+ * missing or unreadable.
  */
-export function loadDefaultGovernanceState(workspaceFolder?: string): GovernanceDefaults {
-  const folder = workspaceFolder ?? workspaceFolderForDefaults()
-  if (folder) {
-    const candidate = path.join(folder, GOV_DEFAULTS_REL)
-    try {
-      if (fs.existsSync(candidate)) {
-        const raw = fs.readFileSync(candidate, "utf-8")
-        return JSON.parse(raw) as GovernanceDefaults
-      }
-    } catch {
-      // fall through to hard-coded skeleton
-    }
-  }
-
-  // Hard-coded skeleton — matches the 4-tier model from .kilo/governance.json.
+function skeletonGovernanceState(): GovernanceDefaults {
   return {
     tiers: [
       { level: 0, name: "observer", permissions: ["view_audit", "view_status"] },
@@ -158,6 +145,54 @@ export function loadDefaultGovernanceState(workspaceFolder?: string): Governance
     auditLog: [],
     releaseVerdicts: [],
   }
+}
+
+/**
+ * Load the canonical default 4-tier governance state from
+ * `<workspace>/.kilo/governance.json`. Falls back to a hard-coded skeleton
+ * (matching the same 4-tier model) if the file is missing or unreadable.
+ *
+ * NOTE: prefer `loadDefaultGovernanceStateAsync` in handlers — the sync
+ * variant uses `fs.readFileSync`, which can block the extension host long
+ * enough to trigger VS Code's "window not responding" prompt when the Hub
+ * is unreachable and the fallback is hit.
+ */
+export function loadDefaultGovernanceState(workspaceFolder?: string): GovernanceDefaults {
+  const folder = workspaceFolder ?? workspaceFolderForDefaults()
+  if (folder) {
+    const candidate = path.join(folder, GOV_DEFAULTS_REL)
+    try {
+      if (fs.existsSync(candidate)) {
+        const raw = fs.readFileSync(candidate, "utf-8")
+        return JSON.parse(raw) as GovernanceDefaults
+      }
+    } catch {
+      // fall through to hard-coded skeleton
+    }
+  }
+
+  return skeletonGovernanceState()
+}
+
+/**
+ * Async equivalent of `loadDefaultGovernanceState`. Used by the webview
+ * message handler so the extension host stays responsive when Hub is
+ * unreachable and we have to read `.kilo/governance.json` from disk.
+ */
+export async function loadDefaultGovernanceStateAsync(
+  workspaceFolder?: string,
+): Promise<GovernanceDefaults> {
+  const folder = workspaceFolder ?? workspaceFolderForDefaults()
+  if (folder) {
+    const candidate = path.join(folder, GOV_DEFAULTS_REL)
+    try {
+      const raw = await fsp.readFile(candidate, "utf-8")
+      return JSON.parse(raw) as GovernanceDefaults
+    } catch {
+      // ENOENT or parse failure — fall through to skeleton.
+    }
+  }
+  return skeletonGovernanceState()
 }
 
 // ─── Hub fetcher (injectable for tests) ───────────────────────────────────
@@ -249,7 +284,7 @@ export async function handleGovernanceRealWebviewMessage(
     if (result.ok) {
       ctx.postMessage({ type: "governance.update", payload: result.data, source: "hub" })
     } else {
-      const defaults = loadDefaultGovernanceState(ctx.workspaceFolder)
+      const defaults = await loadDefaultGovernanceStateAsync(ctx.workspaceFolder)
       ctx.postMessage({
         type: "governance.update",
         payload: defaults,
@@ -285,7 +320,7 @@ export async function handleGovernanceRealWebviewMessage(
     if (reloaded.ok) {
       ctx.postMessage({ type: "governance.update", payload: reloaded.data, source: "hub" })
     } else {
-      const defaults = loadDefaultGovernanceState(ctx.workspaceFolder)
+      const defaults = await loadDefaultGovernanceStateAsync(ctx.workspaceFolder)
       ctx.postMessage({ type: "governance.update", payload: defaults, source: "defaults" })
     }
   }

@@ -3,6 +3,7 @@ import { Switch } from "@kilocode/kilo-ui/switch"
 import { Card } from "@kilocode/kilo-ui/card"
 import { Button } from "@kilocode/kilo-ui/button"
 import { useVSCode } from "../../context/vscode"
+import { postMessageDebounced } from "../../lib/message-bus"
 import type { ExtensionMessage } from "../../types/messages"
 import SettingsRow from "./SettingsRow"
 
@@ -422,8 +423,10 @@ const RoutingTab: Component = () => {
 
   // ── Initial Data Fetch ───────────────────────────────────
   onMount(() => {
-    // Request the full routing state (providers, config, health, traces) on tab open
-    vscode.postMessage({ type: "requestRoutingState" } as never)
+    // Request the full routing state (providers, config, health, traces) on tab open.
+    // Debounced so back-to-back tab clicks (or sibling tabs requesting the
+    // same state) don't flood the extension host with redundant requests.
+    postMessageDebounced({ type: "requestRoutingState" } as never, "routing:requestState", 50)
   })
 
   // ── Actions ──────────────────────────────────────────────

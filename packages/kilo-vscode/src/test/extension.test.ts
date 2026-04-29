@@ -5,11 +5,20 @@ import * as assert from "assert"
 import * as vscode from "vscode"
 // import * as myExtension from '../../extension';
 
-suite("Extension Test Suite", () => {
-  vscode.window.showInformationMessage("Start all tests.")
+// NOTE: This file uses Mocha's `suite/test` API for the VS Code integration test runner
+// (`vscode-test`). Bun's `bun test` discovery picks it up but does not provide those
+// globals, causing a `ReferenceError: suite is not defined`. Guard the registration so
+// the file is a no-op under Bun while still working under the VS Code test harness.
+declare const suite: ((name: string, body: () => void) => void) | undefined
+declare const test: ((name: string, body: () => void) => void) | undefined
 
-  test("Sample test", () => {
-    assert.strictEqual(-1, [1, 2, 3].indexOf(5))
-    assert.strictEqual(-1, [1, 2, 3].indexOf(0))
+if (typeof suite === "function" && typeof test === "function") {
+  suite("Extension Test Suite", () => {
+    vscode.window.showInformationMessage("Start all tests.")
+
+    test("Sample test", () => {
+      assert.strictEqual(-1, [1, 2, 3].indexOf(5))
+      assert.strictEqual(-1, [1, 2, 3].indexOf(0))
+    })
   })
-})
+}

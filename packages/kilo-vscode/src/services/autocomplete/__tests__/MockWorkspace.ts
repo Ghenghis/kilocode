@@ -1,5 +1,24 @@
 import * as vscode from "vscode"
-import { MockTextDocument } from "../../mocking/MockTextDocument"
+
+// Inline stub for the missing `../../mocking/MockTextDocument` helper. The original
+// helper file was never committed to this branch; this minimal shape is sufficient for
+// the consumers in this test directory and matches the surface area used below
+// (`getText`, `updateContent`, accepted constructor signature).
+class MockTextDocument {
+  private content: string
+  constructor(
+    public readonly uri: vscode.Uri,
+    content: string,
+  ) {
+    this.content = content
+  }
+  getText(): string {
+    return this.content
+  }
+  updateContent(next: string): void {
+    this.content = next
+  }
+}
 
 /**
  * Mock implementation of the key VSCode workspace APIs needed for testing AutocompleteWorkspaceEdit

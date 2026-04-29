@@ -228,7 +228,15 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
   private slimEditMetadata = true
 
   private pendingFollowup: Followup | null = null
-  private followupListeners: Array<(session: Session, directory: string) => void> = []
+  /**
+   * Subscribers notified when a plan follow-up session is adopted. A Set
+   * (rather than an Array) so the unsubscribe function returned from
+   * `onFollowupAdopted` is O(1) and so accidental double-registration of
+   * the same callback collapses to one entry. Hard-capped via
+   * MAX_FOLLOWUP_LISTENERS to surface listener leaks early.
+   */
+  private followupListeners = new Set<(session: Session, directory: string) => void>()
+  private static readonly MAX_FOLLOWUP_LISTENERS = 50
   /** Worktree diff stats poller for the sidebar badge — reuses GitStatsPoller (local stats only) */
   private statsPoller: GitStatsPoller | null = null
   private statsGitOps: GitOps | null = null
@@ -529,9 +537,25 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     void this.handleLoadSessions()
   }
 
-  /** Register a listener invoked when a plan follow-up session is adopted. */
-  public onFollowupAdopted(cb: (session: Session, directory: string) => void): void {
-    this.followupListeners.push(cb)
+  /**
+   * Register a listener invoked when a plan follow-up session is adopted.
+   * Returns an unsubscribe function — callers SHOULD invoke it on dispose
+   * to avoid accumulating stale references to disposed agent managers.
+   *
+   * Adding more than `MAX_FOLLOWUP_LISTENERS` listeners is treated as a leak
+   * and produces a `console.warn` (the registration still succeeds so we
+   * don't break startup; the warning is the actionable signal for tests).
+   */
+  public onFollowupAdopted(cb: (session: Session, directory: string) => void): () => void {
+    if (this.followupListeners.size >= KiloProvider.MAX_FOLLOWUP_LISTENERS) {
+      console.warn(
+        `[KiloProvider] followupListeners exceeded cap (${KiloProvider.MAX_FOLLOWUP_LISTENERS}); possible leak`,
+      )
+    }
+    this.followupListeners.add(cb)
+    return () => {
+      this.followupListeners.delete(cb)
+    }
   }
 
   /** Recover permission/question prompts after sessions and directories are tracked. */

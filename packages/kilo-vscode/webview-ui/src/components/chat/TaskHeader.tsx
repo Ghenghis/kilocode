@@ -17,6 +17,7 @@ import { useSession } from "../../context/session"
 import { collapseCostBreakdown } from "../../context/session-utils"
 import { useLanguage } from "../../context/language"
 import { useVSCode } from "../../context/vscode"
+import { subscribeToMessages } from "../../lib/message-bus"
 import { TaskTimeline } from "./TaskTimeline"
 import { ContextProgress } from "./ContextProgress"
 import type { TodoItem, ExtensionMessage } from "../../types/messages"
@@ -89,11 +90,11 @@ export const TaskHeader: Component<TaskHeaderProps> = (props) => {
 
   // Read initial value from VS Code settings
   onMount(() => vscode.postMessage({ type: "requestTimelineSetting" }))
-  const handler = (e: MessageEvent<ExtensionMessage>) => {
-    if (e.data.type === "timelineSettingLoaded") setExpanded(e.data.visible)
+  const handler = (raw: unknown) => {
+    const msg = raw as ExtensionMessage
+    if (msg.type === "timelineSettingLoaded") setExpanded(msg.visible)
   }
-  window.addEventListener("message", handler)
-  onCleanup(() => window.removeEventListener("message", handler))
+  onCleanup(subscribeToMessages(handler))
 
   const toggle = () => {
     const next = !expanded()

@@ -25,6 +25,7 @@ import {
   ParentComponent,
 } from "solid-js"
 import { useVSCode } from "./vscode"
+import { subscribeToMessages } from "../lib/message-bus"
 import type {
   BackendId,
   BackendConfig,
@@ -195,16 +196,19 @@ export const BackendProvider: ParentComponent = (props) => {
   // ── Inbound sync from extension host ─────────────────────────────────────
 
   onMount(() => {
-    const handler = (event: MessageEvent) => {
-      const msg = event.data as { type?: string; state?: BackendState }
+    // Use the shared message bus instead of a private window listener so
+    // every BackendProvider mount adds one Set entry rather than one full
+    // window addEventListener registration.
+    const handler = (data: unknown) => {
+      const msg = data as { type?: string; state?: BackendState }
       if (msg?.type === "backendStateSync" && msg.state) {
         // Replace state without re-broadcasting (would create an echo loop)
         setState(msg.state)
         saveState(msg.state)
       }
     }
-    window.addEventListener("message", handler)
-    onCleanup(() => window.removeEventListener("message", handler))
+    const unsubscribe = subscribeToMessages(handler as Parameters<typeof subscribeToMessages>[0])
+    onCleanup(unsubscribe)
   })
 
   const value: BackendContextValue = {

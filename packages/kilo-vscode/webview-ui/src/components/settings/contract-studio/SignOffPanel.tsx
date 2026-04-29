@@ -24,6 +24,7 @@ import { Component, createSignal, For, Show, onMount, onCleanup } from "solid-js
 import { Icon } from "@kilocode/kilo-ui/icon"
 import { Button } from "@kilocode/kilo-ui/button"
 import { useVSCode } from "../../../context/vscode"
+import { subscribeToMessages } from "../../../lib/message-bus"
 
 // ── Wire types ──────────────────────────────────────────────────────────
 
@@ -101,8 +102,8 @@ const SignOffPanel: Component<SignOffPanelProps> = (props) => {
 
   // ── Host wiring ────────────────────────────────────────────────────────
 
-  const onMessage = (event: MessageEvent) => {
-    const msg = event.data as { type?: unknown }
+  const onMessage = (raw: unknown) => {
+    const msg = raw as { type?: unknown }
     if (!msg || typeof msg.type !== "string") return
     if (msg.type === "contract:trace:list:result") {
       const m = msg as TraceListResultWire
@@ -126,11 +127,12 @@ const SignOffPanel: Component<SignOffPanelProps> = (props) => {
     }
   }
 
+  let unsubscribe: (() => void) | undefined
   onMount(() => {
-    window.addEventListener("message", onMessage)
+    unsubscribe = subscribeToMessages(onMessage)
     post({ type: "contract:trace:list", docPath: props.docPath })
   })
-  onCleanup(() => window.removeEventListener("message", onMessage))
+  onCleanup(() => unsubscribe?.())
 
   // ── Actions ────────────────────────────────────────────────────────────
 

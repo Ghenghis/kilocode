@@ -42,8 +42,9 @@ export interface SessionProvider {
   recoverPendingPrompts(): void
   /** Register a callback invoked when a plan follow-up session is adopted.
    *  The callback receives the new session and its directory so the Agent Manager
-   *  can route it to the correct worktree instead of LOCAL. */
-  onFollowupAdopted(cb: (session: Session, directory: string) => void): void
+   *  can route it to the correct worktree instead of LOCAL. Returns an
+   *  unsubscribe function so subscribers can detach on dispose. */
+  onFollowupAdopted(cb: (session: Session, directory: string) => void): () => void
   dispose(): void
 }
 

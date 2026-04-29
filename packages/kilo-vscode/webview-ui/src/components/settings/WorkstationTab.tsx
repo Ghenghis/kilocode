@@ -17,6 +17,7 @@
 import { Component, createSignal, onMount, onCleanup, Show, For, createMemo } from "solid-js"
 import { Icon } from "@kilocode/kilo-ui/icon"
 import { useVSCode } from "../../context/vscode"
+import { subscribeToMessages } from "../../lib/message-bus"
 
 interface HardwareSnapshot {
   cpuCores?: number
@@ -112,8 +113,8 @@ const WorkstationTab: Component = () => {
     requestAll()
   }
 
-  const onMessage = (event: MessageEvent) => {
-    const msg = event.data as { type?: string; [k: string]: unknown }
+  const onMessage = (raw: unknown) => {
+    const msg = raw as { type?: string; [k: string]: unknown }
     if (!msg?.type) return
     switch (msg.type) {
       case "workstationHardware":
@@ -146,11 +147,12 @@ const WorkstationTab: Component = () => {
     }
   }
 
+  let unsubscribe: (() => void) | undefined
   onMount(() => {
-    window.addEventListener("message", onMessage)
+    unsubscribe = subscribeToMessages(onMessage)
     requestAll()
   })
-  onCleanup(() => window.removeEventListener("message", onMessage))
+  onCleanup(() => unsubscribe?.())
 
   const totalLibrarySize = createMemo(() =>
     modelLibrary().reduce((sum, m) => sum + (m.sizeGb ?? 0), 0).toFixed(1),

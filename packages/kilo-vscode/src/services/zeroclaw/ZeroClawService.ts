@@ -102,6 +102,15 @@ const HISTORY_STATE_KEY = "zeroclaw.executionHistory"
 const MAX_HISTORY = 200
 
 /**
+ * Hard cap on the in-memory `tasks` Map. The service keeps task records around
+ * after they complete so the UI can still render "recent runs"; without a cap
+ * a long-lived workspace would let the Map grow unboundedly because
+ * persistHistory only truncates the *persisted* slice. Anything beyond this
+ * threshold is pruned from the live Map (oldest-first, terminal-status-only).
+ */
+const MAX_TASKS_RETAINED = 200
+
+/**
  * Per-task cap on captured stdout+stderr bytes. Anything beyond this is
  * dropped and replaced with a single truncation marker, preventing a
  * runaway child from exhausting extension memory.
@@ -628,6 +637,10 @@ export class ZeroClawService implements vscode.Disposable {
 		task.status = status
 		if (status === "completed" || status === "failed") {
 			task.completedAt = Date.now()
+			// Prune only on terminal transitions — pruning a still-running task
+			// would risk dropping its child handle from `children` if the Map
+			// entry it points at gets evicted.
+			this.pruneOldTasks()
 		}
 
 		const event: TaskStatusEvent = { taskId, status, task: { ...task } }
@@ -637,6 +650,33 @@ export class ZeroClawService implements vscode.Disposable {
 			} catch {
 				// Listener errors must not break the service
 			}
+		}
+	}
+
+	/**
+	 * Cap the in-memory tasks Map at MAX_TASKS_RETAINED entries by evicting the
+	 * oldest *terminal* tasks (completed / failed). Active tasks (queued,
+	 * running, blocked) are never evicted because the service still holds
+	 * timers / child handles keyed by their taskId.
+	 */
+	private pruneOldTasks(): void {
+		if (this.tasks.size <= MAX_TASKS_RETAINED) return
+		const terminal: ZeroClawTask[] = []
+		for (const t of this.tasks.values()) {
+			if (t.status === "completed" || t.status === "failed") terminal.push(t)
+		}
+		// Oldest first by completion time (fall back to createdAt for safety).
+		terminal.sort((a, b) => (a.completedAt ?? a.createdAt) - (b.completedAt ?? b.createdAt))
+		const overage = this.tasks.size - MAX_TASKS_RETAINED
+		const toEvict = terminal.slice(0, overage)
+		for (const victim of toEvict) {
+			this.tasks.delete(victim.taskId)
+		}
+		if (toEvict.length > 0) {
+			this.log.debug("Pruned old tasks from in-memory map", {
+				evicted: toEvict.length,
+				remaining: this.tasks.size,
+			})
 		}
 	}
 
@@ -915,18 +955,20 @@ export class ZeroClawService implements vscode.Disposable {
 		child.stdout?.on("data", (c) => captureChunk(c, "stdout"))
 		child.stderr?.on("data", (c) => captureChunk(c, "stderr"))
 
-		const exitInfo = await new Promise<{ code: number | null; signal: NodeJS.Signals | null; error?: Error }>(
-			(resolve) => {
-				let settled = false
-				const settle = (v: { code: number | null; signal: NodeJS.Signals | null; error?: Error }) => {
-					if (settled) return
-					settled = true
-					resolve(v)
-				}
-				child.on("error", (error) => settle({ code: null, signal: null, error }))
-				child.on("close", (code, signal) => settle({ code, signal }))
-			},
-		)
+		// Race the two outcomes: `error` fires for spawn-level problems (ENOENT,
+		// EACCES, etc.); `close` fires for normal child exit *and* signal-driven
+		// termination (SIGKILL from startExecutionTimer). Promise.race naturally
+		// honors the first-to-resolve discipline without the boolean latch the
+		// previous implementation needed. Both promises are wired with `once`
+		// so the loser doesn't leak its listener back onto the ChildProcess.
+		type ExitInfo = { code: number | null; signal: NodeJS.Signals | null; error?: Error }
+		const errorPromise = new Promise<ExitInfo>((resolve) => {
+			child.once("error", (error) => resolve({ code: null, signal: null, error }))
+		})
+		const closePromise = new Promise<ExitInfo>((resolve) => {
+			child.once("close", (code, signal) => resolve({ code, signal }))
+		})
+		const exitInfo = await Promise.race([errorPromise, closePromise])
 
 		this.clearExecutionTimer(task.taskId)
 		this.children.delete(task.taskId)

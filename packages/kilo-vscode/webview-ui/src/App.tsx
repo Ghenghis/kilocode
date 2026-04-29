@@ -21,6 +21,7 @@ import { Diff } from "@kilocode/kilo-ui/diff"
 import { File } from "@kilocode/kilo-ui/file"
 import { DataProvider } from "@kilocode/kilo-ui/context/data"
 import { Toast } from "@kilocode/kilo-ui/toast"
+import { subscribeToMessages } from "./lib/message-bus"
 import Settings from "./components/settings/Settings"
 import ProfileView from "./components/profile/ProfileView"
 import { VSCodeProvider, useVSCode } from "./context/vscode"
@@ -254,36 +255,43 @@ const AppContent: Component = () => {
   }
 
   onMount(() => {
-    const handler = (event: MessageEvent) => {
-      const message = event.data
+    // Subscribe via the shared message bus instead of installing a private
+    // window listener — keeps fan-out cost O(N) over subscribers, not over
+    // (subscribers × window-listeners).
+    const handler = (msg: unknown) => {
+      const message = msg as Record<string, unknown> | undefined
       if (message?.type === "action" && message.action) {
         console.log("[Kilo New] App: 🎬 action:", message.action)
-        handleViewAction(message.action)
+        handleViewAction(message.action as string)
       }
-      if (message?.type === "navigate" && message.view && VALID_VIEWS.has(message.view)) {
+      if (
+        message?.type === "navigate" &&
+        typeof message.view === "string" &&
+        VALID_VIEWS.has(message.view)
+      ) {
         console.log("[Kilo New] App: 🧭 navigate:", message.view, message.tab ? `tab=${message.tab}` : "")
-        if (message.tab) setSettingsTab(message.tab)
+        if (typeof message.tab === "string") setSettingsTab(message.tab)
         setCurrentView(message.view as ViewType)
       }
       if (message?.type === "openCloudSession" && message.sessionId) {
         console.log("[Kilo New] App: ☁️ openCloudSession:", message.sessionId)
-        session.selectCloudSession(message.sessionId)
+        session.selectCloudSession(message.sessionId as string)
         setCurrentView("newTask")
       }
-      handleForked(message)
+      handleForked(message as { type?: string; sessionID?: string })
       if (message?.type === "viewSubAgentSession" && message.sessionID) {
         console.log("[Kilo New] App: 🔍 viewSubAgentSession:", message.sessionID)
-        session.setCurrentSessionID(message.sessionID)
+        session.setCurrentSessionID(message.sessionID as string)
         setCurrentView("subAgentViewer")
       }
       // legacy-migration: state-driven migration wizard
       if (message?.type === "migrationState") {
         console.log("[Kilo New] App: 🔄 migrationState:", message.needed)
-        setMigrationNeeded(message.needed)
+        setMigrationNeeded(Boolean(message.needed))
       }
     }
-    window.addEventListener("message", handler)
-    onCleanup(() => window.removeEventListener("message", handler))
+    const unsubscribe = subscribeToMessages(handler as Parameters<typeof subscribeToMessages>[0])
+    onCleanup(unsubscribe)
   })
 
   // ── Auto-speak: speak last assistant reply when session goes idle ──

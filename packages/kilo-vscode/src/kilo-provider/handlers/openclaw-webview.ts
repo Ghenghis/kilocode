@@ -30,7 +30,7 @@
 
 import * as vscode from "vscode"
 import * as path from "path"
-import * as fs from "fs"
+import * as fsp from "fs/promises"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -361,7 +361,10 @@ export async function handleOpenClawWebviewMessage(
           const workspaceRoot =
             vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? process.cwd()
           const tmpDir = path.join(workspaceRoot, ".kilo", "tmp")
-          if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true })
+          // Async mkdir (recursive is idempotent — no need for an existsSync probe).
+          // Sync mkdir + writeFile of multi-MB log payloads previously blocked the
+          // extension host long enough for VS Code to show "window not responding".
+          await fsp.mkdir(tmpDir, { recursive: true })
           const outPath = path.join(
             tmpDir,
             `openclaw-log-${new Date().toISOString().replace(/[:.]/g, "-")}.json`,
@@ -370,7 +373,7 @@ export async function handleOpenClawWebviewMessage(
             typeof result.data === "string"
               ? result.data
               : JSON.stringify(result.data, null, 2)
-          fs.writeFileSync(outPath, content, "utf-8")
+          await fsp.writeFile(outPath, content, "utf-8")
           await vscode.window.showTextDocument(vscode.Uri.file(outPath))
           ctx.postMessage({ type: "openclawLogExported", path: outPath, ok: true })
         } catch (writeErr) {

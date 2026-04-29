@@ -65,13 +65,21 @@ export class HubPanel {
     try {
       const ext = vscode.extensions.getExtension("kilo-code")
       const version = ext?.packageJSON?.version ?? "unknown"
+      // AbortSignal.timeout ensures the extension-host Node.js thread is never
+      // blocked longer than 3 s on an unreachable Hub. Without this, the OS
+      // default TCP timeout (~75 s on Windows) would freeze VS Code's window.
+      const signal =
+        typeof AbortSignal.timeout === "function"
+          ? AbortSignal.timeout(3_000)
+          : (() => { const c = new AbortController(); setTimeout(() => c.abort(), 3_000); return c.signal })()
       await fetch(`${HUB_URL}/api/runtime/kilocode/sync`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ version, synced: true }),
+        signal,
       })
     } catch {
-      // Hub not running — silent fail
+      // Hub not running or timed out — silent fail
     }
   }
 

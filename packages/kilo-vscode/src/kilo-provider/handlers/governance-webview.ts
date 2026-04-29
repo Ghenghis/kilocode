@@ -201,7 +201,7 @@ export async function loadDefaultGovernanceStateAsync(
 
 // ─── Hub fetcher (injectable for tests) ───────────────────────────────────
 
-export type FetchInit = { method?: string; headers?: Record<string, string>; body?: string }
+export type FetchInit = { method?: string; headers?: Record<string, string>; body?: string; signal?: AbortSignal }
 export type FetchResponseLike = {
   ok: boolean
   status: number
@@ -239,10 +239,24 @@ type HubResult =
   | { ok: true; data: unknown }
   | { ok: false; status: number; reason: string }
 
+// Hard timeout for all Hub HTTP calls made from the extension host (Node.js).
+// Without this, an unreachable Hub hangs the extension host indefinitely and
+// triggers the VS Code "Window is not responding" dialog. AbortSignal.timeout
+// is available in Node.js 17.3+ (VS Code uses Node.js 18+).
+const HUB_FETCH_TIMEOUT_MS = 5_000
+
+function hubSignal(): AbortSignal {
+  if (typeof AbortSignal.timeout === "function") return AbortSignal.timeout(HUB_FETCH_TIMEOUT_MS)
+  // Fallback for very old runtimes: create a controller and auto-abort after timeout.
+  const ctrl = new AbortController()
+  setTimeout(() => ctrl.abort(), HUB_FETCH_TIMEOUT_MS)
+  return ctrl.signal
+}
+
 async function hubLoad(ctx: GovernanceWebviewContext): Promise<HubResult> {
   const url = `${getHubBaseUrl(ctx)}/api/canonical-settings?key=${encodeURIComponent(GOV_KEY)}`
   try {
-    const res = await getFetch(ctx)(url, { method: "GET", headers: authHeaders() })
+    const res = await getFetch(ctx)(url, { method: "GET", headers: authHeaders(), signal: hubSignal() })
     if (!res.ok) return { ok: false, status: res.status, reason: `HTTP ${res.status}` }
     const body = (await res.json()) as { value?: unknown; governance?: unknown }
     const data = (body && typeof body === "object" ? body.value ?? body.governance : undefined) ?? body
@@ -259,6 +273,7 @@ async function hubSave(ctx: GovernanceWebviewContext, payload: unknown): Promise
       method: "POST",
       headers: authHeaders(),
       body: JSON.stringify({ key: GOV_KEY, value: payload }),
+      signal: hubSignal(),
     })
     if (!res.ok) return { ok: false, status: res.status, reason: `HTTP ${res.status}` }
     const body = (await res.json()) as { value?: unknown; governance?: unknown }

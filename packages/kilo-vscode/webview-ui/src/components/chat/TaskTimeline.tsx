@@ -58,7 +58,11 @@ export const TaskTimeline: Component = () => {
   let startScroll = 0
 
   const messages = () => session.messages()
-  const allParts = () => {
+  // createMemo ensures the parts subscriptions are registered once per evaluation
+  // rather than being re-executed every time bars() reads allParts() inline. Without
+  // this, every streaming partUpdated caused bars to fully rebuild via an untracked
+  // allParts() call that had to re-subscribe to all N message parts each time.
+  const allParts = createMemo(() => {
     const msgs = messages()
     const result: Record<string, Part[]> = {}
     for (const m of msgs) {
@@ -66,7 +70,7 @@ export const TaskTimeline: Component = () => {
       if (p.length > 0) result[m.id] = p
     }
     return result
-  }
+  })
 
   const bars = createMemo(() => collect(messages(), allParts()))
   const busy = () => session.status() === "busy"

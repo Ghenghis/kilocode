@@ -1,4 +1,4 @@
-import { Component, Show, createSignal, onCleanup } from "solid-js"
+import { Component, Show, createSignal, onCleanup, onMount } from "solid-js"
 import { Switch } from "@kilocode/kilo-ui/switch"
 import { Select } from "@kilocode/kilo-ui/select"
 import { Card } from "@kilocode/kilo-ui/card"
@@ -49,7 +49,7 @@ const NotificationsTab: Component = () => {
   })
 
   onCleanup(unsubscribe)
-  vscode.postMessage({ type: "requestNotificationSettings" })
+  onMount(() => vscode.postMessage({ type: "requestNotificationSettings" }))
 
   const sendTestNotification = (channel: TestNotificationChannel) => {
     setTesting(true)

@@ -1,4 +1,4 @@
-import { Component, createSignal, createMemo, onCleanup, For, Show } from "solid-js"
+import { Component, createSignal, createMemo, onCleanup, onMount, For, Show } from "solid-js"
 import { Switch } from "@kilocode/kilo-ui/switch"
 import { Select } from "@kilocode/kilo-ui/select"
 import { Card } from "@kilocode/kilo-ui/card"
@@ -381,8 +381,7 @@ const SpeechTab: Component = () => {
     unsubscribe()
     stopSpeech()
   })
-
-  vscode.postMessage({ type: "requestSpeechSettings" })
+  onMount(() => vscode.postMessage({ type: "requestSpeechSettings" }))
 
   // --- Save helpers (draft-based, not auto-save) ---
   const updateField = <K extends keyof SpeechSettings>(key: K, value: SpeechSettings[K]) => {

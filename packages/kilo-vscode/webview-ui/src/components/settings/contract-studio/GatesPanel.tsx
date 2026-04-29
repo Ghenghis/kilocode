@@ -27,6 +27,7 @@ import { Icon } from "@kilocode/kilo-ui/icon"
 import { Button } from "@kilocode/kilo-ui/button"
 import { useVSCode } from "../../../context/vscode"
 import { subscribeToMessages } from "../../../lib/message-bus"
+import { useTrackedTimers } from "../../../lib/tracked-timers"
 import {
   CATEGORY_ORDER,
   CATEGORY_TITLES,
@@ -194,14 +195,16 @@ const GatesPanel: Component<GatesPanelProps> = (props) => {
   }
 
   // Debounced rubric re-run on edits.
-  let debounceTimer: ReturnType<typeof setTimeout> | undefined
+  const { trackTimeout, cancelAll: cancelTimers } = useTrackedTimers()
   createEffect(() => {
     const path = props.docPath
     // Track markdown so the effect re-runs.
     void props.markdown
     if (!path) return
-    if (debounceTimer) clearTimeout(debounceTimer)
-    debounceTimer = setTimeout(() => {
+    // cancelAll clears the previous debounce before scheduling a new one;
+    // useTrackedTimers also auto-cancels on component unmount via its onCleanup.
+    cancelTimers()
+    trackTimeout(() => {
       post({ type: "contract:rubric:score", docPath: path })
     }, DEBOUNCE_MS)
   })
@@ -215,7 +218,6 @@ const GatesPanel: Component<GatesPanelProps> = (props) => {
   })
   onCleanup(() => {
     unsubscribe?.()
-    if (debounceTimer) clearTimeout(debounceTimer)
   })
 
   // ── Row actions ────────────────────────────────────────────────────────

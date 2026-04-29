@@ -1,4 +1,4 @@
-import { Component, createSignal, createEffect, For, Show, onCleanup } from "solid-js"
+import { Component, createSignal, createEffect, For, Show, onCleanup, onMount } from "solid-js"
 import { useVSCode } from "../../context/vscode"
 
 // ─── Types ───────────────────────────────────────────────
@@ -380,9 +380,8 @@ const TrainingTab: Component = () => {
   })
 
   onCleanup(() => unsubscribe())
-
-  // Request initial state
-  vscode.postMessage({ type: "trainingGetJobs" })
+  // Request initial state after mount (not at component-body scope)
+  onMount(() => vscode.postMessage({ type: "trainingGetJobs" }))
 
   // ─── Actions ──────────────────────────────────────────
 

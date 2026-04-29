@@ -40,7 +40,7 @@ import { handleMemoryRealWebviewMessage } from "./kilo-provider/handlers/memory-
 import { handleRoutingRealWebviewMessage } from "./kilo-provider/handlers/routing-webview"
 import { handleZeroClawRealWebviewMessage } from "./kilo-provider/handlers/zeroclaw-webview"
 import { handleGovernanceRealWebviewMessage } from "./kilo-provider/handlers/governance-webview"
-import { handleTrainingWebviewMessage as handleTrainingRealWebviewMessage } from "./kilo-provider/handlers/training-webview"
+import { handleTrainingWebviewMessage as handleTrainingRealWebviewMessage, disposeAllTrainingSubscriptions } from "./kilo-provider/handlers/training-webview"
 import { handleOpenClawWebviewMessage } from "./kilo-provider/handlers/openclaw-webview"
 import {
   handleTestMcpTool,
@@ -241,12 +241,16 @@ export class DaveProviderExtensions {
     }
   }
 
-  /** Dispose all V4 service event listeners. Called from extension deactivate. */
+  /** Dispose all V4 service event listeners. Called from extension deactivate or panel close. */
   dispose(): void {
     for (const off of this.v4Disposers) {
       try { off() } catch { /* listener already disposed */ }
     }
     this.v4Disposers = []
+    // Tear down module-level SSE subscriptions opened by the training handler.
+    // Without this, each panel open/close cycle leaks live SSE connections that
+    // keep posting into the old (already-disposed) panel's dead context.
+    disposeAllTrainingSubscriptions()
   }
 
   // ──────────────────────────────────────────────────────────────────

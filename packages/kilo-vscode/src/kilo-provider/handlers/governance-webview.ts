@@ -156,6 +156,10 @@ function skeletonGovernanceState(): GovernanceDefaults {
  * variant uses `fs.readFileSync`, which can block the extension host long
  * enough to trigger VS Code's "window not responding" prompt when the Hub
  * is unreachable and the fallback is hit.
+ *
+ * @deprecated Use `loadDefaultGovernanceStateAsync` in all production code paths.
+ * This export is retained only for the test harness which needs a synchronous read.
+ * DO NOT call this from any message handler or activation code.
  */
 export function loadDefaultGovernanceState(workspaceFolder?: string): GovernanceDefaults {
   const folder = workspaceFolder ?? workspaceFolderForDefaults()

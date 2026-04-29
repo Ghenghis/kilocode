@@ -42,11 +42,15 @@ export const ServerProvider: ParentComponent = (props) => {
   const [workspaceDirectory, setWorkspaceDirectory] = createSignal<string>("")
   const [gitInstalled, setGitInstalled] = createSignal<boolean>(false)
 
-  const gitSub = vscode.onMessage((m: ExtensionMessage) => {
-    if (m.type === "gitStatus") setGitInstalled(m.repo)
-  })
+  // Tracked timer for the 1.5s post-auth reset; cleared on unmount and on each re-auth.
+  let deviceAuthResetTimer: ReturnType<typeof setTimeout> | undefined
 
   onMount(() => {
+    // Register gitSub inside onMount so cleanup is symmetric — both subscribe and
+    // unsubscribe happen in the same reactive lifecycle scope.
+    const gitSub = vscode.onMessage((m: ExtensionMessage) => {
+      if (m.type === "gitStatus") setGitInstalled(m.repo)
+    })
     const unsubscribe = vscode.onMessage((message: ExtensionMessage) => {
       switch (message.type) {
         case "ready":
@@ -111,8 +115,9 @@ export const ServerProvider: ParentComponent = (props) => {
         case "deviceAuthComplete":
           console.log("[Kilo New] Device auth complete")
           setDeviceAuth({ status: "success" })
-          // Reset to idle after a short delay
-          setTimeout(() => setDeviceAuth(initialDeviceAuth), 1500)
+          // Reset to idle after a short delay; clear previous timer if auth fires again
+          clearTimeout(deviceAuthResetTimer)
+          deviceAuthResetTimer = setTimeout(() => setDeviceAuth(initialDeviceAuth), 1500)
           break
 
         case "deviceAuthFailed":
@@ -130,6 +135,7 @@ export const ServerProvider: ParentComponent = (props) => {
     onCleanup(() => {
       gitSub()
       unsubscribe()
+      clearTimeout(deviceAuthResetTimer)
     })
 
     // Let the extension know the webview has mounted and message handlers are registered.

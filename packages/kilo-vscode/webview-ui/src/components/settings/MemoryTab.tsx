@@ -1,4 +1,4 @@
-import { Component, createSignal, createEffect, onCleanup, For, Show } from "solid-js"
+import { Component, createSignal, createEffect, onCleanup, onMount, For, Show } from "solid-js"
 import { useVSCode } from "../../context/vscode"
 
 // ─── Types ───────────────────────────────────────────────
@@ -404,10 +404,11 @@ const MemoryTab: Component = () => {
   })
 
   onCleanup(unsubscribe)
-
   // ── Initial data request ──
-  vscode.postMessage({ type: "memoryGetStatus" } as never)
-  vscode.postMessage({ type: "memoryGetHistory" } as never)
+  onMount(() => {
+    vscode.postMessage({ type: "memoryGetStatus" } as never)
+    vscode.postMessage({ type: "memoryGetHistory" } as never)
+  })
 
   // ── Actions ──
 

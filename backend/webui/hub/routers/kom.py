@@ -16,10 +16,10 @@ import asyncio
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
-from hub.config import HERMES_URL, SETTINGS_URL
-from hub.auth import require_write
-from hub.event_bus import emit
-from hub._http import _req
+from backend.webui.hub.config import HERMES_URL, SETTINGS_URL
+from backend.webui.hub.auth import require_write
+from backend.webui.hub.event_bus import emit
+from backend.webui.hub._http import _req
 
 _KOM_ENABLED: dict = {"enabled": False}
 _KOM_SESSIONS: dict = {}

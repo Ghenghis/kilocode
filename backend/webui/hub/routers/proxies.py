@@ -2,9 +2,9 @@
 import asyncio
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
-from hub.config import HERMES_URL, LM_STUDIO_URL, OLLAMA_URL, LITELLM_URL, RUNTIME_URL, SETTINGS_URL, VPS_HOST, BOT_BASE_PORT
-from hub.auth import require_write
-from hub._http import _req
+from backend.webui.hub.config import HERMES_URL, LM_STUDIO_URL, OLLAMA_URL, LITELLM_URL, RUNTIME_URL, SETTINGS_URL, VPS_HOST, BOT_BASE_PORT
+from backend.webui.hub.auth import require_write
+from backend.webui.hub._http import _req
 
 
 def create_router() -> APIRouter:

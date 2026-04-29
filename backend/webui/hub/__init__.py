@@ -12,13 +12,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from hub.config import HUB_ADMIN_TOKEN
-from hub.event_bus import create_events_router
-from hub.panel_registry import create_router as panel_router
-from hub.mcp_server import attach_mcp
+from backend.webui.hub.config import HUB_ADMIN_TOKEN
+from backend.webui.hub.event_bus import create_events_router
+from backend.webui.hub.panel_registry import create_router as panel_router
+from backend.webui.hub.mcp_server import attach_mcp
 
 # ── Router imports ─────────────────────────────────────────────────────────────
-from hub.routers import discord, kilocode, agents, providers, pipeline, kom, proxies, runtime, settings, openwebui, staging, agents_bridge, tasks, permissions, repairs, mcp, roadmap, capabilities, warroom, skills, services as services_router
+from backend.webui.hub.routers import discord, kilocode, agents, providers, pipeline, kom, proxies, runtime, settings, openwebui, staging, agents_bridge, tasks, permissions, repairs, mcp, roadmap, capabilities, warroom, skills, services as services_router
 
 
 def create_app(base_url: str = "http://localhost:8095") -> FastAPI:

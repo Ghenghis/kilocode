@@ -8,9 +8,9 @@ import asyncio
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 import httpx
-from hub.config import OPENWEBUI_URL, OPENWEBUI_PIPELINES_URL, OPENWEBUI_API_KEY, TIMEOUT
-from hub.auth import require_write
-from hub.event_bus import emit
+from backend.webui.hub.config import OPENWEBUI_URL, OPENWEBUI_PIPELINES_URL, OPENWEBUI_API_KEY, TIMEOUT
+from backend.webui.hub.auth import require_write
+from backend.webui.hub.event_bus import emit
 
 
 async def _owui_req(method: str, url: str, body=None, extra_headers: dict | None = None) -> dict:

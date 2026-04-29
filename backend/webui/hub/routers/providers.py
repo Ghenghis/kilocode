@@ -10,9 +10,9 @@ import uuid
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 import httpx
-from hub.config import PROVIDER_HEALTH_URLS
-from hub.auth import require_write
-from hub.event_bus import emit
+from backend.webui.hub.config import PROVIDER_HEALTH_URLS
+from backend.webui.hub.auth import require_write
+from backend.webui.hub.event_bus import emit
 
 _CIRCUIT: dict = {
     pid: {"state": "closed", "failures": 0, "last_ok": None, "last_fail": None, "latency_ms": None}

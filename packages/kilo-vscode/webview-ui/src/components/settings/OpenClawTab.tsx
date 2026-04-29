@@ -14,7 +14,7 @@
  * Version:         2026.4.27
  */
 
-import { Component, createSignal, For, Show, createMemo, createEffect, onCleanup } from "solid-js"
+import { Component, createSignal, For, Show, createMemo, createEffect, onMount, onCleanup } from "solid-js"
 import { useVSCode } from "../../context/vscode"
 import { fetchLivePricing, formatPrice, type ModelPricing, FALLBACK_PRICING } from "../../utils/pricing-service"
 
@@ -453,7 +453,8 @@ const OpenClawTab: Component = () => {
   const [modelPricing, setModelPricing] = createSignal<ModelPricing[]>([])
   const [pricingLoaded, setPricingLoaded] = createSignal(false)
 
-  createEffect(() => {
+  onMount(() => {
+    if (pricingLoaded()) return
     fetchLivePricing().then(data => {
       setModelPricing(data)
       setPricingLoaded(true)
@@ -859,7 +860,7 @@ const OpenClawTab: Component = () => {
     }
   }
 
-  createEffect(() => {
+  onMount(() => {
     window.addEventListener("message", onExtensionMessage)
     onCleanup(() => window.removeEventListener("message", onExtensionMessage))
   })

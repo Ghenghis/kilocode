@@ -4,9 +4,9 @@ import time
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
-from hub.auth import require_write
-from hub.config import PROVIDER_HEALTH_URLS
-from hub.routers.kilocode import _kc_state
+from backend.webui.hub.auth import require_write
+from backend.webui.hub.config import PROVIDER_HEALTH_URLS
+from backend.webui.hub.routers.kilocode import _kc_state
 
 
 def _ts() -> str:

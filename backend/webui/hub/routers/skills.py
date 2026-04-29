@@ -38,8 +38,8 @@ from typing import Any
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 
-from hub.auth import require_write
-from hub.event_bus import emit
+from backend.webui.hub.auth import require_write
+from backend.webui.hub.event_bus import emit
 
 
 # ── Storage paths ─────────────────────────────────────────────────────────────

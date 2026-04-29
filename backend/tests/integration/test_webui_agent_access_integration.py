@@ -16,7 +16,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 
-from webui.control_center import (
+from backend.webui.control_center import (
     AgentAccessAPI,
     ControlCenterApp,
     EvidencePanel,

@@ -464,7 +464,7 @@ class IntegrationLead:
     
     def _default_handoff_template(self) -> str:
         """Default handoff template if template file missing"""
-        return Path(__file__).parent / "KILOCODE_HANDOFF_TEMPLATE.md").read_text()
+        return (Path(__file__).parent / "KILOCODE_HANDOFF_TEMPLATE.md").read_text()
 
 
 async def main():

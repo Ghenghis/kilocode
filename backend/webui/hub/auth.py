@@ -8,7 +8,7 @@ Two FastAPI dependencies:
 import time
 from typing import Optional
 from fastapi import Request, HTTPException
-from hub.config import HUB_ADMIN_TOKEN
+from backend.webui.hub.config import HUB_ADMIN_TOKEN
 
 # ── Maintenance window state (shared with staging router) ──────────────────────
 _maintenance_window: Optional[dict] = None

@@ -11,7 +11,7 @@
  *  - Active task tracker with state machine display
  */
 
-import { Component, createSignal, createEffect, onCleanup, For, Show } from "solid-js"
+import { Component, createSignal, onMount, onCleanup, For, Show } from "solid-js"
 import { useVSCode } from "../../context/vscode"
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -89,11 +89,14 @@ const HermesTab: Component = () => {
     vscode.postMessage({ type: "hermes.listLocalAgents" })
   }
 
-  createEffect(() => {
+  onMount(() => {
     requestStatus()
     requestLocalAgents()
     const interval = setInterval(requestStatus, 30_000)
     onCleanup(() => clearInterval(interval))
+
+    window.addEventListener("message", onMessage)
+    onCleanup(() => window.removeEventListener("message", onMessage))
   })
 
   // ── Message handler ────────────────────────────────────────────────────────
@@ -137,10 +140,7 @@ const HermesTab: Component = () => {
     }
   }
 
-  createEffect(() => {
-    window.addEventListener("message", onMessage)
-    onCleanup(() => window.removeEventListener("message", onMessage))
-  })
+  // (listener registration moved into onMount above to avoid createEffect re-runs)
 
   // ── Actions ────────────────────────────────────────────────────────────────
   const toggle = () => {

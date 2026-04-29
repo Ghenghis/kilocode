@@ -12,7 +12,7 @@ import asyncio
 import sys
 sys.path.insert(0, "/sessions/lucid-sweet-ptolemy/mnt/contract-kit-v17/src")
 
-from webui.control_center import (
+from backend.webui.control_center import (
     ControlCenterApp,
     EvidencePanel,
     RepairPanel,

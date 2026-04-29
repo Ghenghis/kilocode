@@ -44,9 +44,9 @@ import httpx
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 
-from hub.auth import require_write
-from hub.event_bus import emit
-from hub.config import (
+from backend.webui.hub.auth import require_write
+from backend.webui.hub.event_bus import emit
+from backend.webui.hub.config import (
     HERMES_URL, LM_STUDIO_URL, OLLAMA_URL, LITELLM_URL,
     OPENWEBUI_URL, OPENWEBUI_PIPELINES_URL, RUNTIME_URL, SETTINGS_URL,
     PROVIDER_HEALTH_URLS, TIMEOUT,

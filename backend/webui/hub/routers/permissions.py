@@ -17,8 +17,8 @@ from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
-from hub.auth import require_write, get_maintenance_window
-from hub.event_bus import emit
+from backend.webui.hub.auth import require_write, get_maintenance_window
+from backend.webui.hub.event_bus import emit
 
 # ── Default capabilities ──────────────────────────────────────────────────────
 _CAPABILITIES = [

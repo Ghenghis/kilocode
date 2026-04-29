@@ -2,9 +2,9 @@
 import asyncio
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
-from hub.config import VPS_HOST, BOT_BASE_PORT
-from hub.auth import require_write, require_disruptive
-from hub._http import _req
+from backend.webui.hub.config import VPS_HOST, BOT_BASE_PORT
+from backend.webui.hub.auth import require_write, require_disruptive
+from backend.webui.hub._http import _req
 
 _BOT_META = {
     "hermes1": {"role": "Planning Strategist",   "channel": "#general",  "port_offset": 0},

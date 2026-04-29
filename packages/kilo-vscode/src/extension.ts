@@ -120,6 +120,27 @@ export function activate(context: vscode.ExtensionContext) {
   const memoryService = new MemoryService(context)
   context.subscriptions.push(memoryService)
 
+  // Initialize the client-side agent registry from .kilo/agents/ at the workspace
+  // root (or the extension's own .kilo/agents/ when no workspace is open). This
+  // populates the dropdown in HermesTab and the suggest() helper. Failures are
+  // logged but never block activation.
+  void (async () => {
+    const { agentRegistry } = await import("./services/agents/AgentRegistry")
+    const wsRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+    const fallbackRoot = context.extensionPath
+    const candidates = [wsRoot, fallbackRoot]
+      .filter((p): p is string => Boolean(p))
+      .map((root) => `${root.replace(/\\+$/, "")}/.kilo/agents`)
+    for (const dir of candidates) {
+      try {
+        await agentRegistry.init(dir)
+        if (agentRegistry.getAll().length > 0) break
+      } catch {
+        // try next candidate
+      }
+    }
+  })()
+
   const autoApproveService = new AutoApproveService(context)
   context.subscriptions.push(autoApproveService)
 

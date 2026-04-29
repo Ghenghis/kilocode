@@ -17,8 +17,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 
-import runtime.core as _core
-from hermes.orchestrator import ZeroClawAdapter, ShellAdapter
+import backend.runtime.core as _core
+from backend.hermes.orchestrator import ZeroClawAdapter, ShellAdapter
 
 
 # ---------------------------------------------------------------------------

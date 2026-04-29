@@ -2,7 +2,7 @@
 import asyncio
 from typing import Any, Optional
 import httpx
-from hub.config import TIMEOUT
+from backend.webui.hub.config import TIMEOUT
 
 
 async def _req(method: str, url: str, body: Optional[dict] = None) -> dict:

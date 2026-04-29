@@ -14,8 +14,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 # Ensure src/ is on the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 
-from kilocode.runtime_sync import RuntimeSync, SettingsManager, SyncState
-from hermes.orchestrator import HermesOrchestrator
+from backend.kilocode.runtime_sync import RuntimeSync, SettingsManager, SyncState
+from backend.hermes.orchestrator import HermesOrchestrator
 
 
 # ---------------------------------------------------------------------------

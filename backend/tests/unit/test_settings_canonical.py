@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from hub.routers.settings import (
+from backend.webui.hub.routers.settings import (
     _compute_version_hash,
     _fetch_canonical_settings,
     _surface_versions,

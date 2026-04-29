@@ -14,7 +14,7 @@ import pytest
 import subprocess
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from zeroclaw.adapters import (
+from backend.zeroclaw.adapters import (
     BaseAdapter,
     GitAdapter,
     ShellAdapter,

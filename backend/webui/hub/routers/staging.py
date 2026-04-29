@@ -12,10 +12,10 @@ import uuid
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
-from hub.config import STAGING_PORT, LIVE_PORT
-from hub.auth import require_write, require_disruptive
-from hub.event_bus import emit
-from hub._http import _req
+from backend.webui.hub.config import STAGING_PORT, LIVE_PORT
+from backend.webui.hub.auth import require_write, require_disruptive
+from backend.webui.hub.event_bus import emit
+from backend.webui.hub._http import _req
 
 _PROMOTION_HISTORY: list = []
 _staging_state: dict = {

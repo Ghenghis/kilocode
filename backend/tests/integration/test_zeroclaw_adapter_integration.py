@@ -13,7 +13,7 @@ from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 
-from zeroclaw.adapters import (
+from backend.zeroclaw.adapters import (
     FilesystemAdapter,
     GitAdapter,
     ResearchAdapter,

@@ -1,0 +1,44 @@
+[Unit]
+Description=KiloCode Shiba Memory Gateway
+Documentation=https://daveai.tech/docs
+After=network-online.target postgresql.service
+Wants=network-online.target
+StartLimitIntervalSec=0
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/opt/kilocode
+EnvironmentFile=-/opt/kilocode/.env
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONPATH=/opt/kilocode
+
+# The gateway code reads ONLY from os.environ — EnvironmentFile populates
+# os.environ at unit-start time, but the FastAPI app never opens the .env file
+# itself. This keeps the runtime path identical to docker-compose deployments.
+ExecStart=/usr/bin/python3 -m uvicorn backend.shiba.gateway_server:app \
+    --host 0.0.0.0 \
+    --port 18789 \
+    --workers 1 \
+    --log-level info \
+    --access-log
+
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=60
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=kilocode-shiba
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/kilocode/data /opt/kilocode/logs
+
+[Install]
+WantedBy=multi-user.target

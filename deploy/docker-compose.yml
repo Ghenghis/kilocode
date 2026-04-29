@@ -17,6 +17,8 @@ volumes:
       type: none
       o: bind
       device: /opt/kilocode/data
+  shiba-pgdata:
+    driver: local
 
 services:
 
@@ -113,6 +115,57 @@ services:
       timeout: 5s
       retries: 5
       start_period: 15s
+
+  # ---------------------------------------------------------------------------
+  # Shiba Memory Gateway (port 18789) — long-term memory for the WebUI/VS Code
+  # ---------------------------------------------------------------------------
+  shiba-postgres:
+    image: postgres:16-alpine
+    container_name: shiba-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: shiba
+      POSTGRES_USER: shiba
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shiba-local-pw}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - shiba-pgdata:/var/lib/postgresql/data
+    networks:
+      - kilocode-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shiba -d shiba"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  shiba-gateway:
+    build:
+      context: ..
+      dockerfile: deploy/docker/shiba-gateway/Dockerfile
+    image: contract-kit/shiba-gateway:latest
+    container_name: shiba-gateway
+    restart: unless-stopped
+    environment:
+      SHIBA_DB_URL: ${SHIBA_DB_URL:-postgresql://shiba:${POSTGRES_PASSWORD:-shiba-local-pw}@shiba-postgres:5432/shiba}
+      SHIBA_KEY: ${SHIBA_KEY:-shiba-local-key}
+      SHIBA_GATEWAY_PORT: "18789"
+      SHIBA_CORS_ORIGINS: ${SHIBA_CORS_ORIGINS:-http://localhost,http://127.0.0.1}
+    ports:
+      - "${SHIBA_GATEWAY_PORT:-18789}:18789"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      shiba-postgres:
+        condition: service_healthy
+    networks:
+      - kilocode-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:18789/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   # ---------------------------------------------------------------------------
   # WebUI Control Center (port 7860 — Open WebUI convention)

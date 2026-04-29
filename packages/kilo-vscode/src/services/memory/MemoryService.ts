@@ -224,6 +224,13 @@ export class MemoryService implements vscode.Disposable {
   private consecutiveFailures = 0
   private readonly autoReconnectThreshold = 3
 
+  // ── Remote (Shiba) sync ──
+  private readonly maxRemoteRetryQueue = 100
+  private readonly remoteWriteTimeoutMs = 5000
+  private readonly remoteRecallTimeoutMs = 3000
+  private remoteRetryQueue: MemoryEntry[] = []
+  private isFlushingRetryQueue = false
+
   private readonly _onConnectionChanged = new vscode.EventEmitter<MemoryConnection>()
   readonly onConnectionChanged = this._onConnectionChanged.event
 
@@ -286,6 +293,11 @@ export class MemoryService implements vscode.Disposable {
         lastError: err instanceof Error ? err.message : "Unknown error",
       })
     }
+
+    // Best-effort: drain any writes queued while we were disconnected.
+    void this.flushRemoteRetryQueue().catch((err: unknown) => {
+      this.log.warn("flushRemoteRetryQueue failed during reconnect", err)
+    })
 
     return this.getConnection()
   }
@@ -511,6 +523,16 @@ export class MemoryService implements vscode.Disposable {
     this.lastSuccessfulWrite = Date.now()
     this.recordOperation(true)
     this._onMemoryWritten.fire(entry)
+
+    // Fire-and-forget remote push when connected to a Shiba endpoint.
+    // This MUST NOT block the local write path or surface errors —
+    // failures are logged and the entry is queued for later retry.
+    if (this.isRemoteEndpointConnected()) {
+      void this.pushToRemote(entry).catch((err: unknown) => {
+        this.log.warn("pushToRemote unexpected failure", err)
+      })
+    }
+
     return entry
   }
 
@@ -637,6 +659,40 @@ export class MemoryService implements vscode.Disposable {
       this._onRecallCompleted.fire(result)
       return result
     }
+  }
+
+  // ─── Memory Recall with Remote Merge ────────────────
+  //
+  // Async sibling of `recall()` that ALSO consults the configured Shiba
+  // gateway when the connection is in "connected" state. Local results
+  // are computed first (and always returned, even if the remote call
+  // fails). Remote results are merged using last-write-wins by
+  // `timestamp`, then re-ranked by relevance.
+  //
+  // Public `recall()` remains synchronous for backwards compatibility
+  // with the existing webview message handler in KiloProvider.dave.ts —
+  // see RFC notes in the package handoff doc for the deferred refactor
+  // to a single async API.
+
+  async recallWithRemote(
+    query: string,
+    options?: { project?: string; scope?: MemoryEntry["scope"]; factType?: MemoryEntry["factType"]; limit?: number; projectOnly?: boolean; threshold?: number },
+  ): Promise<RecallResult> {
+    const localResult = this.recall(query, options)
+    if (!this.isRemoteEndpointConnected()) {
+      return localResult
+    }
+
+    const limit = options?.limit ?? 20
+    const threshold = options?.threshold ?? 0
+    const remoteEntries = await this.fetchRemoteRecall(query, limit, threshold)
+    if (remoteEntries === null) {
+      // Remote failed — fall back silently to the local-only result.
+      return localResult
+    }
+
+    const merged = this.mergeRecallResults(localResult, remoteEntries, query, limit)
+    return merged
   }
 
   // ─── Write History ───────────────────────────────────
@@ -957,6 +1013,304 @@ export class MemoryService implements vscode.Disposable {
     this._onRecallCompleted.dispose()
     this._onPermissionChanged.dispose()
     this._onHealthChanged.dispose()
+  }
+
+  // ─── Remote Sync (Shiba) ────────────────────────────
+
+  /**
+   * Push a freshly-written memory entry to the configured Shiba gateway.
+   *
+   * Failures are logged at WARN level and the entry is queued for retry —
+   * they MUST NOT throw, since the local write has already succeeded.
+   */
+  private async pushToRemote(entry: MemoryEntry): Promise<void> {
+    const endpoint = this.connection.endpoint
+    if (!endpoint || !this.isHttpEndpoint(endpoint)) return
+
+    const url = `${this.normaliseEndpoint(endpoint)}/write`
+    const body = this.entryToWritePayload(entry)
+    const ok = await this.postJson(url, body, this.remoteWriteTimeoutMs)
+    if (ok) {
+      // Opportunistically drain queued retries — single in-flight at a time.
+      void this.flushRemoteRetryQueue()
+      return
+    }
+
+    this.queueForRetry(entry)
+    this.log.warn("pushToRemote: write failed; queued for retry", {
+      id: entry.id,
+      queueDepth: this.remoteRetryQueue.length,
+    })
+  }
+
+  /** POST a JSON body to the gateway. Returns true iff the response was 2xx. */
+  private async postJson(url: string, body: unknown, timeoutMs: number): Promise<boolean> {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), timeoutMs)
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Shiba-Key": this.getShibaKey(),
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      })
+      return res.ok
+    } catch (err: unknown) {
+      this.log.warn("postJson failed", {
+        url,
+        error: err instanceof Error ? err.message : String(err),
+      })
+      return false
+    } finally {
+      clearTimeout(timer)
+    }
+  }
+
+  /**
+   * Pull recall hits from the gateway. Returns ``null`` when the request
+   * fails for any reason (timeout, non-2xx, malformed JSON) so callers
+   * can distinguish "no results" from "remote unreachable".
+   */
+  private async fetchRemoteRecall(
+    query: string,
+    limit: number,
+    threshold: number,
+  ): Promise<Array<MemoryEntry & { relevanceScore: number; matchReason: string }> | null> {
+    const endpoint = this.connection.endpoint
+    if (!endpoint || !this.isHttpEndpoint(endpoint)) return null
+    const url = `${this.normaliseEndpoint(endpoint)}/recall`
+
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), this.remoteRecallTimeoutMs)
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Shiba-Key": this.getShibaKey(),
+        },
+        body: JSON.stringify({ query, limit, threshold }),
+        signal: controller.signal,
+      })
+      if (!res.ok) {
+        this.log.warn("fetchRemoteRecall: non-2xx response", { status: res.status })
+        return null
+      }
+      const json = (await res.json()) as { memories?: unknown }
+      if (!json || !Array.isArray(json.memories)) return []
+      return json.memories
+        .map((m) => this.adaptRemoteEntry(m))
+        .filter((m): m is MemoryEntry & { relevanceScore: number; matchReason: string } => m !== null)
+    } catch (err: unknown) {
+      this.log.warn("fetchRemoteRecall failed", {
+        error: err instanceof Error ? err.message : String(err),
+      })
+      return null
+    } finally {
+      clearTimeout(timer)
+    }
+  }
+
+  /**
+   * Merge local and remote recall results using last-write-wins by
+   * `timestamp`. Entries with the same id collapse to a single record;
+   * the most recent `timestamp` wins. Final results are re-ranked by
+   * `relevanceScore` (desc) and capped at ``limit``.
+   */
+  private mergeRecallResults(
+    local: RecallResult,
+    remoteEntries: Array<MemoryEntry & { relevanceScore: number; matchReason: string }>,
+    query: string,
+    limit: number,
+  ): RecallResult {
+    type Scored = MemoryEntry & { relevanceScore: number; matchReason: string; crossProject?: boolean }
+    const merged = new Map<string, Scored>()
+
+    for (const r of local.results) {
+      merged.set(r.id, { ...r })
+    }
+
+    for (const r of remoteEntries) {
+      const existing = merged.get(r.id)
+      if (!existing) {
+        merged.set(r.id, { ...r, matchReason: `${r.matchReason} (remote)` })
+        continue
+      }
+      // LWW: newer timestamp replaces older record's content.
+      if (r.timestamp > existing.timestamp) {
+        merged.set(r.id, {
+          ...existing,
+          ...r,
+          relevanceScore: Math.max(existing.relevanceScore, r.relevanceScore),
+          matchReason: `${existing.matchReason}; remote-newer`,
+        })
+      } else {
+        merged.set(r.id, {
+          ...existing,
+          relevanceScore: Math.max(existing.relevanceScore, r.relevanceScore),
+        })
+      }
+    }
+
+    const ordered = Array.from(merged.values())
+      .sort((a, b) => b.relevanceScore - a.relevanceScore)
+      .slice(0, limit)
+
+    return {
+      query,
+      project: local.project,
+      results: ordered,
+      status: ordered.length > 0 ? "success" : "empty",
+      timestamp: Date.now(),
+    }
+  }
+
+  /**
+   * Adapt the gateway's wire schema to the local ``MemoryEntry`` shape.
+   *
+   * The remote payload uses ``content`` / ``score`` / ``created_at`` /
+   * ``updated_at``; the local store uses ``summary`` / ``content`` /
+   * ``timestamp`` / etc. We synthesise sensible defaults for missing
+   * fields and treat ``updated_at`` as the LWW timestamp.
+   */
+  private adaptRemoteEntry(
+    raw: unknown,
+  ): (MemoryEntry & { relevanceScore: number; matchReason: string }) | null {
+    if (!raw || typeof raw !== "object") return null
+    const obj = raw as Record<string, unknown>
+    const id = typeof obj.id === "string" ? obj.id : null
+    const content = typeof obj.content === "string" ? obj.content : null
+    if (!id || !content) return null
+
+    const score = typeof obj.score === "number" ? obj.score : 0
+    const updatedAt = typeof obj.updated_at === "number" ? obj.updated_at : 0
+    // Convert seconds (server) to ms (local). Detect by magnitude.
+    const timestamp = updatedAt > 0 && updatedAt < 1e12 ? Math.floor(updatedAt * 1000) : Math.floor(updatedAt)
+
+    const tags = Array.isArray(obj.tags) ? (obj.tags.filter((t) => typeof t === "string") as string[]) : []
+    const summary = content.slice(0, 80)
+
+    const project = typeof (obj.metadata as { project?: unknown })?.project === "string"
+      ? ((obj.metadata as { project: string }).project)
+      : "remote"
+    const factType = "recall" as MemoryEntry["factType"]
+    const scope = "global" as MemoryEntry["scope"]
+
+    return {
+      id,
+      project,
+      scope,
+      factType,
+      summary,
+      content,
+      traceRef: `remote-${id}`,
+      timestamp: timestamp || Date.now(),
+      agent: undefined,
+      relevanceScore: Math.max(0, Math.min(1, score)),
+      matchReason: tags.length > 0 ? `remote: tags=${tags.join(",")}` : "remote",
+    }
+  }
+
+  /** Serialise a local entry into the gateway's WriteRequest schema. */
+  private entryToWritePayload(entry: MemoryEntry): {
+    id: string
+    content: string
+    tags: string[]
+    metadata: Record<string, unknown>
+    created_at: number
+    updated_at: number
+  } {
+    const seconds = entry.timestamp / 1000
+    return {
+      id: entry.id,
+      content: entry.content,
+      tags: [entry.factType, entry.scope, entry.project].filter((t) => typeof t === "string" && t.length > 0),
+      metadata: {
+        project: entry.project,
+        scope: entry.scope,
+        factType: entry.factType,
+        summary: entry.summary,
+        traceRef: entry.traceRef,
+        agent: entry.agent ?? null,
+      },
+      created_at: seconds,
+      updated_at: seconds,
+    }
+  }
+
+  /** True when the connection points at an HTTP(S) URL — local file paths are skipped. */
+  private isRemoteEndpointConnected(): boolean {
+    return this.connection.status === "connected" && this.isHttpEndpoint(this.connection.endpoint)
+  }
+
+  private isHttpEndpoint(endpoint: string | undefined): boolean {
+    if (!endpoint) return false
+    return endpoint.startsWith("http://") || endpoint.startsWith("https://")
+  }
+
+  private normaliseEndpoint(endpoint: string): string {
+    return endpoint.replace(/\/$/, "")
+  }
+
+  /**
+   * Resolve the Shiba auth key. Resolution order:
+   *   1. ``process.env.SHIBA_KEY`` (populated by setup-windows-env.ps1)
+   *   2. ``kilocode.memory.shibaKey`` workspace setting
+   *   3. ``"shiba-local-key"`` (matches gateway dev default)
+   */
+  private getShibaKey(): string {
+    const fromEnv = (typeof process !== "undefined" && process.env && process.env.SHIBA_KEY) || ""
+    if (fromEnv.trim().length > 0) return fromEnv
+
+    try {
+      const fromConfig = vscode.workspace.getConfiguration("kilocode").get<string>("memory.shibaKey")
+      if (typeof fromConfig === "string" && fromConfig.trim().length > 0) {
+        return fromConfig
+      }
+    } catch {
+      // vscode unavailable (tests) — fall through.
+    }
+    return "shiba-local-key"
+  }
+
+  private queueForRetry(entry: MemoryEntry): void {
+    this.remoteRetryQueue.push(entry)
+    if (this.remoteRetryQueue.length > this.maxRemoteRetryQueue) {
+      // Drop the oldest entries — newer writes are more likely to be
+      // user-relevant than stale ones from a long-disconnected session.
+      this.remoteRetryQueue = this.remoteRetryQueue.slice(-this.maxRemoteRetryQueue)
+    }
+  }
+
+  /** Flush any queued retries, one at a time. Safe to call repeatedly. */
+  private async flushRemoteRetryQueue(): Promise<void> {
+    if (this.isFlushingRetryQueue) return
+    if (!this.isRemoteEndpointConnected()) return
+    if (this.remoteRetryQueue.length === 0) return
+
+    this.isFlushingRetryQueue = true
+    try {
+      while (this.remoteRetryQueue.length > 0 && this.isRemoteEndpointConnected()) {
+        const entry = this.remoteRetryQueue[0]
+        const url = `${this.normaliseEndpoint(this.connection.endpoint)}/write`
+        const ok = await this.postJson(url, this.entryToWritePayload(entry), this.remoteWriteTimeoutMs)
+        if (!ok) {
+          // Stop draining on first failure; keep the queue intact for the next attempt.
+          break
+        }
+        this.remoteRetryQueue.shift()
+      }
+    } finally {
+      this.isFlushingRetryQueue = false
+    }
+  }
+
+  /** Test-only accessor for the retry queue depth. */
+  getRemoteRetryQueueDepth(): number {
+    return this.remoteRetryQueue.length
   }
 
   // ─── Private ─────────────────────────────────────────

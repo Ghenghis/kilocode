@@ -45,20 +45,28 @@ services:
       retries: 5
 
   # ── Shiba Memory Gateway ─────────────────────────────────────────────────────
-  shiba:
-    image: ghcr.io/shiba-memory/shiba:latest
-    container_name: shiba
+  shiba-gateway:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/shiba-gateway/Dockerfile
+    image: contract-kit/shiba-gateway:latest
+    container_name: shiba-gateway
     restart: unless-stopped
     ports:
-      - "18789:8000"
+      - "${SHIBA_GATEWAY_PORT:-18789}:18789"
     environment:
-      DATABASE_URL: postgresql://shb:${POSTGRES_PASSWORD}@postgres:5432/shb
+      SHIBA_DB_URL: ${SHIBA_DB_URL:-postgresql://shb:${POSTGRES_PASSWORD}@postgres:5432/shb}
+      SHIBA_KEY: ${SHIBA_KEY:-shiba-local-key}
+      SHIBA_GATEWAY_PORT: "18789"
+      SHIBA_CORS_ORIGINS: ${SHIBA_CORS_ORIGINS:-http://localhost,http://127.0.0.1}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       postgres:
         condition: service_healthy
     networks: [kilo-net]
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/health || exit 1"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:18789/health || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -72,7 +80,7 @@ services:
       - "8000:8000"
     environment:
       NATS_URL: nats://nats:4222
-      SHIBA_URL: http://shiba:8000
+      SHIBA_URL: http://shiba-gateway:18789
       POSTGRES_URL: postgresql://shb:${POSTGRES_PASSWORD}@postgres:5432/shb
       MINIMAX_API_KEY: ${MINIMAX_API_KEY:-}
       SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY:-}
@@ -101,7 +109,7 @@ services:
     environment:
       NATS_URL: nats://nats:4222
       RUNTIME_URL: http://runtime-core:8000
-      SHIBA_URL: http://shiba:8000
+      SHIBA_URL: http://shiba-gateway:18789
       LOG_LEVEL: INFO
     depends_on:
       runtime-core:

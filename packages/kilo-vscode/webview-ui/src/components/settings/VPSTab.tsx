@@ -1,4 +1,4 @@
-import { Component, createSignal, createEffect, onCleanup, For, Show } from "solid-js"
+import { Component, createSignal, createEffect, on, onCleanup, onMount, For, Show } from "solid-js"
 import { Card } from "@kilocode/kilo-ui/card"
 import { Button } from "@kilocode/kilo-ui/button"
 import { Switch } from "@kilocode/kilo-ui/switch"
@@ -386,14 +386,19 @@ const VPSTab: Component = () => {
   const isVisible = useDocumentVisible()
 
   // ── Auto-refresh effect ──────────────────────────────
-  createEffect(() => {
-    if (refreshTimer) clearInterval(refreshTimer)
-    if (autoRefresh() && selectedServerId()) {
-      refreshTimer = setInterval(() => {
-        if (isVisible()) requestMetrics()
-      }, refreshInterval() * 1000)
-    }
-  })
+  // { defer: true } — skip the initial run on mount; the initial requestMetrics
+  // is driven by selectServer() when the user picks a server, not by this effect.
+  createEffect(
+    on([autoRefresh, selectedServerId, refreshInterval], () => {
+      if (refreshTimer) clearInterval(refreshTimer)
+      const id = selectedServerId()
+      if (autoRefresh() && id) {
+        refreshTimer = setInterval(() => {
+          if (isVisible()) requestMetrics()
+        }, refreshInterval() * 1000)
+      }
+    }, { defer: true }),
+  )
 
   // ── 30s auto-ping sweep ─────────────────────────────
   // Fires `vpsServerPing` for every registered server on a 30s cadence so the
@@ -430,7 +435,12 @@ const VPSTab: Component = () => {
   })
 
   // ── Request initial data ─────────────────────────────
-  postMessage({ type: "requestVpsServers" } as never)
+  // Deferred to onMount so the request fires after the component is attached
+  // to the DOM (not during reactive evaluation). Prevents stacked requests
+  // if Solid re-evaluates the component body before mount completes.
+  onMount(() => {
+    postMessage({ type: "requestVpsServers" } as never)
+  })
 
   // ── Actions ──────────────────────────────────────────
 

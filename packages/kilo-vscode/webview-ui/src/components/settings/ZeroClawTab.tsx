@@ -1,5 +1,6 @@
-import { Component, createSignal, createEffect, For, Show, onCleanup } from "solid-js"
+import { Component, createSignal, createEffect, For, Show, onCleanup, onMount } from "solid-js"
 import { useVSCode } from "../../context/vscode"
+import { useDocumentVisible } from "../../hooks/useDocumentVisible"
 import type { ExtensionMessage } from "../../types/messages"
 
 // ─── Types ───────────────────────────────────────────────
@@ -921,21 +922,15 @@ const ZeroClawTab: Component = () => {
 		if (tickInterval !== null) return
 		tickInterval = setInterval(() => setTick((t) => t + 1), 1000)
 	}
+	// Use the shared hook instead of a manual document.addEventListener —
+	// the hook registers with onCleanup automatically and avoids the duplicate
+	// visibility logic that was duplicating startTick/stopTick calls.
+	const isVisible = useDocumentVisible()
 	createEffect(() => {
 		const hasRunning = activeTasks().length > 0
-		const visible = typeof document === "undefined" || !document.hidden
-		if (hasRunning && visible) startTick()
+		if (hasRunning && isVisible()) startTick()
 		else stopTick()
 	})
-	if (typeof document !== "undefined") {
-		const onVisibility = () => {
-			const hasRunning = activeTasks().length > 0
-			if (document.hidden) stopTick()
-			else if (hasRunning) startTick()
-		}
-		document.addEventListener("visibilitychange", onVisibility)
-		onCleanup(() => document.removeEventListener("visibilitychange", onVisibility))
-	}
 	onCleanup(stopTick)
 	// Expose `tick` as a reactive read for downstream TaskCard memos that
 	// genuinely need second-level updates. Components that don't read tick()
@@ -1000,8 +995,11 @@ const ZeroClawTab: Component = () => {
 
 	onCleanup(() => unsubscribe())
 
-	// Request initial data
-	vscode.postMessage({ type: "zeroClawGetHistory" } as any)
+	// Request initial data — deferred to onMount so it fires after DOM attach,
+	// not during reactive evaluation. Prevents duplicate requests on rapid tab clicks.
+	onMount(() => {
+		vscode.postMessage({ type: "zeroClawGetHistory" } as any)
+	})
 
 	// Actions
 	const handleSubmit = (formData: TaskFormData) => {

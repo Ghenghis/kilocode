@@ -1,4 +1,4 @@
-import { createSignal, createMemo, createEffect, onCleanup, onMount, Show } from "solid-js"
+import { createSignal, createMemo, createEffect, on, onCleanup, onMount, Show } from "solid-js"
 import { Tabs } from "@kilocode/kilo-ui/tabs"
 import { Card } from "@kilocode/kilo-ui/card"
 import { Button } from "@kilocode/kilo-ui/button"
@@ -42,17 +42,30 @@ export const MarketplaceView = () => {
   // (Kobalte unmounts/remounts on every click) doesn't re-send the multi-MB
   // fetchMarketplaceData round-trip when we already have a fresh catalog.
   let lastFetchedDir: string | undefined
+  // Watchdog timer: clears the "fetching" spinner if the extension never replies.
+  let fetchWatchdog: ReturnType<typeof setTimeout> | undefined
 
   const fetchData = (force = false) => {
     setFetching(true)
     lastFetchedDir = server.workspaceDirectory()
     vscode.postMessage({ type: "fetchMarketplaceData" })
+    // 10 s safety net — if the extension host is busy and never replies,
+    // unblock the UI instead of leaving the spinner up indefinitely.
+    clearTimeout(fetchWatchdog)
+    fetchWatchdog = setTimeout(() => setFetching(false), 10_000)
   }
 
-  // Listen for messages
-  createEffect(() => {
+  const telemetry = (event: string, properties?: Record<string, unknown>) => {
+    vscode.postMessage({ type: "telemetry", event, properties: properties ?? {} })
+  }
+
+  onMount(() => {
+    // Register the message listener once, after DOM attach. Using onMount
+    // rather than a bare createEffect prevents the subscription from being
+    // re-registered whenever a reactive dep inside the callback changes.
     const unsub = vscode.onMessage((msg) => {
       if (msg.type === "marketplaceData") {
+        clearTimeout(fetchWatchdog)
         setItems(msg.marketplaceItems ?? [])
         setMetadata(msg.marketplaceInstalledMetadata ?? EMPTY_METADATA)
         setErrors(msg.errors ?? [])
@@ -76,25 +89,27 @@ export const MarketplaceView = () => {
         }
       }
     })
-    onCleanup(unsub)
-  })
+    onCleanup(() => {
+      unsub()
+      clearTimeout(fetchWatchdog)
+    })
 
-  // Re-fetch only on first mount or when the workspace directory actually changes.
-  // Guard: if the component remounts (tab click) but the workspace is the same
-  // and we already hold a catalog, skip the round-trip — the catalog hasn't changed.
-  createEffect(() => {
-    const dir = server.workspaceDirectory()
-    if (items().length > 0 && dir === lastFetchedDir) return
-    fetchData()
-  })
-
-  const telemetry = (event: string, properties?: Record<string, unknown>) => {
-    vscode.postMessage({ type: "telemetry", event, properties: properties ?? {} })
-  }
-
-  onMount(() => {
     telemetry(TelemetryEventName.MARKETPLACE_TAB_VIEWED)
+
+    // Initial fetch on first mount — only if we don't already have data for
+    // this workspace (handles rapid tab-click remounts cleanly).
+    if (items().length === 0 || server.workspaceDirectory() !== lastFetchedDir) {
+      fetchData()
+    }
   })
+
+  // Re-fetch when the workspace directory changes AFTER the initial mount.
+  // { defer: true } skips the first run — onMount already handles that.
+  createEffect(
+    on(() => server.workspaceDirectory(), (dir) => {
+      if (dir !== lastFetchedDir) fetchData()
+    }, { defer: true }),
+  )
 
   const handleInstall = (item: MarketplaceItem) => {
     telemetry(TelemetryEventName.MARKETPLACE_INSTALL_BUTTON_CLICKED, {

@@ -140,7 +140,14 @@ export class MarketplaceInstaller {
     const staging = path.join(base, `.staging-${item.id}-${stamp}`)
 
     try {
-      const response = await fetch(item.content)
+      const ctrl = new AbortController()
+      const dlTimer = setTimeout(() => ctrl.abort(), 30_000)
+      let response: Response
+      try {
+        response = await fetch(item.content, { signal: ctrl.signal })
+      } finally {
+        clearTimeout(dlTimer)
+      }
       if (!response.ok) {
         return { success: false, slug: item.id, error: `Download failed: ${response.status}` }
       }

@@ -8,6 +8,7 @@ import { useConfig } from "../../context/config"
 import type { ConnectionState, ExtensionMessage } from "../../types/messages"
 import { buildExport, parseImport, MAX_IMPORT_SIZE } from "./settings-io"
 import { subscribeToMessages } from "../../lib/message-bus"
+import { useTrackedTimers } from "../../lib/tracked-timers"
 
 export interface AboutKiloCodeTabProps {
   port: number | null
@@ -23,6 +24,22 @@ const AboutKiloCodeTab: Component<AboutKiloCodeTabProps> = (props) => {
   const [importing, setImporting] = createSignal(false)
   const [exporting, setExporting] = createSignal(false)
   let epoch = 0
+  // Wave 10-D fix: 5s export reset watchdog and the import file-input were
+  // both untracked. Track the watchdog so it auto-cancels on tab unmount.
+  const { trackTimeout } = useTrackedTimers()
+  // Track in-flight import resources so we can abort the FileReader and
+  // remove the change listener if the user switches tabs mid-pick.
+  let importCleanup: (() => void) | null = null
+  onCleanup(() => {
+    if (importCleanup) {
+      try {
+        importCleanup()
+      } catch {
+        /* ignore */
+      }
+      importCleanup = null
+    }
+  })
 
   const open = (url: string) => {
     vscode.postMessage({ type: "openExternal", url })
@@ -53,7 +70,7 @@ const AboutKiloCodeTab: Component<AboutKiloCodeTabProps> = (props) => {
     setExporting(true)
     const token = ++epoch
     vscode.postMessage({ type: "requestGlobalConfig" })
-    setTimeout(() => {
+    trackTimeout(() => {
       if (epoch === token) setExporting(false)
     }, 5000)
   }
@@ -61,11 +78,19 @@ const AboutKiloCodeTab: Component<AboutKiloCodeTabProps> = (props) => {
   // ----- Import -----
   const handleImport = () => {
     if (importing()) return
+    // Abort any prior in-flight import (Wave 10-D fix #5).
+    if (importCleanup) {
+      importCleanup()
+      importCleanup = null
+    }
     const input = document.createElement("input")
     input.type = "file"
     input.accept = ".json"
     input.style.display = "none"
-    input.addEventListener("change", () => {
+    let aborted = false
+    let reader: FileReader | null = null
+    const onChange = () => {
+      if (aborted) return
       const file = input.files?.[0]
       if (!file) return
       if (file.size > MAX_IMPORT_SIZE) {
@@ -73,10 +98,11 @@ const AboutKiloCodeTab: Component<AboutKiloCodeTabProps> = (props) => {
         return
       }
       setImporting(true)
-      const reader = new FileReader()
+      reader = new FileReader()
       reader.onload = () => {
+        if (aborted) return
         setImporting(false)
-        const text = reader.result as string
+        const text = reader!.result as string
         const result = parseImport(text)
         if (!result.ok) {
           const key =
@@ -99,11 +125,27 @@ const AboutKiloCodeTab: Component<AboutKiloCodeTabProps> = (props) => {
         })
       }
       reader.onerror = () => {
+        if (aborted) return
         setImporting(false)
         showToast({ variant: "error", title: language.t("settings.aboutKiloCode.importSettings.invalidJson") })
       }
       reader.readAsText(file)
-    })
+    }
+    input.addEventListener("change", onChange)
+    importCleanup = () => {
+      aborted = true
+      try {
+        input.removeEventListener("change", onChange)
+      } catch {
+        /* ignore */
+      }
+      try {
+        reader?.abort()
+      } catch {
+        /* ignore */
+      }
+      reader = null
+    }
     document.body.appendChild(input)
     input.click()
     document.body.removeChild(input)

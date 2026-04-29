@@ -39,6 +39,7 @@ import {
 } from "solid-js"
 import { createContext, useContext } from "solid-js"
 import { useVSCode } from "../../context/vscode"
+import { useDocumentVisible } from "../../hooks/useDocumentVisible"
 
 // ── Storage keys ─────────────────────────────────────────────────────────────
 
@@ -223,23 +224,35 @@ export const HubProvider: Component<{ children: any }> = (props) => {
     }
   }
 
-  // Poll every 15s
+  // Poll every 30s — visibility-gated so we pause polling while VS Code or the
+  // panel is hidden (Wave 10-F finding: was 15s unguarded, polling 2 endpoints
+  // per tick contributed to background CPU on hidden panels).
   let pollTimer: ReturnType<typeof setInterval> | null = null
+  const isVisible = useDocumentVisible()
   const startPoll = () => {
+    // Defensive: clear any prior timer in case startPoll is ever re-entered.
+    if (pollTimer) {
+      clearInterval(pollTimer)
+      pollTimer = null
+    }
     void fetchModels()
     void fetchHealth()
     pollTimer = setInterval(() => {
+      if (!isVisible()) return
       void fetchModels()
       void fetchHealth()
-    }, 15_000)
+    }, 30_000)
   }
 
-  createEffect(() => {
-    startPoll()
-  })
+  // Plain mount-time setup (no reactive deps) — avoids re-init churn if anyone
+  // later adds a signal read inside startPoll.
+  startPoll()
 
   onCleanup(() => {
-    if (pollTimer) clearInterval(pollTimer)
+    if (pollTimer) {
+      clearInterval(pollTimer)
+      pollTimer = null
+    }
   })
 
   // "Set as active model" — posts a message to the extension to switch the model

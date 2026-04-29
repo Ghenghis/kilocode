@@ -346,6 +346,13 @@ const VPSTab: Component = () => {
       case "vpsServerRemoved": {
         const removedId = msg.serverId as string
         setServers((prev) => prev.filter((s) => s.id !== removedId))
+        // Wave 10-E fix: also drop the per-server pingResults entry so dead
+        // serverIds don't linger in the map for the lifetime of the tab.
+        setPingResults((prev) => {
+          if (!(removedId in prev)) return prev
+          const { [removedId]: _, ...rest } = prev
+          return rest
+        })
         if (selectedServerId() === removedId) {
           setSelectedServerId(null)
           setMetrics(null)

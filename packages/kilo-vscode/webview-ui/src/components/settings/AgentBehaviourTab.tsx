@@ -43,6 +43,7 @@ interface SelectOption {
 }
 
 import SettingsRow from "./SettingsRow"
+import { useTrackedTimers } from "../../lib/tracked-timers"
 
 // View states for the agents subtab
 type AgentView = "list" | "create" | "edit"
@@ -53,6 +54,9 @@ const AgentBehaviourTab: Component = () => {
   const session = useSession()
   const dialog = useDialog()
   const vscode = useVSCode()
+  // Wave 10-D fix: dialog-close-then-session-mutate setTimeouts at lines ~236
+  // and ~535 used to be untracked. Auto-cancelled on unmount now.
+  const { trackTimeout } = useTrackedTimers()
   const [activeSubtab, setActiveSubtab] = createSignal<SubtabId>("agents")
   const [newSkillPath, setNewSkillPath] = createSignal("")
   const [newSkillUrl, setNewSkillUrl] = createSignal("")
@@ -233,7 +237,7 @@ const AgentBehaviourTab: Component = () => {
                 // Delay optimistic removal until after dialog close animation (100ms)
                 // to prevent the reactive list re-render from firing click handlers
                 // on shifted list items while the dialog overlay is still present.
-                setTimeout(() => {
+                trackTimeout(() => {
                   session.removeMode(agent.name)
                   // If we were editing this mode, go back to list
                   if (editingAgent() === agent.name) {
@@ -532,7 +536,7 @@ const AgentBehaviourTab: Component = () => {
               size="large"
               onClick={() => {
                 dialog.close()
-                setTimeout(() => session.removeMcp(name), 150)
+                trackTimeout(() => session.removeMcp(name), 150)
               }}
             >
               {language.t("settings.agentBehaviour.removeMcp.button")}

@@ -18,6 +18,8 @@ import { Component, createSignal, For, Show, createMemo, createEffect, onMount, 
 import { useVSCode } from "../../context/vscode"
 import { fetchLivePricing, formatPrice, type ModelPricing, FALLBACK_PRICING } from "../../utils/pricing-service"
 import { subscribeToMessages, postMessageDebounced } from "../../lib/message-bus"
+import { useDocumentVisible } from "../../hooks/useDocumentVisible"
+import { useTrackedTimers } from "../../lib/tracked-timers"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -428,6 +430,13 @@ const Badge = (props: { label: string; status?: string; color?: string; bg?: str
 
 const OpenClawTab: Component = () => {
   const vscode = useVSCode()
+  // Wave 10-D / 10-E fix: prior code used `onCleanup(...)` *inside* event
+  // handlers (connect, testChannelConnection, scanForModels). Solid's
+  // onCleanup is a no-op outside a reactive root → those 12s/15s/20s safety
+  // timeouts NEVER got cancelled and always fired, even on disposed scopes.
+  // Now route every safety timer through the tracked-timers helper which
+  // hooks onCleanup ONCE at the component top level.
+  const { trackTimeout } = useTrackedTimers()
 
   // ── Gateway state ──────────────────────────────────────────────────────────
   const [urlInput, setUrlInput] = createSignal("http://localhost:18789")
@@ -503,9 +512,14 @@ const OpenClawTab: Component = () => {
     whatsapp: 0, signal: 0, googlechat: 0, teams: 0,
   })
 
+  // Wave 10-F fix: gate the 60ms flow animation on document visibility — it
+  // was the highest-frequency interval in the codebase. While the panel is
+  // hidden the animation isn't visible anyway, so we just skip the tick.
+  const flowVisible = useDocumentVisible()
   createEffect(() => {
     if (!flowActive()) return
     const iv = setInterval(() => {
+      if (!flowVisible()) return
       setFlowTick((t) => (t + 1) % 100)
     }, 60)
     onCleanup(() => clearInterval(iv))
@@ -556,7 +570,7 @@ const OpenClawTab: Component = () => {
 
   const qcRunTest = () => {
     setQcTestResult("testing")
-    setTimeout(() => {
+    trackTimeout(() => {
       setQcTestResult(Math.random() > 0.2 ? "ok" : "fail")
     }, 1400)
   }
@@ -608,7 +622,7 @@ const OpenClawTab: Component = () => {
     // Safety timeout — if the extension never replies (e.g. handler not wired),
     // surface a clear error after FETCH_TIMEOUT_MS + grace so the UI doesn't
     // hang indefinitely. The real listener clears `connecting` on response.
-    const safetyId = setTimeout(() => {
+    trackTimeout(() => {
       if (connecting()) {
         setConnecting(false)
         setStatus({
@@ -620,7 +634,6 @@ const OpenClawTab: Component = () => {
         })
       }
     }, 12_000)
-    onCleanup(() => clearTimeout(safetyId))
   }
 
   const disconnect = () => {
@@ -637,7 +650,7 @@ const OpenClawTab: Component = () => {
   const copyConfigPath = () => {
     navigator.clipboard?.writeText(CONFIG_PATH).catch(() => {})
     setCopiedPath(true)
-    setTimeout(() => setCopiedPath(false), 1500)
+    trackTimeout(() => setCopiedPath(false), 1500)
   }
 
   const toggleChannelEnabled = (id: string) => {
@@ -657,13 +670,12 @@ const OpenClawTab: Component = () => {
     vscode.postMessage({ type: "openclawTestChannel", channelId: id } as any)
     // Result resolved by openclawChannelTested listener below.
     // Safety: clear "testing" state if no reply within 15s so UI doesn't stick.
-    const safetyId = setTimeout(() => {
+    trackTimeout(() => {
       setChannelTestResult((prev) => {
         if (prev[id] !== "testing") return prev
         return { ...prev, [id]: "error" }
       })
     }, 15_000)
-    onCleanup(() => clearTimeout(safetyId))
   }
 
   const updateChannelField = (id: string, field: keyof OpenClawChannel, value: string) => {
@@ -677,10 +689,9 @@ const OpenClawTab: Component = () => {
     vscode.postMessage({ type: "openclawScanModels" } as any)
     // Result resolved by openclawModelsUpdate listener below.
     // Safety: stop spinner if no reply within 20s.
-    const safetyId = setTimeout(() => {
+    trackTimeout(() => {
       if (scanning()) setScanning(false)
     }, 20_000)
-    onCleanup(() => clearTimeout(safetyId))
   }
 
   const addModel = () => {

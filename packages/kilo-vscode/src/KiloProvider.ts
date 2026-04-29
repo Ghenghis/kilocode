@@ -286,6 +286,14 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
   }
 
   setRemoteService(service: RemoteStatusService): void {
+    // Wave 9 — same idempotency-guard pattern that Wave 7+8 added to
+    // setV4Services. setRemoteService is called from SettingsEditorProvider
+    // every time a Settings/Profile/Marketplace panel is opened
+    // (provider.setRemoteService(this.remoteService) at SettingsEditorProvider.ts:136).
+    // Without this guard each re-call stacked another onChange listener; over
+    // many panel opens the same RemoteStatusService change fired N copies of
+    // postMessage("remoteStatus") onto an increasingly-saturated message bus.
+    this.unsubscribeRemote?.()
     this.remoteService = service
     this.unsubscribeRemote = service.onChange(() => {
       const s = this.remoteService?.getState()
@@ -474,9 +482,19 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
 
     this.setupWebviewMessageHandler(panel.webview)
     this.viewStateDisposable?.dispose()
-    this.viewStateDisposable = panel.onDidChangeViewState(() =>
-      this.focusSession(panel.active ? this.currentSession?.id : undefined),
-    )
+    this.viewStateDisposable = panel.onDidChangeViewState(() => {
+      this.focusSession(panel.active ? this.currentSession?.id : undefined)
+      // Wave 9 — propagate panel visibility to the stats poller so the
+      // editor-tab Settings/Profile/Marketplace panels don't keep spawning
+      // git child_processes every 5s while the user has focused another
+      // tab. Sidebar (resolveWebviewView) already does this; the editor
+      // panel path was missing, which contributed to background CPU pile-up
+      // when the user keeps a Settings panel open behind their working tab.
+      if (this.statsPoller) {
+        this.statsPoller.setEnabled(panel.visible)
+        this.statsPoller.setVisible(panel.visible)
+      }
+    })
     this.initializeConnection()
   }
 
@@ -4533,6 +4551,21 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     this.syncedChildSessions.clear()
     this.sessionDirectories.clear()
     this.sessionStatusMap.clear()
+    // Wave 9 — also clear the two session-keyed maps Wave 8 audit flagged as
+    // unbounded; they previously persisted on dispose and held references to
+    // session IDs / queued review comments after the provider went away.
+    this.lastReconciledAt.clear()
+    this.pendingReviewComments = []
+    // Wave 9 — dispose the V4-services event listener bridge installed by
+    // KiloProvider.dave.ts. Without this, every panel close leaks the
+    // SSH/ZeroClaw/Routing handlers registered on the previous setV4Services
+    // call, and they continue to invoke this.postMessage on a dead webview.
+    try {
+      const dave = (this as unknown as { __daveExtensions?: { dispose?: () => void } }).__daveExtensions
+      dave?.dispose?.()
+    } catch (e) {
+      console.warn("[Kilo New] KiloProvider: __daveExtensions.dispose() failed:", e)
+    }
     this.ignoreController?.dispose()
     this.chatAutocomplete?.dispose()
     this.marketplace?.dispose()

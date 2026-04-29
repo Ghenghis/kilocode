@@ -1,6 +1,7 @@
 import { Component, createSignal, createEffect, For, Show, onCleanup, onMount } from "solid-js"
 import { useVSCode } from "../../context/vscode"
 import { subscribeToMessages } from "../../lib/message-bus"
+import { useTrackedTimers } from "../../lib/tracked-timers"
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -45,6 +46,10 @@ type Step = "discovery" | "review" | "secrets" | "validation" | "complete"
 
 const OnboardingWizard: Component<{ onFinish?: () => void }> = (props) => {
   const vscode = useVSCode()
+  // Wave 10-D fix: 15s validation watchdog at line ~168 was untracked. If the
+  // wizard is dismissed within that 15s, the timer would still flip step to
+  // "complete" on a disposed signal.
+  const { trackTimeout } = useTrackedTimers()
 
   const [step, setStep] = createSignal<Step>("discovery")
   const [discovering, setDiscovering] = createSignal(true)
@@ -165,7 +170,7 @@ const OnboardingWizard: Component<{ onFinish?: () => void }> = (props) => {
     }
 
     // After 15 seconds regardless, advance to complete
-    setTimeout(() => {
+    trackTimeout(() => {
       setValidating(false)
       setStep("complete")
     }, 15000)

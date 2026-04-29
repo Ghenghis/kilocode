@@ -26,6 +26,7 @@ import type {
 } from "./CustomProviderModelCard"
 import { validateCustomProvider } from "./CustomProviderValidation"
 import type { FormErrors, FormState, HeaderRow } from "./CustomProviderValidation"
+import { useTrackedTimers } from "../../lib/tracked-timers"
 const DEBOUNCE_MS = 500
 const SEARCH_DEBOUNCE_MS = 150
 
@@ -60,6 +61,26 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
   const vscode = useVSCode()
   const action = createProviderAction(vscode)
   onCleanup(action.dispose)
+  // Wave 10-A finding #1: vscode.onMessage was being registered inside the
+  // doFetch event handler with no onCleanup pairing. If the response never
+  // arrived (extension restart, fetch error, dialog cancelled mid-flight,
+  // validation fails before send) the listener stayed in the global
+  // handlers Set forever AND the closure pinned this dialog component's
+  // entire reactive scope in memory. Track every in-flight unsub so they
+  // can all be released on dialog close.
+  const inflightUnsubs = new Set<() => void>()
+  onCleanup(() => {
+    for (const u of inflightUnsubs) {
+      try {
+        u()
+      } catch {
+        /* ignore */
+      }
+    }
+    inflightUnsubs.clear()
+  })
+  // Allow stalled fetches to time out (90s) so they don't pin forever.
+  const { trackTimeout } = useTrackedTimers()
 
   const editing = () => !!props.existing
 
@@ -214,10 +235,19 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
 
     const rid = crypto.randomUUID()
 
-    const unsub = vscode.onMessage((msg: ExtensionMessage) => {
+    let unsub: () => void = () => {}
+    const releaseInflight = () => {
+      try {
+        unsub()
+      } catch {
+        /* ignore */
+      }
+      inflightUnsubs.delete(releaseInflight)
+    }
+    unsub = vscode.onMessage((msg: ExtensionMessage) => {
       if (msg.type !== "customProviderModelsFetched") return
       if (!("requestId" in msg) || msg.requestId !== rid) return
-      unsub()
+      releaseInflight()
 
       // Stale response — a newer fetch was triggered while this one was in-flight
       if (version !== fetchVersion) return
@@ -247,6 +277,20 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
       setSelected(new Set(fresh.map((m) => m.id)))
       setFetchedModels(fresh)
     })
+
+    inflightUnsubs.add(releaseInflight)
+    // Stalled-fetch safety net: if no reply within 90s, drop the listener
+    // anyway so the global handlers Set doesn't grow unbounded across
+    // repeated cancel/retry cycles.
+    trackTimeout(() => {
+      if (inflightUnsubs.has(releaseInflight)) {
+        releaseInflight()
+        if (version === fetchVersion && fetching()) {
+          setFetching(false)
+          setFetchError(language.t("provider.custom.models.fetch.timeout") || "Timed out")
+        }
+      }
+    }, 90_000)
 
     vscode.postMessage({
       type: "fetchCustomProviderModels",

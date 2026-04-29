@@ -955,7 +955,7 @@ const ZeroClawTab: Component = () => {
 
 		switch (msg.type) {
 			case "zeroClawTasksLoaded": {
-				if (msg.tasks) setTasks(msg.tasks)
+				if (msg.tasks) setTasks(msg.tasks.slice(0, 200))
 				break
 			}
 			case "zeroClawTaskUpdated": {
@@ -967,25 +967,27 @@ const ZeroClawTab: Component = () => {
 							next[idx] = msg.task!
 							return next
 						}
-						return [msg.task!, ...prev]
+						// Wave 10-E fix: cap to last 200 tasks so long sessions
+						// don't grow this signal unbounded.
+						return [msg.task!, ...prev].slice(0, 200)
 					})
 				}
 				break
 			}
 			case "zeroClawTaskSubmitted": {
 				if (msg.task) {
-					setTasks((prev) => [msg.task!, ...prev])
+					setTasks((prev) => [msg.task!, ...prev].slice(0, 200))
 				}
 				break
 			}
 			case "zeroClawTaskRetried": {
 				if (msg.newTask) {
-					setTasks((prev) => [msg.newTask!, ...prev])
+					setTasks((prev) => [msg.newTask!, ...prev].slice(0, 200))
 				}
 				break
 			}
 			case "zeroClawHistoryLoaded": {
-				if (msg.tasks) setTasks(msg.tasks)
+				if (msg.tasks) setTasks(msg.tasks.slice(0, 200))
 				break
 			}
 			case "zeroClawError": {

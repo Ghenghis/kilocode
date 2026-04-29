@@ -4,6 +4,7 @@ import { Button } from "@kilocode/kilo-ui/button"
 import { useVSCode } from "../../context/vscode"
 import type { ExtensionMessage } from "../../types/messages"
 import SettingsRow from "./SettingsRow"
+import { useTrackedTimers } from "../../lib/tracked-timers"
 
 // ─── Types ──────────────────────────────────────────────
 
@@ -186,6 +187,8 @@ function parseBreadcrumb(path: string): { label: string; path: string }[] {
 
 const SSHTab: Component = () => {
   const vscode = useVSCode()
+  // Wave 10-D fix: 2s "copied" reset timer at line ~541 was untracked.
+  const { trackTimeout } = useTrackedTimers()
 
   // --- Section collapse state ---
   const [profilesOpen, setProfilesOpen] = createSignal(true)
@@ -538,7 +541,7 @@ const SSHTab: Component = () => {
     try {
       await navigator.clipboard.writeText(k)
       setKeyGenCopied(true)
-      setTimeout(() => setKeyGenCopied(false), 2000)
+      trackTimeout(() => setKeyGenCopied(false), 2000)
     } catch {
       // Clipboard may be unavailable in webview; the key is still visible to copy manually.
     }

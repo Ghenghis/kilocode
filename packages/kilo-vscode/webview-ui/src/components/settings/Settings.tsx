@@ -66,18 +66,38 @@ const Settings: Component<SettingsProps> = (props) => {
 
   // kilocode_change: real tab search filter — applies via DOM walker so we don't have to
   // wrap each of 24 tab triggers in <Show>. Trigger element is queried via the .label child.
+  // Wave 10-B fix: the selector matched each trigger 2-3× ([role='tab'] +
+  // button[data-value] + button[role='tab']), and the effect ran the full
+  // walk on every keystroke synchronously — forcing layout recalc on
+  // Kobalte's tablist. Use a single union selector with rAF coalescing so
+  // rapid filter input doesn't pile up reflows.
   const [tabFilter, setTabFilter] = createSignal("")
   let tabsListRef: HTMLElement | undefined
+  let filterRaf: number | null = null
   createEffect(() => {
     const q = tabFilter().trim().toLowerCase()
     const root = tabsListRef
     if (!root) return
-    const triggers = root.querySelectorAll<HTMLElement>("[role='tab'], button[data-value], button[role='tab']")
-    triggers.forEach((trigger) => {
-      const label = trigger.querySelector(".label")?.textContent?.toLowerCase() ?? ""
-      const match = !q || label.includes(q)
-      trigger.style.display = match ? "" : "none"
+    if (filterRaf !== null) cancelAnimationFrame(filterRaf)
+    filterRaf = requestAnimationFrame(() => {
+      filterRaf = null
+      // Single dedup'd selector — same trigger nodes only walked once.
+      const triggers = root.querySelectorAll<HTMLElement>("[role='tab']")
+      triggers.forEach((trigger) => {
+        const label = trigger.querySelector(".label")?.textContent?.toLowerCase() ?? ""
+        const match = !q || label.includes(q)
+        const next = match ? "" : "none"
+        // Only write when value actually changes — avoids invalidating
+        // Kobalte's internal MutationObserver on every keystroke.
+        if (trigger.style.display !== next) trigger.style.display = next
+      })
     })
+  })
+  onCleanup(() => {
+    if (filterRaf !== null) {
+      cancelAnimationFrame(filterRaf)
+      filterRaf = null
+    }
   })
 
   const busyCount = () => Object.values(session.allStatusMap()).filter((s) => s.type === "busy").length

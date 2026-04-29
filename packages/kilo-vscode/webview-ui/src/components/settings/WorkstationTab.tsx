@@ -18,6 +18,7 @@ import { Component, createSignal, onMount, onCleanup, Show, For, createMemo } fr
 import { Icon } from "@kilocode/kilo-ui/icon"
 import { useVSCode } from "../../context/vscode"
 import { subscribeToMessages } from "../../lib/message-bus"
+import { useTrackedTimers } from "../../lib/tracked-timers"
 
 interface HardwareSnapshot {
   cpuCores?: number
@@ -81,6 +82,9 @@ const sectionTitle = {
 
 const WorkstationTab: Component = () => {
   const vscode = useVSCode()
+  // Wave 10-D fix: 4s loading watchdog at line ~107 was untracked AND was
+  // re-armed on every reload() click without clearing the previous timer.
+  const { trackTimeout, cancelAll: cancelAllTimers } = useTrackedTimers()
 
   const [hardware, setHardware] = createSignal<HardwareSnapshot | null>(null)
   const [localAI, setLocalAI] = createSignal<LocalAICapabilities | null>(null)
@@ -94,6 +98,8 @@ const WorkstationTab: Component = () => {
   const [error, setError] = createSignal<string | null>(null)
 
   const requestAll = () => {
+    // Cancel any prior in-flight watchdog so reload() doesn't stack timers.
+    cancelAllTimers()
     setLoading(true)
     setError(null)
     vscode.postMessage({ type: "workstationGetHardware" } as never)
@@ -104,7 +110,7 @@ const WorkstationTab: Component = () => {
     vscode.postMessage({ type: "workstationHasLocalTTS" } as never)
     vscode.postMessage({ type: "workstationHasLocalSTT" } as never)
     // Watchdog — exit loading state even if extension never replies.
-    setTimeout(() => setLoading(false), 4_000)
+    trackTimeout(() => setLoading(false), 4_000)
   }
 
   const reload = () => {

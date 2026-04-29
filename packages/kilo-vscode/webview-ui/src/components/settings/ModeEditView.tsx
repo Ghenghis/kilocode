@@ -11,6 +11,7 @@ import { useLanguage } from "../../context/language"
 import type { AgentConfig, AgentInfo, PermissionRuleItem } from "../../types/messages"
 import SettingsRow from "./SettingsRow"
 import { buildExport } from "./mode-io"
+import { useTrackedTimers } from "../../lib/tracked-timers"
 
 interface Props {
   name: string
@@ -273,6 +274,9 @@ interface RulesetProps {
 const PermissionRuleset: Component<RulesetProps> = (props) => {
   const language = useLanguage()
   const [copied, setCopied] = createSignal(false)
+  // Wave 10-D fix: 2s "copied" reset timer was untracked. PermissionRuleset
+  // is the actual owner of the copy() handler — not the parent ModeEditView.
+  const { trackTimeout } = useTrackedTimers()
 
   // Compute effective action per unique tool by finding the last rule with pattern "*"
   // NOTE: This assumes the CLI uses "*" as the wildcard pattern for catch-all rules.
@@ -292,7 +296,7 @@ const PermissionRuleset: Component<RulesetProps> = (props) => {
     const data = { agent: props.agent, rules: props.rules }
     navigator.clipboard.writeText(JSON.stringify(data, null, 2))
     setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    trackTimeout(() => setCopied(false), 2000)
   }
 
   return (

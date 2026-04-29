@@ -9,12 +9,14 @@ import { useConfig } from "../../context/config"
 import { useLanguage } from "../../context/language"
 import { useVSCode } from "../../context/vscode"
 import type { ExtensionMessage } from "../../types/messages"
+import { useTrackedTimers } from "../../lib/tracked-timers"
 import SettingsRow from "./SettingsRow"
 
 const ContextTab: Component = () => {
   const { config, updateConfig } = useConfig()
   const language = useLanguage()
   const vscode = useVSCode()
+  const { trackTimeout } = useTrackedTimers()
   const [newPattern, setNewPattern] = createSignal("")
 
   // System-prompt preview round-trip — extension reads the active template,
@@ -42,7 +44,8 @@ const ContextTab: Component = () => {
     setPreviewError(null)
     vscode.postMessage({ type: "previewSystemPrompt" } as never)
     // Safety timeout in case the extension is unreachable.
-    setTimeout(() => {
+    // Wave 10-D fix: was untracked — fired post-unmount on disposed signals.
+    trackTimeout(() => {
       if (previewing()) {
         setPreviewing(false)
         if (!previewText()) setPreviewError("No response from extension (timeout)")

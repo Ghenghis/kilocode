@@ -947,7 +947,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
           this.validateAzureKey(message.apiKey, message.region)
           break
         case "requestApiKeys":
-          this.handleRequestApiKeys()
+          void this.handleRequestApiKeys()
           break
         case "autoFillSetting":
           await this.handleAutoFillSetting(message.key)
@@ -2577,8 +2577,8 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
    * Handle request for discovered API keys from the webview.
    * Returns a summary of available keys (without exposing actual key values).
    */
-  private handleRequestApiKeys(): void {
-    const summary = ApiKeyScannerService.getDiscoverySummary()
+  private async handleRequestApiKeys(): Promise<void> {
+    const summary = await ApiKeyScannerService.getDiscoverySummary()
     this.postMessage({ type: "apiKeysDiscovered", keys: summary })
   }
 
@@ -2587,7 +2587,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
    * Discovers API keys and fills in the requested setting.
    */
   private async handleAutoFillSetting(key: string): Promise<void> {
-    const scanResult = ApiKeyScannerService.scan()
+    const scanResult = await ApiKeyScannerService.scan()
 
     try {
       let success = false

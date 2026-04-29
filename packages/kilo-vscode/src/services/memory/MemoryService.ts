@@ -257,7 +257,12 @@ export class MemoryService implements vscode.Disposable {
 
   constructor(private readonly ctx: vscode.ExtensionContext) {
     this.resolveStorePath()
-    this.loadStore()
+    // Fire-and-forget initial load: callers observe the empty default store
+    // until the load resolves. The empty default is a valid empty memory
+    // (no entries / history / permissions) so reads pre-load return cleanly.
+    void this.loadStore().catch((err: unknown) => {
+      this.log.error("Initial loadStore failed", err)
+    })
     this.startPingLoop()
     this.log.info("MemoryService initialized")
 
@@ -284,7 +289,7 @@ export class MemoryService implements vscode.Disposable {
     const started = Date.now()
 
     try {
-      this.loadStore()
+      await this.loadStore()
       const latency = Date.now() - started
       this.setConnection({
         status: "connected",
@@ -336,8 +341,15 @@ export class MemoryService implements vscode.Disposable {
       const candidates = this.buildConfigCandidatePaths()
       for (const candidate of candidates) {
         try {
-          if (!fs.existsSync(candidate)) continue
-          const raw = fs.readFileSync(candidate, "utf-8")
+          let raw: string
+          try {
+            raw = await fs.promises.readFile(candidate, "utf-8")
+          } catch (err: unknown) {
+            // Treat missing files like the previous existsSync check.
+            const code = (err as NodeJS.ErrnoException | undefined)?.code
+            if (code === "ENOENT") continue
+            throw err
+          }
           const parsed = JSON.parse(raw) as { endpoint?: unknown; url?: unknown }
           const configured =
             typeof parsed.endpoint === "string"
@@ -1013,9 +1025,10 @@ export class MemoryService implements vscode.Disposable {
       clearInterval(this.pingTimer)
       this.pingTimer = undefined
     }
-    // Flush any pending writes
+    // Flush any pending writes — fire-and-forget since vscode.Disposable.dispose
+    // cannot be async. flushSave() logs its own errors.
     if (this.savePending) {
-      this.flushSave()
+      void this.flushSave()
     }
     this._onConnectionChanged.dispose()
     this._onMemoryWritten.dispose()
@@ -1427,7 +1440,7 @@ export class MemoryService implements vscode.Disposable {
     }
   }
 
-  private loadStore(): void {
+  private async loadStore(): Promise<void> {
     if (!this.storeFilePath) {
       this.setConnection({
         ...this.connection,
@@ -1439,8 +1452,14 @@ export class MemoryService implements vscode.Disposable {
     }
 
     try {
-      if (fs.existsSync(this.storeFilePath)) {
-        const raw = fs.readFileSync(this.storeFilePath, "utf-8")
+      let raw: string | null = null
+      try {
+        raw = await fs.promises.readFile(this.storeFilePath, "utf-8")
+      } catch (err: unknown) {
+        const code = (err as NodeJS.ErrnoException | undefined)?.code
+        if (code !== "ENOENT") throw err
+      }
+      if (raw !== null) {
         const parsed = JSON.parse(raw)
         this.store = {
           entries: Array.isArray(parsed.entries) ? parsed.entries : [],
@@ -1468,16 +1487,14 @@ export class MemoryService implements vscode.Disposable {
     }
   }
 
-  private flushSave(): void {
+  private async flushSave(): Promise<void> {
     this.savePending = false
     if (!this.storeFilePath) return
 
     try {
       const dir = path.dirname(this.storeFilePath)
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true })
-      }
-      fs.writeFileSync(this.storeFilePath, JSON.stringify(this.store, null, 2), "utf-8")
+      await fs.promises.mkdir(dir, { recursive: true })
+      await fs.promises.writeFile(this.storeFilePath, JSON.stringify(this.store, null, 2), "utf-8")
     } catch (err: unknown) {
       this.log.error("Failed to save store", err)
     }
@@ -1488,7 +1505,7 @@ export class MemoryService implements vscode.Disposable {
     if (this.saveTimer) return
     this.saveTimer = setTimeout(() => {
       this.saveTimer = undefined
-      this.flushSave()
+      void this.flushSave()
     }, 500)
   }
 

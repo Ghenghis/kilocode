@@ -19,40 +19,40 @@ describe("listEnvFiles", () => {
     fs.rmSync(dir, { recursive: true, force: true })
   })
 
-  it("returns empty array when no .env files exist", () => {
-    expect(listEnvFiles(dir)).toEqual([])
+  it("returns empty array when no .env files exist", async () => {
+    expect(await listEnvFiles(dir)).toEqual([])
   })
 
-  it("finds .env at root", () => {
+  it("finds .env at root", async () => {
     fs.writeFileSync(path.join(dir, ".env"), "KEY=val")
-    expect(listEnvFiles(dir)).toEqual([".env"])
+    expect(await listEnvFiles(dir)).toEqual([".env"])
   })
 
-  it("finds multiple .env variants", () => {
+  it("finds multiple .env variants", async () => {
     fs.writeFileSync(path.join(dir, ".env"), "A=1")
     fs.writeFileSync(path.join(dir, ".env.local"), "B=2")
     fs.writeFileSync(path.join(dir, ".env.development"), "C=3")
-    const result = listEnvFiles(dir).sort()
+    const result = (await listEnvFiles(dir)).sort()
     expect(result).toEqual([".env", ".env.development", ".env.local"])
   })
 
-  it("ignores directories named .env", () => {
+  it("ignores directories named .env", async () => {
     fs.mkdirSync(path.join(dir, ".env"))
     fs.mkdirSync(path.join(dir, ".env.local"))
-    expect(listEnvFiles(dir)).toEqual([])
+    expect(await listEnvFiles(dir)).toEqual([])
   })
 
-  it("ignores .envrc and other non-dotenv files", () => {
+  it("ignores .envrc and other non-dotenv files", async () => {
     fs.writeFileSync(path.join(dir, ".envrc"), "use nix")
     fs.writeFileSync(path.join(dir, ".environment"), "X=1")
     fs.writeFileSync(path.join(dir, ".env-cmdrc"), "{}")
     fs.writeFileSync(path.join(dir, "not-env"), "Y=2")
     fs.writeFileSync(path.join(dir, "env.bak"), "Z=3")
-    expect(listEnvFiles(dir)).toEqual([])
+    expect(await listEnvFiles(dir)).toEqual([])
   })
 
-  it("returns empty array for nonexistent directory", () => {
-    expect(listEnvFiles(path.join(dir, "nope"))).toEqual([])
+  it("returns empty array for nonexistent directory", async () => {
+    expect(await listEnvFiles(path.join(dir, "nope"))).toEqual([])
   })
 })
 

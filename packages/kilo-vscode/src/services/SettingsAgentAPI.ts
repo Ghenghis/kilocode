@@ -65,7 +65,7 @@ export class SettingsAgentAPI {
    * Get current settings status - what is configured vs what could be auto-filled
    */
   async getSettingsStatus(): Promise<SettingsStatus> {
-    const scanResult = ApiKeyScannerService.scan()
+    const scanResult = await ApiKeyScannerService.scan()
     
     // Get current speech settings
     const speechConfig = vscode.workspace.getConfiguration("kilo-code.new.speech")
@@ -111,7 +111,7 @@ export class SettingsAgentAPI {
    */
   // eslint-disable-next-line complexity
   async autoFillSetting(request: AutoFillRequest): Promise<AutoFillResult> {
-    const scanResult = ApiKeyScannerService.scan()
+    const scanResult = await ApiKeyScannerService.scan()
 
     try {
       switch (request.setting) {
@@ -236,7 +236,7 @@ export class SettingsAgentAPI {
    * Get suggestions for optimal settings based on available keys
    */
   async getSuggestions(): Promise<SettingsSuggestion[]> {
-    const scanResult = ApiKeyScannerService.scan()
+    const scanResult = await ApiKeyScannerService.scan()
     const suggestions: SettingsSuggestion[] = []
 
     // Speech suggestions

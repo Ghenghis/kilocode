@@ -323,7 +323,7 @@ export class TrainingService implements vscode.Disposable {
         this.emitChange()
         return dataset
       }
-      const entries = fs.readdirSync(resolvedPath)
+      const entries = await fs.promises.readdir(resolvedPath)
       if (entries.length === 0) {
         dataset.errors.push("Directory is empty")
         dataset.validationStatus = "failed"

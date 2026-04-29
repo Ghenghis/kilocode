@@ -422,38 +422,58 @@ export class GovernanceService implements vscode.Disposable {
 	constructor(workspaceRoot: string) {
 		const kiloDir = path.join(workspaceRoot, ".kilo")
 		this.storagePath = path.join(kiloDir, "governance.json")
-		this.state = this.load(kiloDir)
+		// Initialize with deep-cloned defaults; seedDefaults() then ensures
+		// any subsequently added defaults are present immediately. Persisted
+		// state is overlaid asynchronously via loadState() so activation is
+		// not blocked by disk I/O. On a fresh workspace this load is a no-op.
+		this.state = JSON.parse(JSON.stringify(DEFAULT_STATE))
 		this.seedDefaults()
+		// Fire-and-forget load. Tests against a fresh tempdir observe defaults
+		// (no governance.json yet) which matches the prior synchronous code path.
+		void this.loadState()
 		this.log.info("GovernanceService initialized", { storagePath: this.storagePath })
 	}
 
 	// ── Persistence ────────────────────────────────────
 
-	private load(kiloDir: string): GovernanceState {
+	/**
+	 * Async load of persisted state. Called fire-and-forget from the
+	 * constructor and may also be invoked by callers that want to refresh
+	 * after an external write. On a missing file the call is a no-op and
+	 * the in-memory defaults are retained.
+	 */
+	async loadState(): Promise<void> {
+		const kiloDir = path.dirname(this.storagePath)
 		try {
-			if (fs.existsSync(this.storagePath)) {
-				const raw = fs.readFileSync(this.storagePath, "utf-8")
-				const parsed = JSON.parse(raw) as Partial<GovernanceState>
-				return {
-					tiers: parsed.tiers ?? DEFAULT_TIERS,
-					tierAssignments: parsed.tierAssignments ?? [],
-					riskThresholds: parsed.riskThresholds ?? DEFAULT_RISK_THRESHOLDS,
-					riskBehaviors: parsed.riskBehaviors ?? DEFAULT_RISK_BEHAVIORS,
-					pendingApprovals: parsed.pendingApprovals ?? [],
-					resolvedApprovals: parsed.resolvedApprovals ?? [],
-					dangerousActions: parsed.dangerousActions ?? DEFAULT_DANGEROUS_ACTIONS,
-					auditLog: parsed.auditLog ?? [],
-					releaseVerdicts: parsed.releaseVerdicts ?? [],
-				}
+			const raw = await fs.promises.readFile(this.storagePath, "utf-8")
+			const parsed = JSON.parse(raw) as Partial<GovernanceState>
+			this.state = {
+				tiers: parsed.tiers ?? DEFAULT_TIERS,
+				tierAssignments: parsed.tierAssignments ?? [],
+				riskThresholds: parsed.riskThresholds ?? DEFAULT_RISK_THRESHOLDS,
+				riskBehaviors: parsed.riskBehaviors ?? DEFAULT_RISK_BEHAVIORS,
+				pendingApprovals: parsed.pendingApprovals ?? [],
+				resolvedApprovals: parsed.resolvedApprovals ?? [],
+				dangerousActions: parsed.dangerousActions ?? DEFAULT_DANGEROUS_ACTIONS,
+				auditLog: parsed.auditLog ?? [],
+				releaseVerdicts: parsed.releaseVerdicts ?? [],
 			}
+			// Re-seed defaults in case the persisted file is missing newly
+			// added entries since it was last written.
+			this.seedDefaults()
+			return
+		} catch (err: unknown) {
+			const code = (err as NodeJS.ErrnoException | undefined)?.code
+			if (code !== "ENOENT") {
+				this.log.warn("Failed to load state, keeping defaults", err)
+			}
+		}
+		// Ensure .kilo directory exists for first-time save (best-effort).
+		try {
+			await fs.promises.mkdir(kiloDir, { recursive: true })
 		} catch (err) {
-			this.log.warn("Failed to load state, using defaults", err)
+			this.log.warn("Failed to ensure .kilo directory", err)
 		}
-		// Ensure .kilo directory exists for first-time save
-		if (!fs.existsSync(kiloDir)) {
-			fs.mkdirSync(kiloDir, { recursive: true })
-		}
-		return JSON.parse(JSON.stringify(DEFAULT_STATE))
 	}
 
 	/**
@@ -507,17 +527,15 @@ export class GovernanceService implements vscode.Disposable {
 			clearTimeout(this.saveTimer)
 		}
 		this.saveTimer = setTimeout(() => {
-			this.persistNow()
+			void this.persistNow()
 		}, 300)
 	}
 
-	private persistNow(): void {
+	private async persistNow(): Promise<void> {
 		try {
 			const dir = path.dirname(this.storagePath)
-			if (!fs.existsSync(dir)) {
-				fs.mkdirSync(dir, { recursive: true })
-			}
-			fs.writeFileSync(this.storagePath, JSON.stringify(this.state, null, 2), "utf-8")
+			await fs.promises.mkdir(dir, { recursive: true })
+			await fs.promises.writeFile(this.storagePath, JSON.stringify(this.state, null, 2), "utf-8")
 		} catch (err) {
 			this.log.error("Failed to persist state", err)
 		}
@@ -1487,8 +1505,9 @@ export class GovernanceService implements vscode.Disposable {
 			clearInterval(this.escalationTimer)
 			this.escalationTimer = undefined
 		}
-		// Final save on disposal
-		this.persistNow()
+		// Final save on disposal — fire-and-forget since vscode.Disposable
+		// cannot be async. Errors are already logged inside persistNow().
+		void this.persistNow()
 		this.onStateChangedEmitter.dispose()
 	}
 }

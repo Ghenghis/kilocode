@@ -45,31 +45,77 @@ pwsh scripts\setup-windows-env.ps1 -Force
 [Environment]::SetEnvironmentVariable('VARIABLE_NAME', $null, 'User')
 ```
 
-## Deliberately excluded providers
+## Provider policy: open-source / local-first by default
 
-`ANTHROPIC_API_KEY` and `OPENAI_API_KEY` are **not** prompted for. The cost-conscious default stack uses:
+The default stack is **open-source / local-first** — no paid SaaS API keys are prompted for unless you explicitly opt in.
 
-- DeepSeek
-- Groq
-- MiniMax
-- SiliconFlow
-- OpenRouter
-- Ollama (local, no key)
-- LM Studio (local, optional key)
+**Default (no flags):** prompts for local + your-own-infra tokens only.
 
-If you ever want Anthropic/OpenAI on a per-task basis, set them through the KiloCode Providers tab — not in shell env.
+**Opt in to paid SaaS:** `pwsh scripts\setup-windows-env.ps1 -IncludePaid` — adds prompts for DeepSeek, Groq, MiniMax, SiliconFlow, OpenRouter.
 
-## Variables managed by the script
+`ANTHROPIC_API_KEY` and `OPENAI_API_KEY` are permanently excluded even from the paid prompt list (cost policy). If you ever want them, set via `[Environment]::SetEnvironmentVariable(...)` directly or through the KiloCode Providers tab.
+
+## Two scripts, two purposes
+
+### 1. Auto-generate self-issued secrets
+
+Some env vars are **shared secrets between your own services** (no external provider gives you the value — you generate it). Examples: `HERMES_API_KEY` (between VS Code and your Hermes Bridge), `LITELLM_MASTER_KEY`, `WEBUI_*`, `SHIBA_KEY`.
+
+```powershell
+pwsh scripts\generate-self-issued-tokens.ps1
+```
+
+- Generates 256-bit cryptographic random hex (32 bytes) for each
+- Sets as Windows User env vars
+- Skips already-set values (use `-Force` to rotate)
+- Never displays values
+- `-List` shows which are set/unset
+
+### 2. Prompt for service-issued / user-provided values
+
+```powershell
+pwsh scripts\setup-windows-env.ps1                   # default: local + own-infra
+pwsh scripts\setup-windows-env.ps1 -IncludePaid      # also paid SaaS
+pwsh scripts\setup-windows-env.ps1 -List             # show what's set
+```
+
+### 3. Or run both via the bootstrap
+
+```powershell
+pwsh scripts\bootstrap.ps1                       # generate + prompt + install VSIX
+pwsh scripts\bootstrap.ps1 -IncludePaid          # same plus paid SaaS prompts
+pwsh scripts\bootstrap.ps1 -Force                # rotate all generated; overwrite all prompted
+```
+
+## Variables managed by these scripts
+
+### Auto-generated (`generate-self-issued-tokens.ps1`)
+
+| Variable | Purpose |
+|---|---|
+| `HERMES_API_KEY` | Auth between VS Code extension and your Hermes Bridge |
+| `LITELLM_MASTER_KEY` | LiteLLM proxy auth |
+| `WEBUI_AGENT_TOKEN` | WebUI agent auth |
+| `WEBUI_SECRET_KEY` | WebUI session signing |
+| `OPEN_WEBUI_SECRET_KEY` | Open WebUI secret |
+| `SHIBA_KEY` | Shiba Gateway X-Shiba-Key (must match server config) |
+
+⚠️ If your Hermes / WebUI / Shiba services are already running with different values for these, restart them with the new values OR they will reject auth (401).
+
+### Prompted — open-source / your-infra (`setup-windows-env.ps1` default)
 
 | Category | Variables |
 |---|---|
-| Local | `LM_STUDIO_API_KEY`, `LITELLM_MASTER_KEY` |
-| Provider | `DEEPSEEK_API_KEY`, `GROQ_API_KEY`, `MINIMAX_API_KEY`, `SILICONFLOW_API_KEY`, `OPENROUTER_API_KEY` |
-| WebUI | `WEBUI_AGENT_TOKEN`, `WEBUI_SECRET_KEY`, `OPEN_WEBUI_SECRET_KEY` |
-| Hermes | `HERMES_API_KEY`, `HERMES_MINIMAX_API_KEY` |
+| Local | `LM_STUDIO_API_KEY` |
 | VPS | `VPS_HOST`, `VPS_USER`, `SSH_KEY` |
-| Shiba | `SHIBA_DB_URL` |
+| Shiba | `SHIBA_DB_URL` (output of `_vps_provision_postgres.sh`) |
 | Discord | `DISCORD_TOKEN_HERMES1` … `5`, `DISCORD_GUILD_ID` |
+
+### Prompted — paid SaaS (`setup-windows-env.ps1 -IncludePaid` only)
+
+| Category | Variables |
+|---|---|
+| Paid | `DEEPSEEK_API_KEY`, `GROQ_API_KEY`, `MINIMAX_API_KEY`, `HERMES_MINIMAX_API_KEY`, `SILICONFLOW_API_KEY`, `OPENROUTER_API_KEY` |
 
 ## How the apps consume these
 

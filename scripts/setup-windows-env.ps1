@@ -19,42 +19,39 @@
 
 [CmdletBinding()]
 param(
-  [switch] $Force,    # Overwrite existing values without confirmation
-  [switch] $List      # Only list which vars are set; do not prompt
+  [switch] $Force,        # Overwrite existing values without confirmation
+  [switch] $List,         # Only list which vars are set; do not prompt
+  [switch] $IncludePaid   # Also prompt for paid SaaS API keys (DeepSeek/Groq/MiniMax/SiliconFlow/OpenRouter)
 )
 
 $ErrorActionPreference = 'Stop'
 
 # ─── Variable manifest ──────────────────────────────────────────────────────
+# Default stack is OPEN-SOURCE / LOCAL-FIRST. Paid SaaS API keys are NOT
+# prompted by default; pass -IncludePaid to also configure them.
 # Each entry: Name, Description, Category. NO real values stored here.
-$vars = @(
-  # Local model runtimes
+
+$coreVars = @(
+  # Local model runtimes (open-source)
   @{ Name = 'LM_STUDIO_API_KEY';        Cat = 'Local';     Desc = 'LM Studio local API key (often blank)' }
-  @{ Name = 'LITELLM_MASTER_KEY';       Cat = 'Local';     Desc = 'LiteLLM proxy master key' }
+  @{ Name = 'LITELLM_MASTER_KEY';       Cat = 'Local';     Desc = 'LiteLLM proxy master key (self-chosen secret)' }
 
-  # Cloud providers (Anthropic + OpenAI deliberately omitted)
-  @{ Name = 'DEEPSEEK_API_KEY';         Cat = 'Provider';  Desc = 'DeepSeek API — platform.deepseek.com/api-keys' }
-  @{ Name = 'GROQ_API_KEY';             Cat = 'Provider';  Desc = 'Groq API — console.groq.com/keys' }
-  @{ Name = 'MINIMAX_API_KEY';          Cat = 'Provider';  Desc = 'MiniMax API' }
-  @{ Name = 'SILICONFLOW_API_KEY';      Cat = 'Provider';  Desc = 'SiliconFlow API — cloud.siliconflow.cn/account/ak' }
-  @{ Name = 'OPENROUTER_API_KEY';       Cat = 'Provider';  Desc = 'OpenRouter API — openrouter.ai/keys' }
+  # WebUI / Hermes auth (self-issued tokens for your own infra)
+  @{ Name = 'WEBUI_AGENT_TOKEN';        Cat = 'WebUI';     Desc = 'WebUI agent token (self-chosen)' }
+  @{ Name = 'WEBUI_SECRET_KEY';         Cat = 'WebUI';     Desc = 'WebUI secret for session signing (self-chosen)' }
+  @{ Name = 'OPEN_WEBUI_SECRET_KEY';    Cat = 'WebUI';     Desc = 'Open WebUI secret (self-chosen)' }
+  @{ Name = 'HERMES_API_KEY';           Cat = 'Hermes';    Desc = 'Hermes Bridge auth key (self-chosen — your infra)' }
 
-  # WebUI / Hermes auth
-  @{ Name = 'WEBUI_AGENT_TOKEN';        Cat = 'WebUI';     Desc = 'WebUI agent token' }
-  @{ Name = 'WEBUI_SECRET_KEY';         Cat = 'WebUI';     Desc = 'WebUI secret (session signing)' }
-  @{ Name = 'OPEN_WEBUI_SECRET_KEY';    Cat = 'WebUI';     Desc = 'Open WebUI secret' }
-  @{ Name = 'HERMES_API_KEY';           Cat = 'Hermes';    Desc = 'Hermes Bridge auth key' }
-  @{ Name = 'HERMES_MINIMAX_API_KEY';   Cat = 'Hermes';    Desc = 'Hermes default MiniMax model key' }
-
-  # VPS access
+  # VPS access (your hardware)
   @{ Name = 'VPS_HOST';                 Cat = 'VPS';       Desc = 'VPS hostname (e.g. hermes.daveai.tech)' }
   @{ Name = 'VPS_USER';                 Cat = 'VPS';       Desc = 'VPS SSH username' }
   @{ Name = 'SSH_KEY';                  Cat = 'VPS';       Desc = 'Path to SSH private key (e.g. C:\Users\Admin\.ssh\id_ed25519)' }
 
-  # Shiba Memory
-  @{ Name = 'SHIBA_DB_URL';             Cat = 'Shiba';     Desc = 'Shiba postgres URL (postgres://user:pass@host:port/db)' }
+  # Shiba Memory Gateway (your infra; output of _vps_provision_postgres.sh)
+  @{ Name = 'SHIBA_KEY';                Cat = 'Shiba';     Desc = 'Shiba Gateway X-Shiba-Key (self-chosen; matches gateway)' }
+  @{ Name = 'SHIBA_DB_URL';             Cat = 'Shiba';     Desc = 'Shiba postgres URL (output of _vps_provision_postgres.sh)' }
 
-  # Discord bots
+  # Discord bots (your bot tokens)
   @{ Name = 'DISCORD_TOKEN_HERMES1';    Cat = 'Discord';   Desc = 'Discord bot 1 token' }
   @{ Name = 'DISCORD_TOKEN_HERMES2';    Cat = 'Discord';   Desc = 'Discord bot 2 token' }
   @{ Name = 'DISCORD_TOKEN_HERMES3';    Cat = 'Discord';   Desc = 'Discord bot 3 token' }
@@ -62,6 +59,25 @@ $vars = @(
   @{ Name = 'DISCORD_TOKEN_HERMES5';    Cat = 'Discord';   Desc = 'Discord bot 5 token' }
   @{ Name = 'DISCORD_GUILD_ID';         Cat = 'Discord';   Desc = 'Discord server (guild) ID' }
 )
+
+# Paid SaaS API keys — prompted only when -IncludePaid is passed.
+# Permanently EXCLUDED even from the paid list per user policy:
+#   - ANTHROPIC_API_KEY  (cost)
+#   - OPENAI_API_KEY     (cost)
+$paidVars = @(
+  @{ Name = 'DEEPSEEK_API_KEY';         Cat = 'Paid';      Desc = 'DeepSeek API — platform.deepseek.com/api-keys' }
+  @{ Name = 'GROQ_API_KEY';             Cat = 'Paid';      Desc = 'Groq API — console.groq.com/keys' }
+  @{ Name = 'MINIMAX_API_KEY';          Cat = 'Paid';      Desc = 'MiniMax API' }
+  @{ Name = 'HERMES_MINIMAX_API_KEY';   Cat = 'Paid';      Desc = 'MiniMax key for Hermes default routing (paid)' }
+  @{ Name = 'SILICONFLOW_API_KEY';      Cat = 'Paid';      Desc = 'SiliconFlow API — cloud.siliconflow.cn/account/ak' }
+  @{ Name = 'OPENROUTER_API_KEY';       Cat = 'Paid';      Desc = 'OpenRouter API — openrouter.ai/keys' }
+)
+
+if ($IncludePaid) {
+  $vars = $coreVars + $paidVars
+} else {
+  $vars = $coreVars
+}
 
 # ─── Helper: convert SecureString → plain text only at the moment of use ────
 function ConvertFrom-SecureToPlain {
@@ -101,6 +117,8 @@ if ($List) {
 Write-Host ""
 Write-Host "KiloCode Ecosystem — Secret Setup" -ForegroundColor Cyan
 Write-Host ("─" * 72)
+$mode = if ($IncludePaid) { "OPEN-SOURCE + PAID SaaS" } else { "OPEN-SOURCE / LOCAL-FIRST (paid SaaS skipped — pass -IncludePaid to also configure)" }
+Write-Host "Mode: $mode" -ForegroundColor DarkGray
 Write-Host "Press Enter to SKIP a variable (keeps existing value, if any)."
 Write-Host "Input is NEVER echoed to screen, logs, or terminal history."
 Write-Host ""

@@ -27,37 +27,57 @@ param(
   [string] $VsixPath,                # explicit VSIX path (otherwise auto-detect latest canary)
   [switch] $SkipEnv,                 # don't prompt for env vars
   [switch] $SkipInstall,             # don't install the VSIX
-  [switch] $Force                    # pass -Force to setup-windows-env (overwrite without confirm)
+  [switch] $SkipGenerate,            # don't auto-generate self-issued secrets
+  [switch] $Force,                   # pass -Force to setup-windows-env + generator (overwrite without confirm)
+  [switch] $IncludePaid              # ALSO prompt for paid SaaS keys (DeepSeek/Groq/MiniMax/SiliconFlow/OpenRouter)
 )
 
 $ErrorActionPreference = 'Stop'
 
 # ─── Locate sibling scripts ────────────────────────────────────────────────
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
-$envScript = Join-Path $here 'setup-windows-env.ps1'
-$repoRoot  = Split-Path -Parent $here
+$envScript      = Join-Path $here 'setup-windows-env.ps1'
+$generateScript = Join-Path $here 'generate-self-issued-tokens.ps1'
+$repoRoot       = Split-Path -Parent $here
 
 if (-not (Test-Path $envScript)) {
   throw "setup-windows-env.ps1 not found next to bootstrap.ps1 (expected at $envScript)"
 }
+if (-not (Test-Path $generateScript)) {
+  throw "generate-self-issued-tokens.ps1 not found next to bootstrap.ps1 (expected at $generateScript)"
+}
 
-# ─── Step 1: env vars ──────────────────────────────────────────────────────
+# ─── Step 1a: auto-generate self-issued secrets ────────────────────────────
+if (-not $SkipGenerate) {
+  Write-Host ""
+  Write-Host "[bootstrap] Step 1a of 3 — Auto-generate self-issued secrets" -ForegroundColor Cyan
+  Write-Host ("─" * 64)
+
+  $genArgs = @()
+  if ($Force) { $genArgs += '-Force' }
+  & $generateScript @genArgs
+} else {
+  Write-Host "[bootstrap] Step 1a skipped (-SkipGenerate)" -ForegroundColor DarkGray
+}
+
+# ─── Step 1b: prompt for service-issued vars ───────────────────────────────
 if (-not $SkipEnv) {
   Write-Host ""
-  Write-Host "[bootstrap] Step 1 of 2 — Environment variables" -ForegroundColor Cyan
+  Write-Host "[bootstrap] Step 1b of 3 — Service-issued / user-provided env vars" -ForegroundColor Cyan
   Write-Host ("─" * 64)
 
   $envArgs = @()
-  if ($Force) { $envArgs += '-Force' }
+  if ($Force)       { $envArgs += '-Force' }
+  if ($IncludePaid) { $envArgs += '-IncludePaid' }
   & $envScript @envArgs
 } else {
-  Write-Host "[bootstrap] Step 1 skipped (-SkipEnv)" -ForegroundColor DarkGray
+  Write-Host "[bootstrap] Step 1b skipped (-SkipEnv)" -ForegroundColor DarkGray
 }
 
 # ─── Step 2: VSIX install ──────────────────────────────────────────────────
 if (-not $SkipInstall) {
   Write-Host ""
-  Write-Host "[bootstrap] Step 2 of 2 — VS Code extension" -ForegroundColor Cyan
+  Write-Host "[bootstrap] Step 2 of 3 — VS Code extension" -ForegroundColor Cyan
   Write-Host ("─" * 64)
 
   # Check VS Code CLI

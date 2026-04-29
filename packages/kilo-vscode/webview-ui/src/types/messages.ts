@@ -3142,6 +3142,7 @@ export interface V4SubsystemRequest {
     | "hermesSetApiKey" | "hermesClearApiKey" | "hermesUpdateConfig"
     | "hermesAgentAssist" | "hermesSubmitTask"
     | "requestHermesTasks" | "hermesApproveTask" | "hermesCancelTask"
+    | "hermes.listLocalAgents"
     // Contract Markdowns Studio (Sprint 1) — webview → extension requests
     | "contract:list" | "contract:open" | "contract:save"
     | "contract:enhancePrompt" | "contract:generate"

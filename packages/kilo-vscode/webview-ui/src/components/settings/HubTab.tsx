@@ -15,7 +15,7 @@
  *  - Last-updated relative time
  */
 
-import { Component, createSignal, createEffect, onCleanup, Show, For } from "solid-js"
+import { Component, createSignal, createEffect, on, onCleanup, onMount, Show, For } from "solid-js"
 import { useVSCode } from "../../context/vscode"
 import { useDocumentVisible } from "../../hooks/useDocumentVisible"
 
@@ -103,8 +103,23 @@ async function fetchHubSummary(baseUrl: string, signal?: AbortSignal): Promise<H
   // The Hub's own panel shell calls these same endpoints; we aggregate them
   // client-side so a single tab refresh is one parallel batch.
   const safe = baseUrl.replace(/\/+$/, "")
+
+  // Each endpoint gets a hard 5 s timeout so a dead/slow Hub cannot block the
+  // extension host. We combine the user-abort signal (component unmount / new
+  // refresh) with a per-request timeout signal so whichever fires first wins.
+  // AbortSignal.any is available in Chrome 116+ / Node 20+ (VS Code ≥ 1.82).
+  const makeSignal = (): AbortSignal => {
+    const ts = AbortSignal.timeout(5000)
+    if (signal && typeof (AbortSignal as { any?: unknown }).any === "function") {
+      return (AbortSignal as unknown as { any: (sigs: AbortSignal[]) => AbortSignal }).any([signal, ts])
+    }
+    // Fallback: timeout-only (user abort will still cancel via Promise.allSettled
+    // short-circuiting after the outer AbortController fires on cleanup).
+    return ts
+  }
+
   const get = async (path: string) => {
-    const res = await fetch(`${safe}${path}`, { signal })
+    const res = await fetch(`${safe}${path}`, { signal: makeSignal() })
     if (!res.ok) throw new Error(`${path} → ${res.status}`)
     return res.json()
   }
@@ -235,14 +250,33 @@ const HubTab: Component = () => {
     }, intervalMs())
   }
 
-  // Initial fetch + reschedule on settings changes
-  createEffect(() => {
-    void baseUrl()
-    void autoRefresh()
-    void intervalMs()
-    refresh()
+  // ── Reactive effects ─────────────────────────────────────────────────────
+
+  // Initial fetch on first mount — runs exactly once.
+  // Using onMount (not a bare createEffect) ensures the component is fully
+  // attached to the DOM before network I/O starts, and prevents a redundant
+  // second fire when the settings-change effect below also initialises.
+  onMount(() => {
+    if (isVisible()) void refresh()
     scheduleNext()
+
+    // Tick "now" every 5 s so relative-time labels update, but only while
+    // visible.  Moving setup here (inside onMount) means the interval starts
+    // after mount and is always paired with the onCleanup below.
+    tickTimer = setInterval(() => {
+      if (isVisible()) setNow(Date.now())
+    }, 5000)
   })
+
+  // Re-schedule (and re-fetch) when the user changes URL / interval / toggle.
+  // { defer: true } skips the initial run — onMount handles that — so this
+  // effect fires only on actual user-driven signal changes.
+  createEffect(
+    on([baseUrl, autoRefresh, intervalMs], () => {
+      void refresh()
+      scheduleNext()
+    }, { defer: true }),
+  )
 
   // Re-fetch immediately when the panel becomes visible again so the user
   // sees fresh data the moment they return to the tab.
@@ -251,13 +285,6 @@ const HubTab: Component = () => {
       void refresh()
     }
   })
-
-  // Tick "now" every 5s so relative-time labels update — but only while
-  // visible; the labels aren't observed when hidden, and the wake-up cost
-  // adds up at 28 tabs.
-  tickTimer = setInterval(() => {
-    if (isVisible()) setNow(Date.now())
-  }, 5000)
 
   onCleanup(() => {
     abortCtl?.abort()

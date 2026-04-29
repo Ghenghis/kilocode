@@ -476,6 +476,18 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     textareaRef.style.height = `${Math.min(textareaRef.scrollHeight, 200)}px`
   }
 
+  // Batched height-adjust for continuous input: coalesces multiple rapid keystrokes
+  // into a single write→read→write cycle per animation frame, preventing a forced
+  // synchronous reflow on every keystroke event.
+  let _adjustHeightRaf = 0
+  const scheduleAdjustHeight = () => {
+    cancelAnimationFrame(_adjustHeightRaf)
+    _adjustHeightRaf = requestAnimationFrame(() => {
+      adjustHeight()
+      syncHighlightScroll()
+    })
+  }
+
   const handlePaste = (e: ClipboardEvent) => {
     imageAttach.handlePaste(e)
     // After pasting text, the textarea content changes but the layout may not
@@ -492,8 +504,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     const val = target.value
     setText(val)
     preEnhanceText = null
-    adjustHeight()
-    syncHighlightScroll()
+    scheduleAdjustHeight()
     history.reset()
 
     slash.onInput(val, target.selectionStart ?? val.length)

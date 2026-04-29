@@ -38,8 +38,14 @@ export const MarketplaceView = () => {
   const mcps = createMemo(() => items().filter((i): i is McpMarketplaceItem => i.type === "mcp"))
   const modes = createMemo(() => items().filter((i): i is ModeMarketplaceItem => i.type === "mode"))
 
-  const fetchData = () => {
+  // Track which workspace dir we last fetched for, so re-mounting the tab
+  // (Kobalte unmounts/remounts on every click) doesn't re-send the multi-MB
+  // fetchMarketplaceData round-trip when we already have a fresh catalog.
+  let lastFetchedDir: string | undefined
+
+  const fetchData = (force = false) => {
     setFetching(true)
+    lastFetchedDir = server.workspaceDirectory()
     vscode.postMessage({ type: "fetchMarketplaceData" })
   }
 
@@ -64,7 +70,7 @@ export const MarketplaceView = () => {
               target: removed.scope,
             })
           }
-          fetchData()
+          fetchData(true)
         } else {
           setErrors((prev) => [...prev, msg.error ?? t("marketplace.remove.failed", { name: msg.slug })])
         }
@@ -73,9 +79,12 @@ export const MarketplaceView = () => {
     onCleanup(unsub)
   })
 
-  // Re-fetch when workspace changes
+  // Re-fetch only on first mount or when the workspace directory actually changes.
+  // Guard: if the component remounts (tab click) but the workspace is the same
+  // and we already hold a catalog, skip the round-trip — the catalog hasn't changed.
   createEffect(() => {
-    server.workspaceDirectory()
+    const dir = server.workspaceDirectory()
+    if (items().length > 0 && dir === lastFetchedDir) return
     fetchData()
   })
 
@@ -108,7 +117,7 @@ export const MarketplaceView = () => {
               ...(extra?.installationMethodName && { installationMethodName: extra.installationMethodName }),
             })
             dialog.close()
-            fetchData()
+            fetchData(true)
           }
         }}
       />

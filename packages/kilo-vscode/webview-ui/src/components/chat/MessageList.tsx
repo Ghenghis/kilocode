@@ -83,6 +83,9 @@ export const MessageList: Component<MessageListProps> = (props) => {
   })
 
   const [scrollEl, setScrollEl] = createSignal<HTMLElement>()
+  // Bounded scroll-position cache: evict oldest entry when we exceed the cap so
+  // navigating through many sessions doesn't accumulate unbounded Map entries.
+  const MAX_POSITIONS = 20
   const positions = new Map<string, { top: number; userScrolled: boolean }>()
 
   const boundary = () => session.revert()?.messageID
@@ -112,6 +115,11 @@ export const MessageList: Component<MessageListProps> = (props) => {
     const el = scrollEl()
     if (!id || !el) return
     positions.set(id, { top: el.scrollTop, userScrolled: autoScroll.userScrolled() })
+    // Evict the oldest entry once we exceed the cap (Map preserves insertion order)
+    if (positions.size > MAX_POSITIONS) {
+      const firstKey = positions.keys().next().value
+      if (firstKey !== undefined) positions.delete(firstKey)
+    }
   }
 
   const maybeLoadOlder = () => {

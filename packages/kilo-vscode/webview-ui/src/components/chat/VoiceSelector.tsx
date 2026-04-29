@@ -30,7 +30,10 @@ const PREVIEW_TEXT =
   "Hi, I'm your KiloCode voice. This is a quick preview so you can hear how I sound."
 const STORAGE_KEY_VOICE = "kilo.chat.azureVoice"
 
-// Lightweight in-memory blob cache so repeated previews don't re-hit Azure
+// Lightweight in-memory blob cache so repeated previews don't re-hit Azure.
+// Capped at MAX_PREVIEW_CACHE entries (FIFO eviction) to prevent unbounded Blob
+// growth across the webview lifetime.
+const MAX_PREVIEW_CACHE = 32
 const previewCache = new Map<string, Blob>()
 let activeAudio: HTMLAudioElement | null = null
 
@@ -139,6 +142,11 @@ const VoiceSelector: Component<VoiceSelectorProps> = (props) => {
           voiceId: voiceId(),
         })
         previewCache.set(voiceId(), blob)
+        // FIFO eviction: drop oldest entry if cache exceeds cap
+        if (previewCache.size > MAX_PREVIEW_CACHE) {
+          const oldest = previewCache.keys().next().value
+          if (oldest !== undefined) previewCache.delete(oldest)
+        }
       }
       const url = URL.createObjectURL(blob)
       const audio = new Audio(url)

@@ -14,6 +14,11 @@ export interface SubmitOpts {
   extraScope?: string[]
   allowNetwork?: boolean
   allowWrite?: boolean
+  /**
+   * Optional client-side hint of which kc-* agent the user picked.
+   * Hermes is the real router and may ignore this — it's just metadata.
+   */
+  agentIdHint?: string
 }
 
 export interface SubmitHandle {
@@ -174,6 +179,7 @@ export function buildEnvelope(
       submitter: "kilo-vscode",
       submitted_at: new Date().toISOString(),
       ...(kiloVersion ? { kilo_version: kiloVersion } : {}),
+      ...(opts.agentIdHint ? { agent_id_hint: opts.agentIdHint } : {}),
     },
   }
 }

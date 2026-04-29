@@ -46,6 +46,15 @@ interface AgentAssistResult {
   auditFindings: string[]
 }
 
+interface LocalAgent {
+  id: string
+  name: string
+  description: string
+  color: string
+  mode: string
+  model: string | null
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 // eslint-disable-next-line complexity
@@ -68,14 +77,21 @@ const HermesTab: Component = () => {
   const [agentPrompt, setAgentPrompt] = createSignal("")
   const [submitting, setSubmitting] = createSignal(false)
   const [error, setError] = createSignal<string | null>(null)
+  const [localAgents, setLocalAgents] = createSignal<LocalAgent[]>([])
+  const [selectedAgentId, setSelectedAgentId] = createSignal<string>("")
 
   // ── Load status on mount ───────────────────────────────────────────────────
   const requestStatus = () => {
     vscode.postMessage({ type: "requestHermesStatus" })
   }
 
+  const requestLocalAgents = () => {
+    vscode.postMessage({ type: "hermes.listLocalAgents" })
+  }
+
   createEffect(() => {
     requestStatus()
+    requestLocalAgents()
     const interval = setInterval(requestStatus, 30_000)
     onCleanup(() => clearInterval(interval))
   })
@@ -99,6 +115,13 @@ const HermesTab: Component = () => {
       case "hermesAgentAssistResult": {
         setAssistResult(msg.result as AgentAssistResult)
         setAssistRunning(false)
+        break
+      }
+      case "hermes.update": {
+        const payload = msg.payload as { kind?: string; agents?: LocalAgent[] } | undefined
+        if (payload?.kind === "localAgents" && Array.isArray(payload.agents)) {
+          setLocalAgents(payload.agents)
+        }
         break
       }
       case "hermesError": {
@@ -167,12 +190,14 @@ const HermesTab: Component = () => {
     const desc = agentPrompt().trim()
     if (!desc) return
     setSubmitting(true)
+    const agentId = selectedAgentId()
     vscode.postMessage({
       type: "hermesSubmitTask",
       task_type: "research",
       description: desc,
       evidence: [],
       auto_approve: approvalMode() === "auto-all",
+      ...(agentId ? { agent_id_hint: agentId } : {}),
     })
     setAgentPrompt("")
     setTimeout(() => { setSubmitting(false); vscode.postMessage({ type: "requestHermesTasks" }) }, 1500)
@@ -494,6 +519,27 @@ const HermesTab: Component = () => {
         <p style={{ "font-size": "11px", color: "var(--vscode-descriptionForeground)", margin: "0 0 8px" }}>
           Hermes routes to the right agent (researcher, auditor, executor). ZeroClaw runs approved actions.
         </p>
+        <Show when={localAgents().length > 0}>
+          <div style={{ display: "flex", gap: "8px", "align-items": "center", "margin-bottom": "6px" }}>
+            <label style={{ "font-size": "11px", color: "var(--vscode-descriptionForeground)" }}>
+              Agent hint:
+            </label>
+            <select
+              value={selectedAgentId()}
+              onChange={(e) => setSelectedAgentId(e.currentTarget.value)}
+              style={{
+                background: "var(--vscode-dropdown-background)", color: "var(--vscode-dropdown-foreground)",
+                border: "1px solid var(--vscode-dropdown-border)", "border-radius": "3px",
+                padding: "4px 6px", "font-size": "11px",
+              }}
+            >
+              <option value="">Auto (let Hermes pick)</option>
+              <For each={localAgents()}>
+                {(a) => <option value={a.id}>{a.id} — {a.description}</option>}
+              </For>
+            </select>
+          </div>
+        </Show>
         <div style={{ display: "flex", gap: "8px" }}>
           <input
             type="text"

@@ -48,6 +48,8 @@ export interface TaskEnvelope {
     submitter: string
     submitted_at: string
     kilo_version?: string
+    /** Optional client-picked agent id (e.g. "kc-07"). Hermes may ignore. */
+    agent_id_hint?: string
   }
 }
 

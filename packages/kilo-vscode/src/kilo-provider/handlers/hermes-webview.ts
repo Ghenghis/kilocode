@@ -32,6 +32,7 @@
  */
 
 import * as vscode from "vscode"
+import { agentRegistry } from "../../services/agents/AgentRegistry"
 
 const HUB_BASE = process.env.KILO_HUB_BASE ?? "https://hermes.daveai.tech"
 const HERMES_KEY_ID = "kilo-code.new.hermes.apiKey"
@@ -113,6 +114,25 @@ export async function handleHermesRealWebviewMessage(
   if (typeof type !== "string" || !type.startsWith("hermes.")) return false
 
   switch (type) {
+    case "hermes.listLocalAgents": {
+      // Client-side registry of kc-* agents loaded from .kilo/agents/.
+      // Distinct from `hermes.listAgents` (which queries the remote Hub).
+      // Used by the HermesTab agent-picker dropdown.
+      const agents = agentRegistry.getAll().map((a) => ({
+        id: a.id,
+        name: a.name,
+        description: a.description,
+        color: a.color,
+        mode: a.mode,
+        model: a.model,
+      }))
+      ctx.postMessage({
+        type: "hermes.update",
+        payload: { kind: "localAgents", agents, loadedAt: Date.now() },
+      })
+      return true
+    }
+
     case "hermes.listAgents": {
       try {
         const data = await hermesFetch<{ agents: HermesAgent[] }>(ctx.extensionContext, "/hermes/agents")

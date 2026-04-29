@@ -10,7 +10,7 @@ import asyncio
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.webui.control_center import (
+from backend.webui.control_center import (
     ControlCenterApp,
     ProviderPanel,
     AgentPanel,

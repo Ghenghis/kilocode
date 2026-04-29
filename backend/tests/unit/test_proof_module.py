@@ -24,7 +24,7 @@ def _dummy_func():
 
 def test_test_runner_init():
     """ProofTestRunner initialises with sensible defaults from config."""
-    from src.proof.test_runner import ProofTestRunner
+    from backend.proof.test_runner import ProofTestRunner
 
     runner = ProofTestRunner(config={})
 
@@ -46,7 +46,7 @@ def test_test_runner_init():
 
 def test_coverage_collector_init():
     """CoverageTracker initialises with config values and sane defaults."""
-    from src.proof.coverage import CoverageTracker
+    from backend.proof.coverage import CoverageTracker
 
     tracker = CoverageTracker(
         config={
@@ -70,7 +70,7 @@ def test_coverage_collector_init():
 
 def test_performance_monitor_timing():
     """PerformanceBenchmark.measure_latency returns a positive latency."""
-    from src.proof.performance import PerformanceBenchmark
+    from backend.proof.performance import PerformanceBenchmark
 
     bench = PerformanceBenchmark(config={"memory_profiling": False})
     result = bench.measure_latency(_dummy_func)
@@ -88,7 +88,7 @@ def test_performance_monitor_timing():
 
 def test_security_scanner_detects_exposed_key():
     """SecurityValidator.scan_for_exposed_keys finds a hardcoded API key."""
-    from src.proof.security import SecurityValidator
+    from backend.proof.security import SecurityValidator
 
     validator = SecurityValidator(config={})
 
@@ -109,7 +109,7 @@ def test_security_scanner_detects_exposed_key():
 
 def test_security_scanner_flags_weak_token():
     """SecurityValidator.check_token_strength flags a short, weak token."""
-    from src.proof.security import SecurityValidator
+    from backend.proof.security import SecurityValidator
 
     validator = SecurityValidator(config={})
 
@@ -125,7 +125,7 @@ def test_security_scanner_flags_weak_token():
 
 def test_security_scanner_accepts_strong_token():
     """SecurityValidator.check_token_strength accepts a sufficiently strong token."""
-    from src.proof.security import SecurityValidator
+    from backend.proof.security import SecurityValidator
 
     validator = SecurityValidator(config={})
 
@@ -146,7 +146,7 @@ def test_security_scanner_accepts_strong_token():
 def test_proof_module_exports_all_classes():
     """src.proof.__init__ exports ProofTestRunner, CoverageTracker,
     PerformanceBenchmark, and SecurityValidator."""
-    import src.proof as proof_module
+    import backend.proof as proof_module
 
     expected_exports = [
         "ProofTestRunner",
@@ -166,7 +166,7 @@ def test_proof_module_exports_all_classes():
 
 def test_test_runner_run_suite_returns_results(tmp_path):
     """ProofTestRunner.run_tests returns a dict with expected keys for a nonexistent path."""
-    from src.proof.test_runner import ProofTestRunner
+    from backend.proof.test_runner import ProofTestRunner
 
     runner = ProofTestRunner(config={})
     # Pass a path that doesn't exist — should return an error result dict, not raise
@@ -180,7 +180,7 @@ def test_test_runner_run_suite_returns_results(tmp_path):
 
 def test_test_runner_run_unit_missing_path():
     """ProofTestRunner.run_unit returns an error dict for a missing path."""
-    from src.proof.test_runner import ProofTestRunner
+    from backend.proof.test_runner import ProofTestRunner
 
     runner = ProofTestRunner(config={})
     result = runner.run_unit("/nonexistent/path/to/tests")
@@ -197,7 +197,7 @@ def test_test_runner_run_unit_missing_path():
 
 def test_performance_monitor_memory():
     """PerformanceBenchmark.profile_memory returns memory allocation info."""
-    from src.proof.performance import PerformanceBenchmark
+    from backend.proof.performance import PerformanceBenchmark
 
     bench = PerformanceBenchmark(config={"memory_profiling": True})
     result = bench.profile_memory(_dummy_func)
@@ -218,7 +218,7 @@ def test_performance_monitor_memory():
 
 def test_coverage_tracker_start_stop(tmp_path):
     """CoverageTracker start_tracking / stop_tracking cycle does not raise."""
-    from src.proof.coverage import CoverageTracker
+    from backend.proof.coverage import CoverageTracker
 
     tracker = CoverageTracker(
         config={"output_dir": str(tmp_path), "source_package": "src"}
@@ -239,7 +239,7 @@ def test_coverage_tracker_start_stop(tmp_path):
 
 def test_security_validator_detects_sql_injection():
     """SecurityValidator.check_sql_injection flags a basic SQL injection string."""
-    from src.proof.security import SecurityValidator
+    from backend.proof.security import SecurityValidator
 
     validator = SecurityValidator(config={})
     # Classic UNION-based injection
@@ -249,7 +249,7 @@ def test_security_validator_detects_sql_injection():
 
 def test_security_validator_clean_query_passes():
     """SecurityValidator.check_sql_injection does not flag a plain string."""
-    from src.proof.security import SecurityValidator
+    from backend.proof.security import SecurityValidator
 
     validator = SecurityValidator(config={})
     result = validator.check_sql_injection("hello world")

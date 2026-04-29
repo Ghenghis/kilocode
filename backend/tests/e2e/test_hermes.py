@@ -12,7 +12,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 @pytest.fixture
 def hermes_orchestrator():
     """Create a HermesOrchestrator instance for testing."""
-    from src.hermes import HermesOrchestrator
+    from backend.hermes import HermesOrchestrator
     orchestrator = HermesOrchestrator(
         runtime_api=None,
         event_bus=None,
@@ -73,7 +73,7 @@ async def test_task_fanout(hermes_orchestrator):
     Verifies that tasks are properly distributed across
     available providers and tracked correctly.
     """
-    from src.hermes.orchestrator import TaskPacket, ContractStatus
+    from backend.hermes.orchestrator import TaskPacket, ContractStatus
     from unittest.mock import MagicMock
     
     # Create a proper TaskPacket object

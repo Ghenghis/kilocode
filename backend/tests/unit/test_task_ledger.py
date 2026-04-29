@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.integration.task_ledger import (
+from backend.integration.task_ledger import (
     InvalidTransition,
     Task,
     TaskLedger,

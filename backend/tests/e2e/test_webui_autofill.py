@@ -11,8 +11,8 @@ import asyncio
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.webui.control_center import ControlCenterApp, ProviderPanel
-from src.webui.agents_panel import (
+from backend.webui.control_center import ControlCenterApp, ProviderPanel
+from backend.webui.agents_panel import (
     AgentsManager,
     ZeroClawAgentsPanel,
     HermesAgentsPanel,

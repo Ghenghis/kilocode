@@ -971,7 +971,7 @@ class SettingsPanel:
             Auto-filled settings with metadata.
         """
         try:
-            from src.kilocode.runtime_sync import SettingsAutofill
+            from backend.kilocode.runtime_sync import SettingsAutofill
             
             autofill = SettingsAutofill(runtime_sync=None)
             result = await autofill.auto_complete_settings(self._settings, context)
@@ -1241,7 +1241,7 @@ class SettingsPanel:
         Returns:
             Missing settings with suggestions.
         """
-        from src.kilocode.runtime_sync import SettingsAutofill
+        from backend.kilocode.runtime_sync import SettingsAutofill
 
         autofill = SettingsAutofill(runtime_sync=None)
         suggestions = await autofill.get_autofill_suggestions(context)

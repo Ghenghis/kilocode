@@ -52,7 +52,7 @@ def mock_runtime_api():
 @pytest.fixture
 def runtime_core_api():
     """Create a RuntimeCoreAPI instance for testing."""
-    from src.runtime import RuntimeCoreAPI
+    from backend.runtime import RuntimeCoreAPI
     api = RuntimeCoreAPI(title="Test Runtime", version="1.0.0")
     return api
 
@@ -60,7 +60,7 @@ def runtime_core_api():
 @pytest.fixture
 def event_bus():
     """Create an EventBus instance for testing."""
-    from src.runtime import EventBus
+    from backend.runtime import EventBus
     bus = EventBus(nats_url="nats://localhost:4222")
     return bus
 
@@ -68,7 +68,7 @@ def event_bus():
 @pytest.fixture
 def hermes_orchestrator(mock_runtime_api):
     """Create a HermesOrchestrator instance for testing."""
-    from src.hermes import HermesOrchestrator
+    from backend.hermes import HermesOrchestrator
     orchestrator = HermesOrchestrator(
         runtime_api=mock_runtime_api,
         event_bus=None,
@@ -217,7 +217,7 @@ class MockAuditResult:
 @pytest.fixture
 def audit_config():
     """Create an AuditConfig for testing."""
-    from src.blockchain_audit import AuditConfig
+    from backend.blockchain_audit import AuditConfig
 
     config = AuditConfig()
     # Set up test-specific values
@@ -229,7 +229,7 @@ def audit_config():
 @pytest.fixture
 def default_audit_config():
     """Create an AuditConfig with default values for testing."""
-    from src.blockchain_audit import AuditConfig
+    from backend.blockchain_audit import AuditConfig
 
     return AuditConfig()
 
@@ -275,7 +275,7 @@ def mock_blockchain():
 @pytest.fixture
 def audit_chain(audit_config, mock_blockchain):
     """Create an AuditChain instance for testing."""
-    from src.blockchain_audit import AuditChain
+    from backend.blockchain_audit import AuditChain
 
     chain = AuditChain(audit_config)
     chain.blockchain = mock_blockchain
@@ -285,7 +285,7 @@ def audit_chain(audit_config, mock_blockchain):
 @pytest.fixture
 def simple_audit_chain(mock_blockchain):
     """Create an AuditChain with minimal config for testing."""
-    from src.blockchain_audit import AuditConfig, AuditChain
+    from backend.blockchain_audit import AuditConfig, AuditChain
 
     config = AuditConfig()
     chain = AuditChain(config)
@@ -296,7 +296,7 @@ def simple_audit_chain(mock_blockchain):
 @pytest.fixture
 def audit_agents(audit_chain, audit_config):
     """Create 5 overlapping audit agents for testing."""
-    from src.blockchain_audit import AuditAgent
+    from backend.blockchain_audit import AuditAgent
 
     agents = []
     for i in range(5):
@@ -314,7 +314,7 @@ def audit_agents(audit_chain, audit_config):
 @pytest.fixture
 def consensus_engine(audit_config):
     """Create a ConsensusEngine instance for testing."""
-    from src.blockchain_audit import ConsensusEngine
+    from backend.blockchain_audit import ConsensusEngine
 
     engine = ConsensusEngine(audit_config)
     return engine
@@ -323,7 +323,7 @@ def consensus_engine(audit_config):
 @pytest.fixture
 def issue_detector(audit_config):
     """Create an IssueDetector instance for testing."""
-    from src.blockchain_audit import IssueDetector
+    from backend.blockchain_audit import IssueDetector
 
     detector = IssueDetector(audit_config)
     return detector
@@ -332,7 +332,7 @@ def issue_detector(audit_config):
 @pytest.fixture
 def correction_validator(audit_config, audit_chain):
     """Create a CorrectionValidator instance for testing."""
-    from src.blockchain_audit import CorrectionValidator
+    from backend.blockchain_audit import CorrectionValidator
 
     validator = CorrectionValidator(audit_config, audit_chain)
     return validator

@@ -9,7 +9,7 @@ import asyncio
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.hermes.orchestrator import (
+from backend.hermes.orchestrator import (
     ContractStatus,
     FilesystemAdapter,
     GitAdapter,

@@ -11,9 +11,9 @@ import logging
 from typing import Optional, Dict, Any
 from pathlib import Path
 
-from src.runtime.core import RuntimeCoreAPI, EventBus, ProviderRouter
-from src.hermes.orchestrator import HermesOrchestrator, ZeroClawAdapter
-from src.zeroclaw.adapters import ZeroClawGateway
+from backend.runtime.core import RuntimeCoreAPI, EventBus, ProviderRouter
+from backend.hermes.orchestrator import HermesOrchestrator, ZeroClawAdapter
+from backend.zeroclaw.adapters import ZeroClawGateway
 
 logger = logging.getLogger(__name__)
 

@@ -13,7 +13,7 @@ import asyncio
 @pytest.fixture
 def circuit_breaker():
     """Create a circuit breaker for testing."""
-    from src.runtime import CircuitBreaker, CircuitState
+    from backend.runtime import CircuitBreaker, CircuitState
     
     cb = CircuitBreaker(
         failure_threshold=3,
@@ -37,7 +37,7 @@ async def test_circuit_breaker(circuit_breaker):
     Verifies that the circuit breaker correctly transitions
     between closed, open, and half-open states.
     """
-    from src.runtime import CircuitState
+    from backend.runtime import CircuitState
     
     assert circuit_breaker.state == CircuitState.CLOSED
     assert circuit_breaker.can_execute() is True
@@ -88,7 +88,7 @@ async def test_health_recovery():
     Verifies that providers can transition from unhealthy
     back to healthy after successful recovery operations.
     """
-    from src.runtime import ProviderRouter, CircuitState
+    from backend.runtime import ProviderRouter, CircuitState
     
     router = ProviderRouter(
         providers=["provider-a", "provider-b"],

@@ -11,7 +11,7 @@ import time
 from typing import List, Dict, Any, Optional
 from unittest.mock import MagicMock, AsyncMock, patch, call
 
-from src.blockchain_audit import AuditConfig
+from backend.blockchain_audit import AuditConfig
 
 
 class TestDynamicOverlapCalculation:
@@ -19,7 +19,7 @@ class TestDynamicOverlapCalculation:
 
     def test_overlap_calculation_low_complexity(self, audit_config, mock_blockchain):
         """Test overlap calculation with low complexity blocks (10%)."""
-        from src.blockchain_audit import AuditChain
+        from backend.blockchain_audit import AuditChain
 
         with patch("src.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_blockchain):
             chain = AuditChain(audit_config)
@@ -30,7 +30,7 @@ class TestDynamicOverlapCalculation:
 
     def test_overlap_calculation_medium_complexity(self, audit_config, mock_blockchain):
         """Test overlap calculation with medium complexity blocks (50%)."""
-        from src.blockchain_audit import AuditChain
+        from backend.blockchain_audit import AuditChain
 
         with patch("src.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_blockchain):
             chain = AuditChain(audit_config)
@@ -41,7 +41,7 @@ class TestDynamicOverlapCalculation:
 
     def test_overlap_calculation_high_complexity(self, audit_config, mock_blockchain):
         """Test overlap calculation with high complexity blocks (90%)."""
-        from src.blockchain_audit import AuditChain
+        from backend.blockchain_audit import AuditChain
 
         with patch("src.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_blockchain):
             chain = AuditChain(audit_config)
@@ -52,7 +52,7 @@ class TestDynamicOverlapCalculation:
 
     def test_overlap_calculation_boundary_low(self, audit_config, mock_blockchain):
         """Test overlap calculation at lowest boundary."""
-        from src.blockchain_audit import AuditChain
+        from backend.blockchain_audit import AuditChain
 
         with patch("src.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_blockchain):
             chain = AuditChain(audit_config)
@@ -63,7 +63,7 @@ class TestDynamicOverlapCalculation:
 
     def test_overlap_calculation_boundary_high(self, audit_config, mock_blockchain):
         """Test overlap calculation at highest boundary."""
-        from src.blockchain_audit import AuditChain
+        from backend.blockchain_audit import AuditChain
 
         with patch("src.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_blockchain):
             chain = AuditChain(audit_config)
@@ -74,7 +74,7 @@ class TestDynamicOverlapCalculation:
 
     def test_overlap_is_deterministic(self, audit_config, mock_blockchain):
         """Test that overlap calculation is deterministic."""
-        from src.blockchain_audit import AuditChain
+        from backend.blockchain_audit import AuditChain
 
         with patch("src.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_blockchain):
             chain = AuditChain(audit_config)
@@ -89,7 +89,7 @@ class TestDynamicOverlapCalculation:
 
     def test_overlap_respects_config_limits(self, default_audit_config, mock_blockchain):
         """Test that overlap respects configured min/max limits."""
-        from src.blockchain_audit import AuditChain
+        from backend.blockchain_audit import AuditChain
 
         with patch("src.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_blockchain):
             chain = AuditChain(default_audit_config)
@@ -145,7 +145,7 @@ class TestLinearChainVerification:
 
     def test_verify_chain_empty_chain(self, audit_config):
         """Test verification of empty chain."""
-        from src.blockchain_audit import AuditChain
+        from backend.blockchain_audit import AuditChain
 
         empty_mock = MagicMock()
         empty_mock.blocks = []
@@ -162,7 +162,7 @@ class TestLinearChainVerification:
 
     def test_verify_chain_single_block(self, audit_config):
         """Test verification of single block chain."""
-        from src.blockchain_audit import AuditChain
+        from backend.blockchain_audit import AuditChain
 
         single_mock = MagicMock()
         block = MockBlock("block-000", previous_hash="genesis", transactions=[], complexity=0.5)
@@ -239,7 +239,7 @@ class TestRecursiveDoubleCheck:
 
     def test_max_passes_respected(self, audit_config):
         """Test that max passes configuration is respected."""
-        from src.blockchain_audit import AuditChain
+        from backend.blockchain_audit import AuditChain
 
         config = AuditConfig(max_verification_passes=3)
         mock_chain = MagicMock()

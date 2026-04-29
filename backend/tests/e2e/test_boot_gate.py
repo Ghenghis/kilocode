@@ -34,7 +34,7 @@ async def test_health_matrix_pass(health_matrix):
     Verifies that the health matrix passes when all
     components report healthy status.
     """
-    from src.runtime import HealthStatus
+    from backend.runtime import HealthStatus
     
     all_healthy = all(
         component["status"] == "healthy"
@@ -105,7 +105,7 @@ async def test_repair_flow():
     Verifies that repair operations are triggered for
     failed components and that recovery is tracked.
     """
-    from src.hermes import RepairRouter
+    from backend.hermes import RepairRouter
     
     mock_orchestrator = AsyncMock()
     repair_router = RepairRouter(orchestrator=mock_orchestrator)

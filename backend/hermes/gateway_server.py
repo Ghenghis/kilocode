@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-from src.hermes.orchestrator import HermesOrchestrator
+from backend.hermes.orchestrator import HermesOrchestrator
 
 logger = logging.getLogger(__name__)
 

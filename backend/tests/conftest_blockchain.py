@@ -131,7 +131,7 @@ class MockAuditResult:
 @pytest.fixture
 def audit_config():
     """Create an AuditConfig for testing."""
-    from src.blockchain_audit import AuditConfig
+    from backend.blockchain_audit import AuditConfig
 
     config = AuditConfig(
         min_overlap_percent=25,
@@ -146,7 +146,7 @@ def audit_config():
 @pytest.fixture
 def default_audit_config():
     """Create an AuditConfig with default values for testing."""
-    from src.blockchain_audit import AuditConfig
+    from backend.blockchain_audit import AuditConfig
 
     return AuditConfig()
 
@@ -230,7 +230,7 @@ def mock_blockchain_with_issues():
 @pytest.fixture
 def audit_chain(audit_config, mock_blockchain):
     """Create an AuditChain instance for testing."""
-    from src.blockchain_audit import AuditChain
+    from backend.blockchain_audit import AuditChain
 
     with patch("src.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_blockchain):
         chain = AuditChain(audit_config)
@@ -241,7 +241,7 @@ def audit_chain(audit_config, mock_blockchain):
 @pytest.fixture
 def simple_audit_chain(mock_blockchain):
     """Create an AuditChain with minimal config for testing."""
-    from src.blockchain_audit import AuditConfig, AuditChain
+    from backend.blockchain_audit import AuditConfig, AuditChain
 
     config = AuditConfig(min_overlap_percent=25, max_overlap_percent=65)
     with patch("src.blockchain_audit.audit_chain.BlockchainClient", return_value=mock_blockchain):
@@ -253,7 +253,7 @@ def simple_audit_chain(mock_blockchain):
 @pytest.fixture
 def audit_agents(audit_chain, audit_config):
     """Create 5 overlapping audit agents for testing."""
-    from src.blockchain_audit import AuditAgent
+    from backend.blockchain_audit import AuditAgent
 
     agents = []
     for i in range(5):
@@ -271,7 +271,7 @@ def audit_agents(audit_chain, audit_config):
 @pytest.fixture
 def consensus_engine(audit_config):
     """Create a ConsensusEngine instance for testing."""
-    from src.blockchain_audit import ConsensusEngine
+    from backend.blockchain_audit import ConsensusEngine
 
     engine = ConsensusEngine(audit_config)
     return engine
@@ -280,7 +280,7 @@ def consensus_engine(audit_config):
 @pytest.fixture
 def issue_detector(audit_config):
     """Create an IssueDetector instance for testing."""
-    from src.blockchain_audit import IssueDetector
+    from backend.blockchain_audit import IssueDetector
 
     detector = IssueDetector(audit_config)
     return detector
@@ -289,7 +289,7 @@ def issue_detector(audit_config):
 @pytest.fixture
 def correction_validator(audit_config):
     """Create a CorrectionValidator instance for testing."""
-    from src.blockchain_audit import CorrectionValidator
+    from backend.blockchain_audit import CorrectionValidator
 
     validator = CorrectionValidator(audit_config)
     return validator

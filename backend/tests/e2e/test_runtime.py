@@ -13,7 +13,7 @@ import asyncio
 @pytest.fixture
 def runtime_core_api():
     """Create a RuntimeCoreAPI instance for testing."""
-    from src.runtime import RuntimeCoreAPI
+    from backend.runtime import RuntimeCoreAPI
     api = RuntimeCoreAPI(title="Test Runtime", version="1.0.0")
     return api
 
@@ -21,7 +21,7 @@ def runtime_core_api():
 @pytest.fixture
 def event_bus():
     """Create an EventBus instance for testing."""
-    from src.runtime import EventBus
+    from backend.runtime import EventBus
     bus = EventBus(nats_url="nats://localhost:4222")
     return bus
 
@@ -29,7 +29,7 @@ def event_bus():
 @pytest.fixture
 def provider_router():
     """Create a ProviderRouter instance for testing."""
-    from src.runtime import ProviderRouter
+    from backend.runtime import ProviderRouter
     router = ProviderRouter(
         providers=["provider-a", "provider-b", "provider-c"],
         event_bus=None

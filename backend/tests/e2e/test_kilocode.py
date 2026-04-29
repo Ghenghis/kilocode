@@ -12,7 +12,7 @@ from unittest.mock import AsyncMock, MagicMock
 @pytest.fixture
 def runtime_sync():
     """Create a RuntimeSync instance for testing."""
-    from src.kilocode import RuntimeSync
+    from backend.kilocode import RuntimeSync
     sync = RuntimeSync(runtime_url="http://localhost:8080", api_key="test-key")
     return sync
 
@@ -38,7 +38,7 @@ async def test_active_task_panel():
     Verifies that the panel correctly fetches and displays
     active tasks from the runtime.
     """
-    from src.kilocode import ActiveTaskPanel
+    from backend.kilocode import ActiveTaskPanel
     
     mock_sync = AsyncMock()
     mock_sync.get_task_details.return_value = {
@@ -60,7 +60,7 @@ async def test_completion_submit():
     Verifies that task completions are properly validated
     and submitted with evidence.
     """
-    from src.kilocode import CompletionSubmitter
+    from backend.kilocode import CompletionSubmitter
     
     mock_sync = AsyncMock()
     mock_sync.push_task_state.return_value = True

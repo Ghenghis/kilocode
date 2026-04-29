@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.integration.identity import (
+from backend.integration.identity import (
     IdentityMapping,
     derive_user_ref,
     new_session_id,

@@ -51,6 +51,22 @@ tsconfig.tsbuildinfo
 # Kilo
 .kilo/plans/*upstream-merge-report-*.md
 .kilo/*.log
+# NOTE: .kilo/governance.json is intentionally TRACKED — it is the canonical
+# state file loaded by GovernanceService at startup. It is also written-to at
+# runtime by the running Hub server, so expect drift in `git status` while the
+# Hub is running. Do not `git rm --cached` it: fresh clones rely on the
+# committed defaults (the loader does fall back to DEFAULT_STATE, but the
+# tracked file is the canonical source). To suppress drift locally during a
+# session, stash or restore: `git restore .kilo/governance.json`.
+
+# Runtime artifacts written by services/Hub (logs, status caches, state files)
+backend/artifacts/services/*.log
+backend/artifacts/services/*-cache.json
+backend/artifacts/services/_*_cache.json
+backend/artifacts/services/*-status.json
+backend/artifacts/services/*-state.json
+**/debug-*.log
+**/debug-storybook.log
 
 # Python backend (consolidated from contract-kit-v17)
 __pycache__/

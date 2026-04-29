@@ -60,9 +60,13 @@ async function withEnabledConfig<T>(fn: () => Promise<T>): Promise<T> {
       getConfiguration: () => unknown
       onDidChangeConfiguration?: (cb: unknown) => { dispose: () => void }
     }
+    window: {
+      createStatusBarItem?: (...args: unknown[]) => unknown
+    }
   }
   const originalGet = vscode.workspace.getConfiguration
   const originalOnChange = vscode.workspace.onDidChangeConfiguration
+  const originalCreateStatusBar = vscode.window.createStatusBarItem
   vscode.workspace.getConfiguration = () => ({
     get: <V>(key: string, fallback?: V): V => {
       if (key === "enabled") return true as unknown as V
@@ -74,6 +78,21 @@ async function withEnabledConfig<T>(fn: () => Promise<T>): Promise<T> {
     update: async () => {},
   })
   vscode.workspace.onDidChangeConfiguration = () => ({ dispose: () => {} })
+  // Other test files in the suite call `mock.module("vscode", ...)` with a
+  // bare `window: {}`, which clobbers the shared mock's `createStatusBarItem`
+  // for the rest of the run. Re-install a working stub so this test can
+  // construct a HermesStatusService regardless of run order.
+  if (typeof vscode.window.createStatusBarItem !== "function") {
+    vscode.window.createStatusBarItem = () => ({
+      text: "",
+      tooltip: "",
+      color: undefined,
+      command: undefined,
+      show: () => {},
+      hide: () => {},
+      dispose: () => {},
+    })
+  }
   try {
     // IMPORTANT: await the inner function so the config patch stays in
     // place across all awaits inside it. A non-async wrapper would restore
@@ -83,6 +102,7 @@ async function withEnabledConfig<T>(fn: () => Promise<T>): Promise<T> {
   } finally {
     vscode.workspace.getConfiguration = originalGet
     vscode.workspace.onDidChangeConfiguration = originalOnChange
+    vscode.window.createStatusBarItem = originalCreateStatusBar
   }
 }
 

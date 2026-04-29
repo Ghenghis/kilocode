@@ -13,16 +13,7 @@ import { SpeechProviderRegistry } from "../../data/speech-providers"
 import { speak, stop as stopSpeech, ensureAudioReady, setVolume } from "../../utils/speech-playback"
 import { synthesizeAzure } from "../../utils/tts-azure"
 import SettingsRow from "./SettingsRow"
-
-// Deep clone utility for settings
-function cloneSettings(s: SpeechSettings): SpeechSettings {
-  return JSON.parse(JSON.stringify(s))
-}
-
-// Check if two settings objects are equal
-function settingsEqual(a: SpeechSettings, b: SpeechSettings): boolean {
-  return JSON.stringify(a) === JSON.stringify(b)
-}
+import { cloneSettings, settingsEqual } from "./SpeechTab.helpers"
 
 function voiceMatchesFilter(v: SpeechVoice, q: string, loc: string): boolean {
   if (q && !v.name.toLowerCase().includes(q) && !v.id.toLowerCase().includes(q) && !v.description.toLowerCase().includes(q)) return false

@@ -185,7 +185,7 @@ export const ChatView: Component<ChatViewProps> = (props) => {
                         setTransferDetail("Capturing changes...")
                         vscode.postMessage({ type: "continueInWorktree", sessionId: sid })
                       }}
-                      aria-label="Continue in Worktree"
+                      aria-label={language.t("chat.action.continueInWorktree")}
                     >
                       <Show when={transferring()} fallback={<Icon name="branch" size="small" />}>
                         <Spinner class="chat-spinner-small" />

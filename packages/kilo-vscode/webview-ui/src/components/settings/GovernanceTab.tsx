@@ -1,4 +1,4 @@
-import { Component, createSignal, createEffect, For, Show, onCleanup } from "solid-js"
+import { Component, createSignal, For, Show, onCleanup, onMount } from "solid-js"
 import { useVSCode } from "../../context/vscode"
 
 // ─── Types ───────────────────────────────────────────────
@@ -312,7 +312,7 @@ const GovernanceTab: Component = () => {
 	onCleanup(unsub)
 
 	// Request initial state — use requestGovernanceState to get full snapshot
-	createEffect(() => {
+	onMount(() => {
 		postMessage({ type: "requestGovernanceState" } as never)
 	})
 

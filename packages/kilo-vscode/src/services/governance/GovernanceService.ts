@@ -889,6 +889,12 @@ export class GovernanceService implements vscode.Disposable {
 		this.log.info("New dangerous action registered", { id: entry.id, name: entry.name, severity: entry.severity, minimumTier: entry.minimumTier })
 		this.state.dangerousActions.push(entry)
 
+		// Cap dangerousActions at 500 entries (FIFO eviction). Without this
+		// cap the persisted JSON state file grew indefinitely across restarts.
+		if (this.state.dangerousActions.length > 500) {
+			this.state.dangerousActions = this.state.dangerousActions.slice(-500)
+		}
+
 		this.addAuditEntry({
 			actor: "system",
 			action: `Registered dangerous action: ${entry.name}`,
@@ -1031,6 +1037,12 @@ export class GovernanceService implements vscode.Disposable {
 			timestamp: Date.now(),
 		}
 		this.state.releaseVerdicts.push(verdict)
+
+		// Cap releaseVerdicts at 200 entries (FIFO eviction). Without this
+		// cap the persisted JSON state file grew indefinitely across restarts.
+		if (this.state.releaseVerdicts.length > 200) {
+			this.state.releaseVerdicts = this.state.releaseVerdicts.slice(-200)
+		}
 
 		const decisionLabel = decision === "pass" ? "PASS" : decision === "conditional_pass" ? "CONDITIONAL PASS" : "FAIL"
 

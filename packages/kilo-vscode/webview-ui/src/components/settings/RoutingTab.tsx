@@ -1,4 +1,4 @@
-import { Component, createSignal, createEffect, For, Show, onCleanup } from "solid-js"
+import { Component, createSignal, For, Show, onCleanup, onMount } from "solid-js"
 import { Switch } from "@kilocode/kilo-ui/switch"
 import { Card } from "@kilocode/kilo-ui/card"
 import { Button } from "@kilocode/kilo-ui/button"
@@ -421,7 +421,7 @@ const RoutingTab: Component = () => {
   onCleanup(unsubscribe)
 
   // ── Initial Data Fetch ───────────────────────────────────
-  createEffect(() => {
+  onMount(() => {
     // Request the full routing state (providers, config, health, traces) on tab open
     vscode.postMessage({ type: "requestRoutingState" } as never)
   })

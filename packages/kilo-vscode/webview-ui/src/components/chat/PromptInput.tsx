@@ -34,11 +34,16 @@ import { fileName, dirName, buildHighlightSegments, atEnd, isPromptBusy } from "
 import type { ReviewComment, TextPart } from "../../types/messages"
 import { formatReviewCommentsMarkdown } from "../../utils/review-comment-markdown"
 import { pendingDraftKey, scopeDraftKey, sessionDraftKey } from "../../utils/prompt-drafts"
-
-// Per-session input text storage (module-level so it survives remounts)
-const drafts = new Map<string, string>()
-const reviewDrafts = new Map<string, ReviewComment[]>()
-const imageDrafts = new Map<string, ImageAttachment[]>()
+import {
+  drafts,
+  reviewDrafts,
+  imageDrafts,
+  enforceDraftCap,
+  pruneDraftsForSession,
+  MAX_DRAFTS,
+  MAX_REVIEW_DRAFTS,
+  MAX_IMAGE_DRAFTS,
+} from "./prompt-drafts-store"
 
 function mergeReviewComments(current: ReviewComment[], incoming: ReviewComment[]): ReviewComment[] {
   if (incoming.length === 0) return current
@@ -107,6 +112,11 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     else reviewDrafts.delete(key)
     if (imgs.length > 0) imageDrafts.set(key, imgs)
     else imageDrafts.delete(key)
+    // Keep module-level Maps bounded so long-running sessions don't grow them
+    // unboundedly. Eviction is FIFO over Map insertion order.
+    enforceDraftCap(drafts, MAX_DRAFTS)
+    enforceDraftCap(reviewDrafts, MAX_REVIEW_DRAFTS)
+    enforceDraftCap(imageDrafts, MAX_IMAGE_DRAFTS)
   }
 
   const [text, setText] = createSignal("")
@@ -389,6 +399,12 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
 
     if (message.type === "action" && message.action === "focusInput") {
       textareaRef?.focus()
+    }
+
+    if (message.type === "sessionDeleted") {
+      // Drop any drafts (text/review/image) belonging to the deleted session
+      // so the module-level Maps don't keep their entries forever.
+      pruneDraftsForSession(message.sessionID)
     }
 
     if (message.type === "enhancePromptResult") {

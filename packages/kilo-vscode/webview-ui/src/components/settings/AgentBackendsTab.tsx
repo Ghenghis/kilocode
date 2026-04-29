@@ -17,6 +17,7 @@
 import { Component, createSignal, createMemo, For, Show, onCleanup } from "solid-js"
 import { useBackend } from "../../context/backend-context"
 import { useVSCode } from "../../context/vscode"
+import { useLanguage } from "../../context/language"
 import type {
   BackendId,
   BackendConfig,
@@ -302,6 +303,7 @@ function newProfile(): AccessProfile {
 const AgentBackendsTab: Component = () => {
   const backend = useBackend()
   const vscode = useVSCode()
+  const language = useLanguage()
 
   // ── Voice: read-only from SpeechTab's localStorage ─────────────────────────
   // IMPORTANT: Voice/TTS profile is backend-agnostic and MUST NOT be configured here.
@@ -506,7 +508,7 @@ const AgentBackendsTab: Component = () => {
           role="button"
           aria-expanded={overviewOpen()}
         >
-          <span>Backend Overview</span>
+          <span>{language.t("settings.agentBackends.section.overview")}</span>
           <span style={{ "font-size": "10px", opacity: "0.7" }}>{overviewOpen() ? "▲" : "▼"}</span>
         </div>
         <Show when={overviewOpen()}>

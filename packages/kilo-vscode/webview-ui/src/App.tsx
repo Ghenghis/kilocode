@@ -28,6 +28,7 @@ import { ServerProvider, useServer } from "./context/server"
 import { ProviderProvider, useProvider } from "./context/provider"
 import { ConfigProvider } from "./context/config"
 import { SessionProvider, useSession } from "./context/session"
+import { BackendProvider } from "./context/backend-context"
 import { LanguageProvider } from "./context/language"
 import { ChatView } from "./components/chat"
 import { MarketplaceView } from "./components/marketplace"
@@ -492,13 +493,15 @@ const App: Component = () => {
                     <FileComponentProvider component={File}>
                       <ProviderProvider>
                         <ConfigProvider>
-                          <NotificationsProvider>
-                            <SessionProvider>
-                              <DataBridge>
-                                <AppContent />
-                              </DataBridge>
-                            </SessionProvider>
-                          </NotificationsProvider>
+                          <BackendProvider>
+                            <NotificationsProvider>
+                              <SessionProvider>
+                                <DataBridge>
+                                  <AppContent />
+                                </DataBridge>
+                              </SessionProvider>
+                            </NotificationsProvider>
+                          </BackendProvider>
                         </ConfigProvider>
                       </ProviderProvider>
                     </FileComponentProvider>

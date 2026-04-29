@@ -16,6 +16,7 @@
  */
 
 import { Component, createSignal, For, Show } from "solid-js"
+import { useLanguage } from "../../context/language"
 
 // ---------------------------------------------------------------------------
 // Public props / param shape
@@ -323,6 +324,7 @@ const TagInput: Component<TagInputProps> = (props) => {
 // ---------------------------------------------------------------------------
 
 const AdvancedModelParams: Component<Props> = (props) => {
+  const language = useLanguage()
   const [open, setOpen] = createSignal(false)
   const [sysPromptOpen, setSysPromptOpen] = createSignal(false)
 
@@ -427,7 +429,7 @@ const AdvancedModelParams: Component<Props> = (props) => {
 
           {/* ── Top-P ───────────────────────────────────────────────────────── */}
           <SliderRow
-            label="Top-P (nucleus sampling)"
+            label={language.t("settings.advancedModelParams.topP.label")}
             description="Only tokens whose cumulative probability exceeds this threshold are considered. 1.0 = disabled."
             value={topP()}
             min={0}
@@ -662,7 +664,7 @@ const AdvancedModelParams: Component<Props> = (props) => {
           {/* ── OpenAI penalties ────────────────────────────────────────────── */}
           <Show when={props.supportsOpenAIPenalties}>
             <SliderRow
-              label="Frequency Penalty"
+              label={language.t("settings.advancedModelParams.frequencyPenalty.label")}
               description="Reduces likelihood of repeating the same tokens. Range -2 to 2."
               value={freqPenalty()}
               min={-2}

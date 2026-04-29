@@ -1439,4 +1439,14 @@ export const dict = {
   "studio.signoff.story": "Story:", // TODO: translate
   "studio.signoff.lastAction": "Last action by", // TODO: translate
   "studio.signoff.approvedBy": "Approved by", // TODO: translate
+
+  // Advanced model parameters panel
+  "settings.advancedModelParams.topP.label": "Top-P (nucleus sampling)", // TODO: translate
+  "settings.advancedModelParams.frequencyPenalty.label": "Frequency Penalty", // TODO: translate
+
+  // Agent backends settings tab
+  "settings.agentBackends.section.overview": "Backend Overview", // TODO: translate
+
+  // Chat actions
+  "chat.action.continueInWorktree": "Continue in Worktree", // TODO: translate
 } satisfies Partial<Record<Keys, string>>

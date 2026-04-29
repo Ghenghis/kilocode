@@ -1501,4 +1501,14 @@ export const dict = {
   "studio.signoff.story": "Story:",
   "studio.signoff.lastAction": "Last action by",
   "studio.signoff.approvedBy": "Approved by",
+
+  // Advanced model parameters panel
+  "settings.advancedModelParams.topP.label": "Top-P (nucleus sampling)",
+  "settings.advancedModelParams.frequencyPenalty.label": "Frequency Penalty",
+
+  // Agent backends settings tab
+  "settings.agentBackends.section.overview": "Backend Overview",
+
+  // Chat actions
+  "chat.action.continueInWorktree": "Continue in Worktree",
 }

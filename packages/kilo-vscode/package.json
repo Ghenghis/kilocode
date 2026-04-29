@@ -2,7 +2,7 @@
   "name": "kilo-code",
   "displayName": "KiloCode MAOS Edition",
   "description": "Multi-Agent Operating System (MAOS) for VS Code — 21-agent workforce (kc-main + kc-01..kc-20) with MiniMax default routing, Hub/Open WebUI integration, and collaborative AI development.",
-  "version": "7.2.21-canary.32",
+  "version": "7.2.21-canary.33",
   "icon": "assets/icons/logo-outline-black.png",
   "galleryBanner": {
     "color": "#FFFFFF",

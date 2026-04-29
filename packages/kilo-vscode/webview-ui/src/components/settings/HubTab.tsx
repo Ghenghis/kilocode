@@ -104,24 +104,34 @@ async function fetchHubSummary(baseUrl: string, signal?: AbortSignal): Promise<H
   // client-side so a single tab refresh is one parallel batch.
   const safe = baseUrl.replace(/\/+$/, "")
 
-  // Each endpoint gets a hard 5 s timeout so a dead/slow Hub cannot block the
-  // extension host. We combine the user-abort signal (component unmount / new
-  // refresh) with a per-request timeout signal so whichever fires first wins.
-  // AbortSignal.any is available in Chrome 116+ / Node 20+ (VS Code ≥ 1.82).
-  const makeSignal = (): AbortSignal => {
-    const ts = AbortSignal.timeout(5000)
-    if (signal && typeof (AbortSignal as { any?: unknown }).any === "function") {
-      return (AbortSignal as unknown as { any: (sigs: AbortSignal[]) => AbortSignal }).any([signal, ts])
+  // Each endpoint gets a 2 s hard timeout AND forwards the parent abort signal
+  // (component unmount / new refresh). The forwarding uses addEventListener so
+  // it works on every VS Code version without AbortSignal.any or
+  // AbortSignal.timeout polyfills.
+  //
+  // WHY 2 s: localhost services either respond in <100 ms or are not running.
+  // 2 s is generous; the old 5 s value meant 5 clicks × 6 fetches = 30
+  // pending requests that couldn't be cancelled on older VS Code builds.
+  //
+  // WHY event-listener forward: AbortSignal.any (Chrome 116 / VS Code 1.83+)
+  // is not universally available. The fallback of returning only the timeout
+  // signal meant component-unmount aborts were silently ignored — every tab
+  // click started 6 new fetches that accumulated until their timeout fired.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const get = async (path: string): Promise<any> => {
+    const tc = new AbortController()
+    const timer = setTimeout(() => tc.abort(), 2000)
+    // Forward the parent abort (unmount / new refresh) → per-request controller.
+    const onParentAbort = () => tc.abort()
+    if (signal) signal.addEventListener("abort", onParentAbort, { once: true })
+    try {
+      const res = await fetch(`${safe}${path}`, { signal: tc.signal })
+      if (!res.ok) throw new Error(`${path} → ${res.status}`)
+      return res.json()
+    } finally {
+      clearTimeout(timer)
+      if (signal) signal.removeEventListener("abort", onParentAbort)
     }
-    // Fallback: timeout-only (user abort will still cancel via Promise.allSettled
-    // short-circuiting after the outer AbortController fires on cleanup).
-    return ts
-  }
-
-  const get = async (path: string) => {
-    const res = await fetch(`${safe}${path}`, { signal: makeSignal() })
-    if (!res.ok) throw new Error(`${path} → ${res.status}`)
-    return res.json()
   }
 
   const [services, audit, prs, quotaMinimax, secretScan, health] = await Promise.allSettled([
@@ -252,20 +262,29 @@ const HubTab: Component = () => {
 
   // ── Reactive effects ─────────────────────────────────────────────────────
 
-  // Initial fetch on first mount — runs exactly once.
-  // Using onMount (not a bare createEffect) ensures the component is fully
-  // attached to the DOM before network I/O starts, and prevents a redundant
-  // second fire when the settings-change effect below also initialises.
+  // Initial fetch on first mount.
+  // A 150 ms debounce prevents any fetch from starting if the user is just
+  // clicking through tabs quickly (Kobalte unmounts/remounts on every click).
+  // If the component is unmounted within 150 ms the timer is cleared and no
+  // network I/O ever begins — eliminating the "6 stacked fetches per rapid
+  // click" accumulation that caused the click-storm freeze.
   onMount(() => {
-    if (isVisible()) void refresh()
-    scheduleNext()
+    let mountDebounce: ReturnType<typeof setTimeout> | undefined = setTimeout(() => {
+      mountDebounce = undefined
+      if (isVisible()) void refresh()
+      scheduleNext()
 
-    // Tick "now" every 5 s so relative-time labels update, but only while
-    // visible.  Moving setup here (inside onMount) means the interval starts
-    // after mount and is always paired with the onCleanup below.
-    tickTimer = setInterval(() => {
-      if (isVisible()) setNow(Date.now())
-    }, 5000)
+      // Tick "now" every 5 s so relative-time labels update, but only while
+      // visible.  Inside the debounce so it only starts when we actually commit
+      // to rendering the tab (not on fly-by tab clicks).
+      tickTimer = setInterval(() => {
+        if (isVisible()) setNow(Date.now())
+      }, 5000)
+    }, 150)
+
+    // Clear the debounce if the component unmounts before 150 ms elapses —
+    // this is the primary defence against click-storm fetch accumulation.
+    onCleanup(() => clearTimeout(mountDebounce))
   })
 
   // Re-schedule (and re-fetch) when the user changes URL / interval / toggle.

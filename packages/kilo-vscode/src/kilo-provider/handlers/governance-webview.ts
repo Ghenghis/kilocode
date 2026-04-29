@@ -243,7 +243,7 @@ type HubResult =
 // Without this, an unreachable Hub hangs the extension host indefinitely and
 // triggers the VS Code "Window is not responding" dialog. AbortSignal.timeout
 // is available in Node.js 17.3+ (VS Code uses Node.js 18+).
-const HUB_FETCH_TIMEOUT_MS = 5_000
+const HUB_FETCH_TIMEOUT_MS = 2_000
 
 function hubSignal(): AbortSignal {
   if (typeof AbortSignal.timeout === "function") return AbortSignal.timeout(HUB_FETCH_TIMEOUT_MS)

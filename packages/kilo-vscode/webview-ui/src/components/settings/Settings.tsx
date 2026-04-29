@@ -26,7 +26,7 @@ import RoutingTab from "./RoutingTab"
 import MemoryTab from "./MemoryTab"
 import TrainingTab from "./TrainingTab"
 import GovernanceTab from "./GovernanceTab"
-import HubTab from "./HubTab"
+// import HubTab from "./HubTab" // TEST: hub-disabled canary
 import OpenClawTab from "./OpenClawTab"
 import AgentBackendsTab from "./AgentBackendsTab"
 import WorkstationTab from "./WorkstationTab"
@@ -253,10 +253,12 @@ const Settings: Component<SettingsProps> = (props) => {
             <Icon name="checklist" />
             <span class="label">Governance</span>
           </Tabs.Trigger>
+          {/* TEST hub-disabled canary
           <Tabs.Trigger value="hub">
             <Icon name="server" />
             <span class="label">Hub</span>
           </Tabs.Trigger>
+          */}
           <Tabs.Trigger value="openclaw">
             <Icon name="robot" />
             <span class="label">OpenClaw</span>
@@ -368,10 +370,12 @@ const Settings: Component<SettingsProps> = (props) => {
           <h3>Governance & Approvals</h3>
           <GovernanceTab />
         </Tabs.Content>
+        {/* TEST hub-disabled canary
         <Tabs.Content value="hub">
           <h3>Hub — Operations Surface</h3>
           <HubTab />
         </Tabs.Content>
+        */}
         <Tabs.Content value="openclaw">
           <h3>OpenClaw — Local AI Gateway</h3>
           <OpenClawTab />

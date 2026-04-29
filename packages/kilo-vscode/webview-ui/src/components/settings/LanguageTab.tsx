@@ -1,4 +1,4 @@
-import { Component, For, createSignal, createEffect } from "solid-js"
+import { Component, For, createSignal, createEffect, untrack } from "solid-js"
 import { Select } from "@kilocode/kilo-ui/select"
 import { Button } from "@kilocode/kilo-ui/button"
 import { Card } from "@kilocode/kilo-ui/card"
@@ -74,7 +74,7 @@ const LanguageTab: Component = () => {
     const fromCfg = (config() as { langModelMap?: LangModelRule[] }).langModelMap
     if (Array.isArray(fromCfg)) {
       // Only re-hydrate if shape differs — avoids ping-ponging during user edits
-      const local = rules()
+      const local = untrack(() => rules())  // break reactive loop
       const sameLen = local.length === fromCfg.length
       if (!sameLen) setRules(fromCfg.slice())
     }

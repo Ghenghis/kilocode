@@ -26,6 +26,9 @@ interface TaskHeaderProps {
   readonly?: boolean
 }
 
+// Module-level flag: only fire requestTimelineSetting once across all mounts
+let timelineSettingRequested = false
+
 export const TaskHeader: Component<TaskHeaderProps> = (props) => {
   const session = useSession()
   const language = useLanguage()
@@ -88,8 +91,13 @@ export const TaskHeader: Component<TaskHeaderProps> = (props) => {
   const vscode = useVSCode()
   const [expanded, setExpanded] = createSignal(true)
 
-  // Read initial value from VS Code settings
-  onMount(() => vscode.postMessage({ type: "requestTimelineSetting" }))
+  // Read initial value from VS Code settings (only once across all mounts)
+  onMount(() => {
+    if (!timelineSettingRequested) {
+      timelineSettingRequested = true
+      vscode.postMessage({ type: "requestTimelineSetting" })
+    }
+  })
   const handler = (raw: unknown) => {
     const msg = raw as ExtensionMessage
     if (msg.type === "timelineSettingLoaded") setExpanded(msg.visible)

@@ -415,10 +415,9 @@ export const QuestionDock: Component<{ request: QuestionRequest }> = (props) => 
                   <form data-slot="custom-input-form" onSubmit={handleCustomSubmit}>
                     <input
                       ref={(el) => {
-                        setTimeout(() => {
-                          if (!document.hasFocus()) return
-                          el.focus()
-                        }, 0)
+                        requestAnimationFrame(() => {
+                          if (document.hasFocus() && el.isConnected) el.focus()
+                        })
                       }}
                       type="text"
                       data-slot="custom-input"

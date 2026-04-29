@@ -70,11 +70,10 @@ export const VscodeSessionTurn: Component<VscodeSessionTurnProps> = (props) => {
   const emptyParts: SDKPart[] = []
   const emptyDiffs: SnapshotFileDiff[] = []
 
-  createEffect(() => {
-    const turn = props.turn
+  createEffect(on(() => props.turn, (turn) => {
     const ids = turn.partial ? turn.assistant.map((m) => m.id) : [turn.user.id, ...turn.assistant.map((m) => m.id)]
     session.hydrateParts(ids)
-  })
+  }))
 
   const message = createMemo(() => props.turn.user as SDKMessage & { role: "user" })
 

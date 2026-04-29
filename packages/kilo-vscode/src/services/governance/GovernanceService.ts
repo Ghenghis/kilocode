@@ -411,6 +411,7 @@ export class GovernanceService implements vscode.Disposable {
 	private escalationTimer: ReturnType<typeof setInterval> | undefined
 	private readonly onStateChangedEmitter = new vscode.EventEmitter<GovernanceState>()
 	public readonly onStateChanged = this.onStateChangedEmitter.event
+	private _snapshotCache: GovernanceState | null = null
 	private registeredSubsystems: Map<string, RegisteredSubsystem> = new Map()
 	private evidenceBundles: Map<string, EvidenceBundle> = new Map()
 
@@ -458,6 +459,7 @@ export class GovernanceService implements vscode.Disposable {
 				auditLog: parsed.auditLog ?? [],
 				releaseVerdicts: parsed.releaseVerdicts ?? [],
 			}
+			this._snapshotCache = null
 			// Re-seed defaults in case the persisted file is missing newly
 			// added entries since it was last written.
 			this.seedDefaults()
@@ -517,6 +519,7 @@ export class GovernanceService implements vscode.Disposable {
 		}
 
 		if (changed) {
+			this._snapshotCache = null
 			this.log.info("Defaults seeded into governance state")
 			this.scheduleSave()
 		}
@@ -542,6 +545,7 @@ export class GovernanceService implements vscode.Disposable {
 	}
 
 	private emitChange(): void {
+		this._snapshotCache = null
 		this.scheduleSave()
 		this.onStateChangedEmitter.fire(this.getSnapshot())
 	}
@@ -550,7 +554,11 @@ export class GovernanceService implements vscode.Disposable {
 
 	getSnapshot(): GovernanceState {
 		this.log.debug("Snapshot requested")
-		return JSON.parse(JSON.stringify(this.state))
+		if (this._snapshotCache !== null) {
+			return this._snapshotCache
+		}
+		this._snapshotCache = JSON.parse(JSON.stringify(this.state))
+		return this._snapshotCache!
 	}
 
 	// ── Authority Tiers ────────────────────────────────

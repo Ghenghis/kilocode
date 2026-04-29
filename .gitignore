@@ -52,6 +52,31 @@ tsconfig.tsbuildinfo
 .kilo/plans/*upstream-merge-report-*.md
 .kilo/*.log
 
+# Python backend (consolidated from contract-kit-v17)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+venv/
+.venv/
+backend/**/.env
+backend/**/.env.vps
+backend/**/.env.local
+deploy/.env
+deploy/.env.vps
+deploy/.env.local
+deploy/**/.env
+deploy/**/.env.vps
+deploy/**/.env.local
+**/secrets.json
+**/credentials.json
+
+# contract-kit junk we explicitly skip importing
+.agent-complete-*
+.agent-stats-*.json
+
 # Test Artifacts
 packages/app/.artifacts/
 packages/opencode/.artifacts/

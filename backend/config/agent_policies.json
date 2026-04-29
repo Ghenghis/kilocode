@@ -1,0 +1,144 @@
+{
+  "version": "2.0",
+  "description": "Per-agent capability policies for the 21-agent KiloCode system",
+  "updated_at": "2026-04-23",
+  "agents": {
+    "kc-main": {
+      "capabilities": ["*"],
+      "description": "Orchestrator - can delegate and use all capabilities",
+      "auto_approve_safe": true,
+      "risk_profile": "admin"
+    },
+    "kc-01": {
+      "capabilities": ["http", "file_read", "validate", "settings_read"],
+      "description": "Integration Lead - coordinates cross-surface work",
+      "risk_profile": "medium"
+    },
+    "kc-02": {
+      "capabilities": ["http", "file_read", "file_write"],
+      "description": "Creative Brainstormer - explores solutions",
+      "risk_profile": "low"
+    },
+    "kc-03": {
+      "capabilities": ["file_read", "validate", "http", "settings_read"],
+      "description": "System Architect - designs system structures",
+      "risk_profile": "medium"
+    },
+    "kc-04": {
+      "capabilities": ["file_read", "http", "validate"],
+      "description": "Bug Triage Specialist - categorizes issues",
+      "risk_profile": "low"
+    },
+    "kc-05": {
+      "capabilities": ["file_read", "http", "exec"],
+      "description": "Root Cause Analyst - investigates problems",
+      "risk_profile": "medium"
+    },
+    "kc-06": {
+      "capabilities": ["file_read", "file_write", "git", "validate"],
+      "description": "Code Generator - creates code, tests, git — NOT live deploy",
+      "risk_profile": "medium",
+      "restrictions": ["no_promote", "no_rollback", "no_docker_exec"]
+    },
+    "kc-07": {
+      "capabilities": ["file_read", "validate", "git"],
+      "description": "Code Reviewer - reviews code quality",
+      "risk_profile": "low"
+    },
+    "kc-08": {
+      "capabilities": ["file_read", "file_write", "exec", "git"],
+      "description": "Test Writer - creates test suites",
+      "risk_profile": "medium"
+    },
+    "kc-09": {
+      "capabilities": ["file_read", "exec", "http", "docker"],
+      "description": "Debugger - troubleshoots issues",
+      "risk_profile": "high"
+    },
+    "kc-10": {
+      "capabilities": ["file_read", "file_write", "git"],
+      "description": "Refactorer - improves code structure",
+      "risk_profile": "medium"
+    },
+    "kc-11": {
+      "capabilities": ["file_read", "file_write", "git"],
+      "description": "Documenter - writes documentation",
+      "risk_profile": "low"
+    },
+    "kc-12": {
+      "capabilities": ["file_read", "validate", "http", "settings_read"],
+      "description": "Security Auditor - inspects, audits, limited write",
+      "risk_profile": "low",
+      "restrictions": ["no_file_write_outside_docs"]
+    },
+    "kc-13": {
+      "capabilities": ["file_read", "exec", "http"],
+      "description": "Performance Analyst - optimizes performance",
+      "risk_profile": "medium"
+    },
+    "kc-14": {
+      "capabilities": ["http", "file_read", "file_write", "validate"],
+      "description": "API Integrator - connects external APIs",
+      "risk_profile": "medium"
+    },
+    "kc-15": {
+      "capabilities": ["file_read", "exec", "http"],
+      "description": "Database Specialist - manages data layer",
+      "risk_profile": "high"
+    },
+    "kc-16": {
+      "capabilities": ["ssh", "scp", "exec", "docker", "promote", "rollback"],
+      "description": "DevOps Engineer - deploy, restart, logs, Docker, SSH",
+      "risk_profile": "critical",
+      "requires_approval_for": ["promote", "rollback", "ssh", "docker"]
+    },
+    "kc-17": {
+      "capabilities": ["file_read", "file_write", "http", "validate"],
+      "description": "Frontend Specialist - UI/UX implementation",
+      "risk_profile": "medium"
+    },
+    "kc-18": {
+      "capabilities": ["file_read", "file_write", "exec", "http"],
+      "description": "Backend Specialist - server-side implementation",
+      "risk_profile": "medium"
+    },
+    "kc-19": {
+      "capabilities": ["http", "file_read"],
+      "description": "Research Analyst - search, retrieval, read-only",
+      "risk_profile": "low",
+      "restrictions": ["read_only"]
+    },
+    "kc-20": {
+      "capabilities": ["file_read", "file_write", "http", "validate"],
+      "description": "Prompt Engineer - optimizes AI prompts",
+      "risk_profile": "low"
+    }
+  },
+  "capability_rules": {
+    "ssh": {
+      "requires_approval": true,
+      "audit_level": "full",
+      "max_sessions_per_hour": 10
+    },
+    "docker": {
+      "requires_approval": true,
+      "audit_level": "full",
+      "allowed_commands": ["build", "run", "ps", "logs", "exec"]
+    },
+    "promote": {
+      "requires_approval": true,
+      "audit_level": "full",
+      "requires_dual_auth": true
+    },
+    "rollback": {
+      "requires_approval": true,
+      "audit_level": "full",
+      "requires_dual_auth": true
+    },
+    "exec": {
+      "requires_approval": true,
+      "audit_level": "full",
+      "blocked_patterns": ["rm -rf /", "dd if=/dev/zero", ":(){:|:&};:"]
+    }
+  }
+}

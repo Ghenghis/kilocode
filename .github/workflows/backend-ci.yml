@@ -1,0 +1,86 @@
+name: CI — Unit & Integration Tests
+
+on:
+  push:
+    branches: [integration/main, master]
+  pull_request:
+    branches: [integration/main, master]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Python Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run unit tests
+        run: |
+          python -m pytest tests/unit/ -v --tb=short --junitxml=test-results/unit.xml
+
+      - name: Run integration tests
+        run: |
+          python -m pytest tests/integration/ -v --tb=short --junitxml=test-results/integration.xml
+
+      - name: Run hub backend tests
+        run: |
+          python -m pytest tests/hub/ -v --tb=short --junitxml=test-results/hub.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-py${{ matrix.python-version }}
+          path: test-results/
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Check syntax (py_compile)
+        run: |
+          python -m py_compile src/runtime/core.py
+          python -m py_compile src/runtime/settings_canonical.py
+          python -m py_compile src/hermes/orchestrator.py
+          python -m py_compile src/webui/control_center.py
+          python -m py_compile src/webui/hub/__init__.py
+          find src/ -name '*.py' -exec python -m py_compile {} +
+
+      - name: Check imports resolve
+        run: |
+          cd src && python -c "
+          import runtime.core
+          import runtime.settings_canonical
+          import hermes.orchestrator
+          import webui.control_center
+          print('All core imports OK')
+          "

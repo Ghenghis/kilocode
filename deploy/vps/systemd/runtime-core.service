@@ -1,0 +1,21 @@
+[Unit]
+Description=Contract Kit — Runtime Core API
+After=network.target docker.service nats.service postgres.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/contract-kit
+EnvironmentFile=/opt/contract-kit/.env
+ExecStartPre=/usr/bin/docker compose pull --quiet runtime-core
+ExecStart=/usr/bin/docker compose up runtime-core
+ExecStop=/usr/bin/docker compose stop runtime-core
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=120
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

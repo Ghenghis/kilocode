@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 580" font-family="'Segoe UI',Arial,sans-serif" font-size="11">
+  <rect width="960" height="580" fill="#0f172a"/>
+  <text x="480" y="32" text-anchor="middle" font-size="16" font-weight="bold" fill="#f8fafc">Testing Pyramid — Contract Kit v17</text>
+  <text x="480" y="50" text-anchor="middle" font-size="10" fill="#94a3b8">tests/ · pytest · Playwright TypeScript · acceptance gates</text>
+
+  <!-- Pyramid layers (left side) -->
+  <!-- E2E / Playwright (top) -->
+  <polygon points="280,75 480,75 580,150 180,150" fill="#1e3a5f" stroke="#3b82f6" stroke-width="2"/>
+  <text x="380" y="107" text-anchor="middle" fill="#60a5fa" font-weight="bold" font-size="13">E2E / Playwright</text>
+  <text x="380" y="124" text-anchor="middle" fill="#93c5fd" font-size="9">test_hub_playwright.ts · 22+ test groups</text>
+
+  <!-- Integration (mid) -->
+  <polygon points="140,158 620,158 680,240 80,240" fill="#1f3720" stroke="#22c55e" stroke-width="2"/>
+  <text x="380" y="196" text-anchor="middle" fill="#4ade80" font-weight="bold" font-size="13">Integration Tests</text>
+  <text x="380" y="213" text-anchor="middle" fill="#86efac" font-size="9">tests/integration/ · 5 suites · full pipeline, kilocode-hermes, runtime-provider</text>
+
+  <!-- Unit (bottom) -->
+  <polygon points="30,248 730,248 760,340 0,340" fill="#2d1b1b" stroke="#f97316" stroke-width="2"/>
+  <text x="380" y="290" text-anchor="middle" fill="#fb923c" font-weight="bold" font-size="13">Unit Tests</text>
+  <text x="380" y="308" text-anchor="middle" fill="#fdba74" font-size="9">tests/unit/ · hermes_orchestrator, kilocode_runtime_sync, zeroclaw_adapters, webui_control_center, proof_module</text>
+
+  <!-- Right side detail panels -->
+  <!-- E2E detail -->
+  <rect x="605" y="65" width="340" height="135" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="775" y="85" text-anchor="middle" fill="#60a5fa" font-weight="bold" font-size="11">Playwright Tests (test_hub_playwright.ts)</text>
+  <text x="620" y="103" fill="#93c5fd" font-size="10">✓ hub loads, sidebar nav, overview default</text>
+  <text x="620" y="118" fill="#93c5fd" font-size="10">✓ providers live probe + failover buttons</text>
+  <text x="620" y="133" fill="#93c5fd" font-size="10">✓ queue pipeline counters + event feed</text>
+  <text x="620" y="148" fill="#93c5fd" font-size="10">✓ evidence filter, repairs timeline + trigger</text>
+  <text x="620" y="163" fill="#93c5fd" font-size="10">✓ activity log load + filter + counters</text>
+  <text x="620" y="178" fill="#93c5fd" font-size="10">✓ KOM toggle + session render</text>
+  <text x="620" y="193" fill="#93c5fd" font-size="10">✓ agents fleet, chat, full smoke nav</text>
+
+  <!-- Integration detail -->
+  <rect x="605" y="215" width="340" height="110" rx="6" fill="#1f3720" stroke="#22c55e" stroke-width="1.5"/>
+  <text x="775" y="234" text-anchor="middle" fill="#4ade80" font-weight="bold" font-size="11">Integration Suites</text>
+  <text x="620" y="251" fill="#86efac" font-size="10">test_full_pipeline_integration.py</text>
+  <text x="620" y="266" fill="#86efac" font-size="10">test_kilocode_hermes_integration.py</text>
+  <text x="620" y="281" fill="#86efac" font-size="10">test_runtime_provider_integration.py</text>
+  <text x="620" y="296" fill="#86efac" font-size="10">test_webui_agent_access_integration.py</text>
+  <text x="620" y="311" fill="#86efac" font-size="10">test_zeroclaw_adapter_integration.py</text>
+
+  <!-- Unit detail -->
+  <rect x="605" y="340" width="340" height="110" rx="6" fill="#2d1b1b" stroke="#f97316" stroke-width="1.5"/>
+  <text x="775" y="359" text-anchor="middle" fill="#fb923c" font-weight="bold" font-size="11">Unit Test Files</text>
+  <text x="620" y="376" fill="#fdba74" font-size="10">test_hermes_orchestrator.py — 7 classes</text>
+  <text x="620" y="391" fill="#fdba74" font-size="10">test_kilocode_runtime_sync.py</text>
+  <text x="620" y="406" fill="#fdba74" font-size="10">test_zeroclaw_adapters.py — 35 tests</text>
+  <text x="620" y="421" fill="#fdba74" font-size="10">test_webui_control_center.py — 8 classes</text>
+  <text x="620" y="436" fill="#fdba74" font-size="10">test_proof_module.py</text>
+
+  <!-- E2E Python tests -->
+  <rect x="605" y="465" width="340" height="90" rx="6" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/>
+  <text x="775" y="484" text-anchor="middle" fill="#94a3b8" font-weight="bold" font-size="11">E2E Python Tests</text>
+  <text x="620" y="501" fill="#64748b" font-size="10">test_boot_gate.py · test_hermes.py</text>
+  <text x="620" y="516" fill="#64748b" font-size="10">test_kilocode.py · test_live_vps.py</text>
+  <text x="620" y="531" fill="#64748b" font-size="10">test_provider_failover.py · test_runtime.py</text>
+  <text x="620" y="546" fill="#64748b" font-size="10">test_settings_live.py · test_webui.py</text>
+
+  <!-- Acceptance gates bottom -->
+  <rect x="0" y="355" width="590" height="210" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <text x="295" y="375" text-anchor="middle" fill="#94a3b8" font-weight="bold" font-size="12">Acceptance Gates</text>
+
+  <rect x="15" y="385" width="170" height="60" rx="4" fill="#1f3720" stroke="#22c55e"/>
+  <text x="100" y="403" text-anchor="middle" fill="#4ade80" font-weight="bold" font-size="10">Gate 1: Syntax</text>
+  <text x="100" y="418" text-anchor="middle" fill="#86efac" font-size="9">python -m py_compile src/**/*.py</text>
+  <text x="100" y="432" text-anchor="middle" fill="#86efac" font-size="9">grep -r "pass  # STUB" src/ → 0</text>
+
+  <rect x="200" y="385" width="170" height="60" rx="4" fill="#2d1b1b" stroke="#f97316"/>
+  <text x="285" y="403" text-anchor="middle" fill="#fb923c" font-weight="bold" font-size="10">Gate 2: Unit Tests</text>
+  <text x="285" y="418" text-anchor="middle" fill="#fdba74" font-size="9">pytest tests/unit/ -v</text>
+  <text x="285" y="432" text-anchor="middle" fill="#fdba74" font-size="9">100% pass required</text>
+
+  <rect x="385" y="385" width="185" height="60" rx="4" fill="#1e1a10" stroke="#facc15"/>
+  <text x="477" y="403" text-anchor="middle" fill="#facc15" font-weight="bold" font-size="10">Gate 3: Integration</text>
+  <text x="477" y="418" text-anchor="middle" fill="#fde68a" font-size="9">pytest tests/integration/ -v</text>
+  <text x="477" y="432" text-anchor="middle" fill="#fde68a" font-size="9">pytest tests/e2e/ -v</text>
+
+  <rect x="15" y="460" width="170" height="60" rx="4" fill="#1e3a5f" stroke="#3b82f6"/>
+  <text x="100" y="478" text-anchor="middle" fill="#60a5fa" font-weight="bold" font-size="10">Gate 4: Coverage</text>
+  <text x="100" y="493" text-anchor="middle" fill="#93c5fd" font-size="9">pytest --cov=src</text>
+  <text x="100" y="507" text-anchor="middle" fill="#93c5fd" font-size="9">--cov-fail-under=80</text>
+
+  <rect x="200" y="460" width="170" height="60" rx="4" fill="#1a1620" stroke="#a78bfa"/>
+  <text x="285" y="478" text-anchor="middle" fill="#c4b5fd" font-weight="bold" font-size="10">Gate 5: Playwright</text>
+  <text x="285" y="493" text-anchor="middle" fill="#ddd6fe" font-size="9">npx playwright test</text>
+  <text x="285" y="507" text-anchor="middle" fill="#ddd6fe" font-size="9">tests/e2e/test_hub_playwright.ts</text>
+
+  <rect x="385" y="460" width="185" height="60" rx="4" fill="#1e293b" stroke="#64748b"/>
+  <text x="477" y="478" text-anchor="middle" fill="#94a3b8" font-weight="bold" font-size="10">Gate 6: VPS Live</text>
+  <text x="477" y="493" text-anchor="middle" fill="#64748b" font-size="9">pytest tests/e2e/test_live_vps.py</text>
+  <text x="477" y="507" text-anchor="middle" fill="#64748b" font-size="9">curl 187.77.30.206:8095/health</text>
+
+  <!-- run commands -->
+  <text x="295" y="540" text-anchor="middle" fill="#475569" font-size="9">Run all: pytest tests/ -v --cov=src --cov-fail-under=80 &amp;&amp; npx playwright test</text>
+  <text x="295" y="555" text-anchor="middle" fill="#475569" font-size="9">Config: playwright.config.ts · conftest.py · conftest_blockchain.py</text>
+</svg>

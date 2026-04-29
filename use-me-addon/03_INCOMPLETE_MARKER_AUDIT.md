@@ -1,0 +1,58 @@
+# Incomplete Marker Audit
+
+Scanned for markers: stub, todo, placeholder, mock, not started, requires implementation, pending, 0%
+
+## Files with markers
+- `WINDSURF_QUICKSTART.md` → 0%
+- `WINDSURF_EXECUTION_HANDOFF_PACK.md` → pending, 0%
+- `FINAL_SUMMARY.md` → 0%
+- `WINDSURF_HANDOFF.md` → not started, 0%
+- `TASK_BOARD.md` → todo, 0%
+- `DAILY_SCRUM.md` → stub, 0%
+- `ACTION_PLAN.md` → stub, todo, mock, not started, pending, 0%
+- `FINAL_STATUS.md` → todo, pending, 0%
+- `INTERACTIVE_ROADMAP.md` → todo, placeholder, pending, 0%
+- `COMPLETION_STATUS.md` → 0%
+- `GAP_ANALYSIS.md` → pending, 0%
+- `README.md` → stub, requires implementation
+- `CHECKLIST.md` → stub, todo, not started, 0%
+- `FINAL_VERIFICATION_REPORT.md` → stub, todo, pending, 0%
+- `COMPLETION_REPORT_AND_ROADMAP.md` → stub, todo, placeholder, not started, 0%
+- `ARCHITECTURE.md` → pending
+- `docs/02_WEBUI_LANE.md` → pending
+- `docs/03_KILOCODE_LANE.md` → pending
+- `docs/06_PROOF_TESTING_LANE.md` → 0%
+- `docs/08_IMPLEMENTATION_ROADMAP.md` → pending
+- `docs/09_BLOCKCHAIN_AUDIT_LAYER.md` → pending, 0%
+- `tests/conftest.py` → mock
+- `tests/conftest_blockchain.py` → mock, pending
+- `tests/e2e/test_blockchain_audit.py` → mock, pending, 0%
+- `tests/e2e/test_boot_gate.py` → mock, pending
+- `tests/e2e/test_hermes.py` → mock
+- `tests/e2e/test_kilocode.py` → mock
+- `tests/e2e/test_provider_failover.py` → mock
+- `tests/e2e/test_runtime.py` → mock
+- `src/blockchain_audit/audit_agent.py` → pending
+- `src/blockchain_audit/audit_dashboard.py` → pending
+- `src/blockchain_audit/consensus_engine.py` → pending
+- `src/blockchain_audit/issue_detector.py` → 0%
+- `src/hermes/orchestrator.py` → pending
+- `src/kilocode/runtime_sync.py` → pending
+- `src/proof/coverage.py` → not started, 0%
+- `src/proof/test_runner.py` → 0%
+- `src/webui/control_center.py` → pending
+- `agent_tasks/00_AUDIT_TEAM_MANIFEST.md` → 0%
+- `agent_tasks/01_AUDIT_SOURCE_LOCATIONS.md` → 0%
+- `agent_tasks/02_WEBUI_TASKS.md` → 0%
+- `agent_tasks/03_RUNTIME_TASKS.md` → 0%
+- `agent_tasks/04_HERMES_TASKS.md` → 0%
+- `agent_tasks/05_INTEGRATION_TASKS.md` → 0%
+- `agent_tasks/06_OVERLAPPING_AUDIT_TASKS.md` → 0%
+- `agent_tasks/07_EXECUTION_MANIFEST.md` → mock, 0%
+- `diagrams/banner.svg` → 0%
+- `diagrams/boot_gate_repair.svg` → 0%
+- `diagrams/five_lane_architecture.svg` → 0%
+- `diagrams/packet_flow.svg` → 0%
+- `diagrams/provider_routing.svg` → 0%
+- `diagrams/settings_closure.svg` → 0%
+- `configs/nats_subjects.json` → pending

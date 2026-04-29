@@ -1,0 +1,6 @@
+
+--- spawn 2026-04-26T09:36:59Z ollama serve ---
+Error: listen tcp 127.0.0.1:11434: bind: Only one usage of each socket address (protocol/network address/port) is normally permitted.
+
+--- spawn 2026-04-26T09:44:13Z ollama serve ---
+Error: listen tcp 127.0.0.1:11434: bind: Only one usage of each socket address (protocol/network address/port) is normally permitted.

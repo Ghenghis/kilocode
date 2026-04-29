@@ -1,0 +1,3658 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KiloCode Control Hub</title>
+  <style>
+    :root {
+      --bg: #0d0f18;
+      --surface: #141720;
+      --surface2: #1c2030;
+      --surface3: #232840;
+      --border: #2a2f4a;
+      --border2: #363d60;
+      --accent: #7c6dff;
+      --accent2: #00d4aa;
+      --accent3: #ff6b9d;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --ok: #22c55e;
+      --info: #38bdf8;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --dim: #475569;
+      --gpu: #ff9500;
+      --model: #a78bfa;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body5 {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 13px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    #header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      z-index: 100;
+    }
+
+    #header h1 {
+      font-size: 16px;
+      font-weight: 700;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+      white-space: nowrap;
+    }
+
+    .hbadge {
+      padding: 2px 9px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .hbadge-ok {
+      background: #14532d;
+      color: var(--ok);
+    }
+
+    .hbadge-warn {
+      background: #78350f;
+      color: var(--warn);
+    }
+
+    .hbadge-err {
+      background: #7f1d1d;
+      color: var(--danger);
+    }
+
+    .hbadge-gpu {
+      background: #431407;
+      color: var(--gpu);
+    }
+
+    .hbadge-mode {
+      background: #1e1b4b;
+      color: var(--accent);
+    }
+
+    #header-dots {
+      display: flex;
+      gap: 6px;
+      margin-left: auto;
+      align-items: center;
+    }
+
+    .sdot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+
+    .sdot:hover {
+      opacity: .7;
+    }
+
+    #header-mode {
+      font-size: 11px;
+      color: var(--muted);
+      margin-left: 8px;
+    }
+
+    #header-time {
+      font-size: 11px;
+      color: var(--dim);
+      margin-left: 12px;
+    }
+
+    #safemode-banner {
+      display: none;
+      background: #7f1d1d;
+      border-bottom: 2px solid var(--danger);
+      padding: 8px 20px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fca5a5;
+      flex-shrink: 0;
+      align-items: center;
+      gap: 12px;
+    }
+
+    #safemode-banner.show {
+      display: flex;
+    }
+
+    #safemode-banner button {
+      background: var(--danger);
+      color: #fff;
+      border: none;
+      padding: 4px 14px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    /* ── Layout ── */
+    #layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      width: 210px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+
+    .nav-section {
+      padding: 10px 12px 4px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 14px;
+      cursor: pointer;
+      border-radius: 0;
+      color: var(--dim);
+      transition: all .12s;
+      border-left: 3px solid transparent;
+    }
+
+    .nav-item:hover {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: var(--surface3);
+      color: var(--accent);
+      border-left-color: var(--accent);
+    }
+
+    .nav-item .icon {
+      font-size: 15px;
+      width: 18px;
+      text-align: center;
+    }
+
+    .nav-item .label {
+      font-size: 12px;
+      font-weight: 500;
+      flex: 1;
+    }
+
+    .nav-item .nbadge {
+      background: var(--danger);
+      color: #fff;
+      border-radius: 999px;
+      padding: 1px 6px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .nav-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 6px 0;
+    }
+
+    /* ── Main content ── */
+    #content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0;
+    }
+
+    .pane {
+      display: none;
+      padding: 20px;
+    }
+
+    .pane.active {
+      display: block;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .card-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title .ct-icon {
+      font-size: 14px;
+    }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .grid3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+    }
+
+    .grid4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    /* ── Stat cards ── */
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 6px;
+    }
+
+    .stat-val {
+      font-size: 26px;
+      font-weight: 700;
+    }
+
+    .stat-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .ok {
+      color: var(--ok) !important;
+    }
+
+    .warn {
+      color: var(--warn) !important;
+    }
+
+    .err {
+      color: var(--danger) !important;
+    }
+
+    .info {
+      color: var(--info) !important;
+    }
+
+    .gpu {
+      color: var(--gpu) !important;
+    }
+
+    .acc {
+      color: var(--accent) !important;
+    }
+
+    .mod {
+      color: var(--model) !important;
+    }
+
+    /* ── Tables ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      text-align: left;
+      padding: 7px 10px;
+      font-size: 11px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+    }
+
+    td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: var(--surface2);
+    }
+
+    /* ── Badges ── */
+    .b-ok {
+      background: #14532d44;
+      color: var(--ok);
+      border: 1px solid #14532d;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .b-warn {
+      background: #78350f44;
+      color: var(--warn);
+      border: 1px solid #78350f;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .b-err {
+      background: #7f1d1d44;
+      color: var(--danger);
+      border: 1px solid #7f1d1d;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .b-info {
+      background: #0c4a6e44;
+      color: var(--info);
+      border: 1px solid #0c4a6e;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .b-gpu {
+      background: #43140744;
+      color: var(--gpu);
+      border: 1px solid #431407;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .b-mod {
+      background: #1e1b4b44;
+      color: var(--model);
+      border: 1px solid #1e1b4b;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .b-pend {
+      background: #1e1b4b44;
+      color: var(--accent);
+      border: 1px solid #1e1b4b;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    /* ── Buttons ── */
+    button {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      border: none;
+      font-weight: 600;
+      transition: opacity .15s;
+    }
+
+    button:hover {
+      opacity: .82;
+    }
+
+    button:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-ok {
+      background: var(--ok);
+      color: #000;
+    }
+
+    .btn-warn {
+      background: var(--warn);
+      color: #000;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .btn-info {
+      background: var(--info);
+      color: #000;
+    }
+
+    .btn-muted {
+      background: var(--surface3);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-gpu {
+      background: var(--gpu);
+      color: #000;
+    }
+
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 11px;
+    }
+
+    /* ── Inputs ── */
+    input,
+    select,
+    textarea {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      width: 100%;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: 2px solid var(--accent);
+      border-color: var(--accent);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+      font-family: monospace;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .row label {
+      min-width: 140px;
+      color: var(--muted);
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    /* ── Pre/log ── */
+    pre {
+      background: var(--surface2);
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      color: var(--accent2);
+      white-space: pre-wrap;
+      max-height: 240px;
+      overflow-y: auto;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+    }
+
+    .log-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 11px;
+      font-family: monospace;
+      max-height: 280px;
+      overflow-y: auto;
+      color: var(--text);
+    }
+
+    .log-line {
+      padding: 2px 0;
+      border-bottom: 1px solid #1a1d2a;
+    }
+
+    .log-line:last-child {
+      border-bottom: none;
+    }
+
+    .log-ok {
+      color: var(--ok);
+    }
+
+    .log-warn {
+      color: var(--warn);
+    }
+
+    .log-err {
+      color: var(--danger);
+    }
+
+    .log-info {
+      color: var(--info);
+    }
+
+    .log-gpu {
+      color: var(--gpu);
+    }
+
+    /* ── Progress bar ── */
+    .progress {
+      background: var(--surface3);
+      border-radius: 999px;
+      height: 6px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width .4s;
+    }
+
+    .pf-ok {
+      background: var(--ok);
+    }
+
+    .pf-warn {
+      background: var(--warn);
+    }
+
+    .pf-err {
+      background: var(--danger);
+    }
+
+    .pf-gpu {
+      background: var(--gpu);
+    }
+
+    .pf-acc {
+      background: var(--accent);
+    }
+
+    /* ── Section ── */
+    .section {
+      margin-bottom: 18px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── Msg ── */
+    .msg {
+      padding: 9px 13px;
+      border-radius: 7px;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+
+    .msg-ok {
+      background: #14532d33;
+      border: 1px solid var(--ok);
+      color: var(--ok);
+    }
+
+    .msg-err {
+      background: #7f1d1d33;
+      border: 1px solid var(--danger);
+      color: var(--danger);
+    }
+
+    .msg-warn {
+      background: #78350f33;
+      border: 1px solid var(--warn);
+      color: var(--warn);
+    }
+
+    .msg-info {
+      background: #0c4a6e33;
+      border: 1px solid var(--info);
+      color: var(--info);
+    }
+
+    /* ── Chips ── */
+    .chip {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 600;
+      margin: 2px;
+    }
+
+    .chip-ok {
+      background: var(--ok);
+      color: #000;
+    }
+
+    .chip-warn {
+      background: var(--warn);
+      color: #000;
+    }
+
+    .chip-err {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .chip-mod {
+      background: var(--model);
+      color: #000;
+    }
+
+    .chip-gpu {
+      background: var(--gpu);
+      color: #000;
+    }
+
+    /* ── Model list ── */
+    .model-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 10px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+
+    .model-item:hover {
+      background: var(--surface2);
+    }
+
+    .model-item:last-child {
+      border-bottom: none;
+    }
+
+    .model-name {
+      font-weight: 500;
+      flex: 1;
+      font-size: 12px;
+    }
+
+    .model-size {
+      font-size: 10px;
+      color: var(--gpu);
+    }
+
+    .model-type {
+      font-size: 10px;
+      color: var(--model);
+    }
+
+    /* ── Boot gate ── */
+    .boot-check {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+    }
+
+    .boot-icon {
+      font-size: 18px;
+      width: 24px;
+      text-align: center;
+    }
+
+    .boot-label {
+      flex: 1;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .boot-status {
+      font-size: 11px;
+    }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 10px 18px;
+      border-radius: 9px;
+      font-size: 12px;
+      display: none;
+      z-index: 9999;
+      max-width: 320px;
+      box-shadow: 0 8px 32px #00000088;
+    }
+
+    /* ── Agent command terminal ── */
+    .terminal {
+      background: #0a0c12;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+
+    .term-line {
+      margin: 2px 0;
+    }
+
+    .term-prompt {
+      color: var(--accent2);
+    }
+
+    .term-out {
+      color: var(--text);
+    }
+
+    .term-err {
+      color: var(--danger);
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--surface);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border2);
+      border-radius: 999px;
+    }
+
+    /* ── Responsive ── */
+    @media(max-width:900px) {
+      .grid3 {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .grid4 {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media(max-width:640px) {
+
+      .grid2,
+      .grid3,
+      .grid4 {
+        grid-template-columns: 1fr;
+      }
+
+      #sidebar {
+        width: 52px;
+      }
+
+      .nav-item .label,
+      .nav-item .nbadge,
+      .nav-section {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ══ SAFEMODE BANNER ══════════════════════════════════════════════════════ -->
+  <div id="safemode-banner">
+    ⚠ SAFEMODE ACTIVE — Critical service failure detected.
+    <span id="safemode-reason">Checking…</span>
+    <button onclick="doRepairAll()">🔧 Run Agent Repair</button>
+    <button class="btn-muted btn-sm" onclick="dismissSafemode()">Dismiss</button>
+  </div>
+
+  <!-- ══ HEADER ═══════════════════════════════════════════════════════════════ -->
+  <div id="header">
+    <h1>⚡ KiloCode Control Hub</h1>
+    <span class="hbadge hbadge-mode" id="h-mode">standard</span>
+    <span class="hbadge hbadge-gpu" id="h-gpu">RTX 3090Ti</span>
+    <span class="hbadge" id="h-runtime" style="background:#14532d33;color:var(--ok)">runtime</span>
+    <span class="hbadge" id="h-hermes" style="background:#14532d33;color:var(--ok)">hermes</span>
+    <span class="hbadge" id="h-lmstudio" style="background:#43140733;color:var(--gpu)">LM Studio</span>
+    <div id="header-dots">
+      <div class="sdot" id="dot-runtime" style="background:var(--dim)" title="Runtime"></div>
+      <div class="sdot" id="dot-settings" style="background:var(--dim)" title="Settings"></div>
+      <div class="sdot" id="dot-hermes" style="background:var(--dim)" title="Hermes"></div>
+      <div class="sdot" id="dot-lms" style="background:var(--dim)" title="LM Studio"></div>
+      <div class="sdot" id="dot-ollama" style="background:var(--dim)" title="Ollama"></div>
+      <div class="sdot" id="dot-litellm" style="background:var(--dim)" title="LiteLLM"></div>
+    </div>
+    <span id="header-mode" style="margin-left:8px;color:var(--muted);font-size:11px">—</span>
+    <span id="header-time" style="color:var(--dim);font-size:11px;margin-left:auto"></span>
+  </div>
+
+  <!-- ══ LAYOUT ════════════════════════════════════════════════════════════════ -->
+  <div id="layout">
+
+    <!-- ══ SIDEBAR ══════════════════════════════════════════════════════════════ -->
+    <nav id="sidebar">
+      <div class="nav-section">System</div>
+      <div class="nav-item active" onclick="nav('overview')" id="nav-overview" data-panel="overview">
+        <span class="icon">🏠</span><span class="label">Overview</span>
+      </div>
+      <div class="nav-item" onclick="nav('bootgate')" id="nav-bootgate" data-panel="bootgate">
+        <span class="icon">🛡</span><span class="label">Boot Gate</span><span class="nbadge" id="boot-badge"
+          style="display:none">!</span>
+      </div>
+      <div class="nav-section">Models & Providers</div>
+      <div class="nav-item" onclick="nav('lmstudio')" id="nav-lmstudio" data-panel="lmstudio">
+        <span class="icon">🖥</span><span class="label">LM Studio</span>
+      </div>
+      <div class="nav-item" onclick="nav('ollama')" id="nav-ollama" data-panel="ollama">
+        <span class="icon">🦙</span><span class="label">Ollama</span>
+      </div>
+      <div class="nav-item" onclick="nav('providers')" id="nav-providers" data-panel="providers">
+        <span class="icon">⚡</span><span class="label">All Providers</span>
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-section">Agents</div>
+      <div class="nav-item" onclick="nav('hermes')" id="nav-hermes" data-panel="hermes">
+        <span class="icon">🤖</span><span class="label">Hermes</span>
+      </div>
+      <div class="nav-item" onclick="nav('zeroclaw')" id="nav-zeroclaw" data-panel="zeroclaw">
+        <span class="icon">⚙</span><span class="label">ZeroClaw</span>
+      </div>
+      <div class="nav-item" onclick="nav('dispatch')" id="nav-dispatch" data-panel="dispatch">
+        <span class="icon">📡</span><span class="label">Dispatch</span>
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-section">Control</div>
+      <div class="nav-item" onclick="nav('settings')" id="nav-settings" data-panel="settings">
+        <span class="icon">⚙️</span><span class="label">Settings</span>
+      </div>
+      <div class="nav-item" onclick="nav('ports')" id="nav-ports" data-panel="ports">
+        <span class="icon">🔌</span><span class="label">Ports</span>
+      </div>
+      <div class="nav-item" onclick="nav('queue')" id="nav-queue" data-panel="queue">
+        <span class="icon">📋</span><span class="label">Queue</span>
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-section">Evidence</div>
+      <div class="nav-item" onclick="nav('evidence')" id="nav-evidence" data-panel="evidence">
+        <span class="icon">📁</span><span class="label">Evidence</span>
+      </div>
+      <div class="nav-item" onclick="nav('repairs')" id="nav-repairs" data-panel="repairs">
+        <span class="icon">🔧</span><span class="label">Repairs</span>
+      </div>
+      <div class="nav-item" onclick="nav('audit')" id="nav-audit" data-panel="audit">
+        <span class="icon">📜</span><span class="label">Audit Trail</span>
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-section">Tools</div>
+      <div class="nav-item" onclick="nav('questions')" id="nav-questions" data-panel="questions">
+        <span class="icon">❓</span><span class="label">Questions</span><span class="nbadge" id="q-badge"
+          style="display:none">?</span>
+      </div>
+      <div class="nav-item" onclick="nav('maintenance')" id="nav-maintenance" data-panel="maintenance">
+        <span class="icon">🪟</span><span class="label">Maintenance</span>
+      </div>
+      <div class="nav-item" onclick="nav('discord')" id="nav-discord" data-panel="discord">
+        <span class="icon">💬</span><span class="label">Discord Bots</span>
+      </div>
+      <div class="nav-item" onclick="nav('kilocode')" id="nav-kilocode" data-panel="vsix">
+        <span class="icon">🔷</span><span class="label">KiloCode VSIX</span>
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-section">KiloCode Config</div>
+      <div class="nav-item" onclick="nav('speech')" id="nav-speech" data-panel="speech">
+        <span class="icon">🔊</span><span class="label">Speech TTS</span>
+      </div>
+      <div class="nav-item" onclick="nav('routing')" id="nav-routing" data-panel="routing">
+        <span class="icon">🔀</span><span class="label">Routing</span>
+      </div>
+      <div class="nav-item" onclick="nav('governance')" id="nav-governance" data-panel="governance">
+        <span class="icon">🏛</span><span class="label">Governance</span>
+      </div>
+    </nav>
+
+    <!-- ══ CONTENT ══════════════════════════════════════════════════════════════ -->
+    <main id="content">
+
+      <!-- ════ OVERVIEW ════════════════════════════════════════════════════════════ -->
+      <div class="pane active" id="pane-overview">
+        <div class="section">
+          <div class="grid4" style="margin-bottom:14px">
+            <div class="stat-card">
+              <div class="stat-label">Runtime</div>
+              <div class="stat-val ok" id="ov-runtime">—</div>
+              <div class="stat-sub" id="ov-runtime-sub">port 8081</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Hermes Agent</div>
+              <div class="stat-val ok" id="ov-hermes">—</div>
+              <div class="stat-sub">port 8091</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">LM Studio (GPU)</div>
+              <div class="stat-val gpu" id="ov-lms">—</div>
+              <div class="stat-sub" id="ov-lms-sub">RTX 3090Ti · 700GB models</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Mode</div>
+              <div class="stat-val acc" id="ov-mode">—</div>
+              <div class="stat-sub">system operating mode</div>
+            </div>
+          </div>
+          <div class="grid3">
+            <div class="card" style="grid-column:span 2">
+              <div class="card-title"><span class="ct-icon">🌐</span>Service Health Matrix</div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Service</th>
+                    <th>URL</th>
+                    <th>Status</th>
+                    <th>Latency</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="ov-health-body">
+                  <tr>
+                    <td colspan="5" style="color:var(--muted)">Checking…</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="card">
+              <div class="card-title"><span class="ct-icon">⚡</span>Quick Actions</div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <button class="btn-ok" onclick="doRepairAll()">🔧 Agent Auto-Repair</button>
+                <button class="btn-primary" onclick="doAutofill()">🤖 Agent Auto-Fill Settings</button>
+                <button class="btn-info" onclick="doValidate()">✅ Validate All</button>
+                <button class="btn-warn" onclick="bootGateCheck()">🛡 Run Boot-Gate Check</button>
+                <button class="btn-muted" onclick="fullRefresh()">🔄 Full Refresh</button>
+              </div>
+              <div id="ov-action-msg" style="margin-top:10px"></div>
+            </div>
+          </div>
+        </div>
+        <div class="section">
+          <div class="section-title">📊 GPU & Model Server Status</div>
+          <div class="grid3">
+            <div class="card">
+              <div class="card-title"><span class="ct-icon">🖥</span>LM Studio Local</div>
+              <div class="row"><label>Status</label><span id="lms-status-ov">Checking…</span></div>
+              <div class="row"><label>Loaded Model</label><span id="lms-model-ov" class="mod">—</span></div>
+              <div class="row"><label>GPU</label><span class="gpu">RTX 3090 Ti (24GB)</span></div>
+              <div class="row"><label>Models Library</label><span class="gpu">~700 GB GGUF</span></div>
+              <button class="btn-gpu btn-sm" onclick="nav('lmstudio')">Manage Models →</button>
+            </div>
+            <div class="card">
+              <div class="card-title"><span class="ct-icon">🦙</span>Ollama</div>
+              <div class="row"><label>Status</label><span id="ollama-status-ov">Checking…</span></div>
+              <div id="ollama-models-ov" style="color:var(--muted);font-size:11px">Loading models…</div>
+              <div style="margin-top:8px"><button class="btn-muted btn-sm" onclick="nav('ollama')">Manage →</button>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title"><span class="ct-icon">🔗</span>LiteLLM Proxy</div>
+              <div class="row"><label>Status</label><span id="litellm-status-ov">Checking…</span></div>
+              <div class="row"><label>Endpoint</label><span
+                  style="font-size:11px;color:var(--muted)">localhost:4000</span></div>
+              <div class="row"><label>Routes</label><span id="litellm-routes-ov" class="info">—</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ BOOT GATE ═══════════════════════════════════════════════════════════ -->
+      <div class="pane" id="pane-bootgate">
+        <div class="section">
+          <div class="section-title">🛡 Boot Gate — System Health Matrix</div>
+          <div class="grid2">
+            <div class="card">
+              <div class="card-title">Critical Checks</div>
+              <div id="boot-checks">
+                <div class="boot-check" id="bc-runtime"><span class="boot-icon">⏳</span><span class="boot-label">Runtime
+                    Core (8081)</span><span class="boot-status" id="bs-runtime">checking…</span></div>
+                <div class="boot-check" id="bc-settings"><span class="boot-icon">⏳</span><span
+                    class="boot-label">Settings Service (8082)</span><span class="boot-status"
+                    id="bs-settings">checking…</span></div>
+                <div class="boot-check" id="bc-hermes"><span class="boot-icon">⏳</span><span class="boot-label">Hermes
+                    Agent (8091)</span><span class="boot-status" id="bs-hermes">checking…</span></div>
+                <div class="boot-check" id="bc-nats"><span class="boot-icon">⏳</span><span class="boot-label">NATS Event
+                    Bus (4222)</span><span class="boot-status" id="bs-nats">checking…</span></div>
+                <div class="boot-check" id="bc-lms"><span class="boot-icon">⏳</span><span class="boot-label">LM Studio
+                    (1234)</span><span class="boot-status" id="bs-lms">checking…</span></div>
+                <div class="boot-check" id="bc-ollama"><span class="boot-icon">⏳</span><span class="boot-label">Ollama
+                    (11434)</span><span class="boot-status" id="bs-ollama">checking…</span></div>
+                <div class="boot-check" id="bc-litellm"><span class="boot-icon">⏳</span><span class="boot-label">LiteLLM
+                    Proxy (4000)</span><span class="boot-status" id="bs-litellm">checking…</span></div>
+                <div class="boot-check" id="bc-settings-q"><span class="boot-icon">⏳</span><span
+                    class="boot-label">Unanswered Required Questions</span><span class="boot-status"
+                    id="bs-settings-q">checking…</span></div>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+                <button class="btn-primary" onclick="bootGateCheck()">🔄 Re-run All Checks</button>
+                <button class="btn-warn" onclick="doRepairAll()">🔧 Repair Failures</button>
+              </div>
+              <div id="boot-gate-result" style="margin-top:10px"></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Boot Gate Result</div>
+              <div id="bootgate-summary" style="padding:20px;text-align:center">
+                <div style="font-size:48px" id="bg-icon">⏳</div>
+                <div style="font-size:18px;font-weight:700;margin-top:10px" id="bg-title">Checking…</div>
+                <div style="color:var(--muted);margin-top:6px;font-size:12px" id="bg-sub">Running boot gate checks</div>
+                <div id="bg-issues" style="margin-top:14px"></div>
+              </div>
+              <div class="card-title" style="margin-top:14px">Safemode Policy</div>
+              <p style="color:var(--muted);font-size:12px;line-height:1.6">
+                If any <strong>critical</strong> check fails, the system enters safemode:
+                normal operations are blocked, agent repair is triggered automatically,
+                and the UI shows a repair banner until all checks pass.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ LM STUDIO ═══════════════════════════════════════════════════════════ -->
+      <div class="pane" id="pane-lmstudio">
+        <div class="section">
+          <div class="section-title">🖥 LM Studio — Local GPU Model Server <span class="hbadge hbadge-gpu"
+              data-gpu="rtx3090">RTX 3090 Ti</span></div>
+          <div class="grid3">
+            <div class="stat-card">
+              <div class="stat-label">GPU</div>
+              <div class="stat-val gpu">RTX 3090 Ti</div>
+              <div class="stat-sub">24 GB VRAM</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Model Library</div>
+              <div class="stat-val gpu">~700 GB</div>
+              <div class="stat-sub">GGUF models on disk</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Active Model</div>
+              <div class="stat-val mod" id="lms-active-model">None</div>
+              <div class="stat-sub" id="lms-context">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="card section">
+            <div class="card-title"><span class="ct-icon">📋</span>Available Models (from API)</div>
+            <div id="lms-models-list" style="max-height:360px;overflow-y:auto">
+              <div style="color:var(--muted);padding:20px;text-align:center">Loading models from LM Studio…</div>
+            </div>
+          </div>
+          <div class="card section">
+            <div class="card-title"><span class="ct-icon">💬</span>Test Inference</div>
+            <div class="row"><label>Model</label><input type="text" id="lms-test-model"
+                placeholder="model id from list"></div>
+            <div class="row"><label>Temperature</label><input type="number" id="lms-temp" value="0.7" min="0" max="2"
+                step="0.1" style="width:80px"></div>
+            <div class="row"><label>Max Tokens</label><input type="number" id="lms-max-tokens" value="256" min="1"
+                style="width:80px"></div>
+            <textarea id="lms-prompt" placeholder="Enter prompt for test inference…"
+              style="margin-bottom:8px"></textarea>
+            <button class="btn-gpu" onclick="lmsInfer()">⚡ Run Inference (GPU)</button>
+            <div id="lms-infer-result" style="margin-top:10px"></div>
+          </div>
+        </div>
+        <div class="card section">
+          <div class="card-title"><span class="ct-icon">⚙</span>LM Studio API Config</div>
+          <div class="grid2">
+            <div>
+              <div class="row"><label>Base URL</label><input type="text" id="lms-url" value="http://localhost:1234">
+              </div>
+              <div class="row"><label>API Path</label><span
+                  style="color:var(--muted);font-size:11px">/v1/chat/completions · /v1/models</span></div>
+              <button class="btn-gpu btn-sm" onclick="saveLmsUrl()">Save URL</button>
+            </div>
+            <div>
+              <div class="card-title">Integration with Hermes / ZeroClaw</div>
+              <p style="color:var(--muted);font-size:12px;line-height:1.6">
+                Agents automatically use LM Studio when available as the primary local GPU provider.
+                LiteLLM proxies LM Studio so all agents use a unified endpoint.
+              </p>
+              <button class="btn-primary btn-sm" style="margin-top:8px" onclick="testLmsViaLiteLLM()">Test via LiteLLM
+                Proxy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ OLLAMA ═══════════════════════════════════════════════════════════════ -->
+      <div class="pane" id="pane-ollama">
+        <div class="section">
+          <div class="section-title">🦙 Ollama — Local Model Runner</div>
+          <div class="grid2">
+            <div class="card">
+              <div class="card-title">Installed Models</div>
+              <div id="ollama-models-list" style="max-height:360px;overflow-y:auto">
+                <div style="color:var(--muted);padding:20px;text-align:center">Loading…</div>
+              </div>
+              <div style="margin-top:10px;display:flex;gap:8px">
+                <input type="text" id="ollama-pull-name" placeholder="model name to pull (e.g. llama3)" style="flex:1">
+                <button class="btn-primary btn-sm" onclick="ollamaPull()">Pull</button>
+              </div>
+              <div id="ollama-pull-msg" style="margin-top:8px"></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Test Inference</div>
+              <div class="row"><label>Model</label><input type="text" id="ollama-test-model" placeholder="e.g. llama3">
+              </div>
+              <textarea id="ollama-prompt" placeholder="Prompt…" style="margin-bottom:8px"></textarea>
+              <button class="btn-primary" onclick="ollamaInfer()">Run</button>
+              <div id="ollama-infer-result" style="margin-top:10px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ ALL PROVIDERS ════════════════════════════════════════════════════════ -->
+      <div class="pane" id="pane-providers">
+        <div class="section">
+          <div class="section-title">⚡ Provider Health &amp; Routing</div>
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-title">Provider Status &amp; Circuit Breakers</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Provider</th>
+                  <th>Endpoint</th>
+                  <th>Status</th>
+                  <th>Latency</th>
+                  <th>Circuit</th>
+                  <th>Priority</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="providers-body">
+                <tr>
+                  <td colspan="7" style="color:var(--muted)">Loading…</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="grid2">
+            <div class="card">
+              <div class="card-title">Failover Order</div>
+              <ol id="failover-order" style="padding-left:20px;color:var(--muted);font-size:12px;line-height:2">
+                <li class="gpu">LM Studio (local RTX 3090Ti) — primary</li>
+                <li>Ollama (local) — secondary</li>
+                <li>LiteLLM Proxy (localhost:4000)</li>
+                <li>MiniMax API (cloud)</li>
+                <li>SiliconFlow API (cloud)</li>
+              </ol>
+            </div>
+            <div class="card">
+              <div class="card-title">Force Failover Test</div>
+              <p style="color:var(--muted);font-size:12px;margin-bottom:10px">Temporarily disable a provider to test
+                failover routing.</p>
+              <div class="row"><label>Provider</label>
+                <select id="fo-provider" style="flex:1">
+                  <option value="lmstudio">LM Studio</option>
+                  <option value="ollama">Ollama</option>
+                  <option value="litellm">LiteLLM</option>
+                  <option value="minimax">MiniMax</option>
+                </select>
+              </div>
+              <button class="btn-warn" onclick="forceFailover()">Trigger Failover Test</button>
+              <div id="fo-result" style="margin-top:8px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ HERMES ═══════════════════════════════════════════════════════════════ -->
+      <div class="pane" id="pane-hermes">
+        <div class="section">
+          <div class="section-title">🤖 Hermes — Orchestration Agent</div>
+          <div class="grid3">
+            <div class="stat-card">
+              <div class="stat-label">Status</div>
+              <div class="stat-val ok" id="hermes-stat">—</div>
+              <div class="stat-sub">port 8091</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Intake Mode</div>
+              <div class="stat-val acc" id="hermes-intake-mode">standard</div>
+              <div class="stat-sub">orchestration</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Queue Depth</div>
+              <div class="stat-val info" id="hermes-queue">0</div>
+              <div class="stat-sub">active packets</div>
+            </div>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <div class="card-title">Configuration</div>
+            <div class="row"><label>Intake Mode</label>
+              <select id="hermes-intake-sel" style="flex:1">
+                <option value="standard">Standard</option>
+                <option value="yolo">YOLO (full auto)</option>
+                <option value="readonly">Read-Only</option>
+              </select>
+            </div>
+            <div class="row"><label>Approval Mode</label><span
+                style="color:var(--muted);font-size:11px">user-required-for-disruptive</span></div>
+            <div class="row"><label>Timeout (s)</label><input type="number" id="hermes-timeout" value="120"
+                style="width:80px"></div>
+            <div class="row"><label>Write Classes</label><span style="color:var(--muted);font-size:11px">inferable,
+                non-secret</span></div>
+            <button class="btn-primary btn-sm" onclick="applyHermesConfig()">Apply Config</button>
+            <div id="hermes-config-msg" style="margin-top:8px"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Actions</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <button class="btn-ok" onclick="hermesRepair()">🔧 Run Settings Repair</button>
+              <button class="btn-primary" onclick="hermesValidate()">✅ Validate Settings</button>
+              <button class="btn-info" onclick="hermesAutofill()">🤖 Auto-Fill Inferable</button>
+              <button class="btn-warn" onclick="hermesTestIntake()">📡 Test Intake Packet</button>
+              <button class="btn-muted" onclick="loadHermes()">🔄 Refresh</button>
+            </div>
+            <div id="hermes-action-msg" style="margin-top:10px"></div>
+          </div>
+        </div>
+        <div class="card section">
+          <div class="card-title">Recent Hermes Activity</div>
+          <div class="log-box" id="hermes-log">No activity yet.</div>
+        </div>
+      </div>
+
+      <!-- ════ ZEROCLAW ════════════════════════════════════════════════════════════ -->
+      <div class="pane" id="pane-zeroclaw">
+        <div class="section">
+          <div class="section-title">⚙ ZeroClaw — Execution Engine</div>
+          <div class="grid4">
+            <div class="stat-card">
+              <div class="stat-label">Engine</div>
+              <div class="stat-val" id="zc-status">—</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Queued</div>
+              <div class="stat-val info" id="zc-queued">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Running</div>
+              <div class="stat-val warn" id="zc-running">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Blocked (needs approval)</div>
+              <div class="stat-val err" id="zc-blocked">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <!-- Submit Task -->
+          <div class="card">
+            <div class="card-title">📥 Submit ZeroClaw Task</div>
+            <div class="row"><label>Description</label>
+              <textarea id="zc-desc" rows="3" placeholder="Describe the task…"
+                style="flex:1;resize:vertical;font-family:inherit;font-size:12px"></textarea>
+            </div>
+            <div class="row"><label>Project Path</label>
+              <input type="text" id="zc-path" placeholder="/path/to/project" style="flex:1">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+              <div>
+                <label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">Risk Level</label>
+                <select id="zc-risk" style="width:100%">
+                  <option value="low">Low (auto-run)</option>
+                  <option value="medium">Medium (diff review)</option>
+                  <option value="high">High (approval gate)</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">Network</label>
+                <select id="zc-net" style="width:100%">
+                  <option value="deny">Deny</option>
+                  <option value="allowlist">Allowlist</option>
+                  <option value="open">Open</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">Write Policy</label>
+                <select id="zc-write" style="width:100%">
+                  <option value="read_only">Read Only</option>
+                  <option value="buffered">Buffered</option>
+                  <option value="approved">Approved</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+              <div>
+                <label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">Timeout (sec)</label>
+                <input type="number" id="zc-timeout" value="300" min="10" style="width:100%">
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">Memory (MB)</label>
+                <input type="number" id="zc-mem" value="512" min="64" style="width:100%">
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">CPU cores</label>
+                <input type="number" id="zc-cpu" value="1" min="0.1" step="0.1" style="width:100%">
+              </div>
+            </div>
+            <div class="row"><label>Workspace Scope</label>
+              <input type="text" id="zc-scope" placeholder="src/**, tests/** (blank = full workspace)" style="flex:1">
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button class="btn-primary" onclick="zcSubmit()">📤 Submit Task</button>
+              <button class="btn-muted btn-sm" onclick="zcRefresh()">🔄 Refresh Queue</button>
+            </div>
+            <div id="zc-submit-msg" style="margin-top:8px;font-size:12px"></div>
+          </div>
+
+          <!-- Engine Config -->
+          <div class="card">
+            <div class="card-title">🔧 Engine Settings</div>
+            <div class="row"><label>Enabled</label>
+              <input type="checkbox" id="zc-enabled" style="width:18px;height:18px"
+                onchange="zcSetEnabled(this.checked)">
+            </div>
+            <div class="row"><label>Auto-approve Level</label>
+              <select id="zc-auto-approve" style="flex:1" onchange="zcSetAutoApprove(this.value)">
+                <option value="none">None — all tasks need approval</option>
+                <option value="low">Low risk only</option>
+                <option value="low+medium">Low + Medium</option>
+                <option value="all">All (dangerous)</option>
+              </select>
+            </div>
+            <div class="row"><label>Adapter Test</label>
+              <select id="zc-test-adapter" style="flex:1">
+                <option value="git">Git</option>
+                <option value="shell">Shell</option>
+                <option value="filesystem">Filesystem</option>
+                <option value="research">Research</option>
+              </select>
+            </div>
+            <div class="row"><label>Test Command</label>
+              <input type="text" id="zc-test-cmd" placeholder="e.g. git status" style="flex:1">
+            </div>
+            <button class="btn-info btn-sm" onclick="zcTest()" style="margin-top:6px">▶ Run Adapter Test</button>
+            <div id="zc-test-result" style="margin-top:8px;font-size:12px"></div>
+          </div>
+        </div>
+
+        <!-- Task Queue -->
+        <div class="card" style="margin-top:14px">
+          <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+            <span>📋 Task Queue</span>
+            <button class="btn-muted btn-sm" onclick="zcRefresh()">🔄</button>
+          </div>
+          <div id="zc-task-list" style="display:flex;flex-direction:column;gap:8px;min-height:60px">
+            <div style="color:var(--muted);font-size:12px;padding:10px 0">No tasks in queue. Submit one above.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ AGENT DISPATCH ═══════════════════════════════════════════════════════ -->
+      <div class="pane" id="pane-dispatch">
+        <div class="section">
+          <div class="section-title">📡 Agent Command Dispatch — Send tasks directly to Hermes/ZeroClaw</div>
+          <div class="grid2">
+            <div class="card">
+              <div class="card-title">Compose Intake Packet</div>
+              <div class="row"><label>Agent</label>
+                <select id="disp-agent" style="flex:1">
+                  <option value="hermes">Hermes (orchestrator)</option>
+                  <option value="zeroclaw">ZeroClaw (executor)</option>
+                </select>
+              </div>
+              <div class="row"><label>Task Type</label>
+                <select id="disp-type" style="flex:1">
+                  <option value="shell">Shell</option>
+                  <option value="git">Git</option>
+                  <option value="filesystem">Filesystem</option>
+                  <option value="research">Research</option>
+                  <option value="repair">Repair</option>
+                  <option value="validate">Validate</option>
+                  <option value="autofill">Autofill</option>
+                </select>
+              </div>
+              <div class="row"><label>Description</label><input type="text" id="disp-desc"
+                  placeholder="describe the task"></div>
+              <div style="margin-bottom:8px">
+                <label style="color:var(--muted);font-size:11px;display:block;margin-bottom:4px">Evidence / Context
+                  (JSON)</label>
+                <textarea id="disp-evidence" placeholder='[{"key":"value"}]' style="height:60px"></textarea>
+              </div>
+              <div class="row"><label>Model Override</label><input type="text" id="disp-model"
+                  placeholder="optional — leave blank for default"></div>
+              <div style="display:flex;gap:8px">
+                <button class="btn-primary" onclick="dispatchTask()">📡 Dispatch</button>
+                <button class="btn-muted" onclick="dispatchDryRun()">🔍 Dry Run</button>
+              </div>
+              <div id="disp-result" style="margin-top:10px"></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Terminal Output</div>
+              <div class="terminal" id="dispatch-terminal">
+                <div class="term-line"><span class="term-prompt">hub &gt; </span><span class="term-out">Ready. Dispatch
+                    a task to see output.</span></div>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:10px">
+                <button class="btn-muted btn-sm" onclick="clearTerminal()">Clear</button>
+                <button class="btn-muted btn-sm" onclick="copyTerminal()">Copy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card section">
+          <div class="card-title">Preset Commands</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn-muted btn-sm" onclick="preset('shell','echo hello from hub')">Echo Test</button>
+            <button class="btn-muted btn-sm" onclick="preset('git','git status')">Git Status</button>
+            <button class="btn-muted btn-sm" onclick="preset('repair','repair all settings')">Repair Settings</button>
+            <button class="btn-muted btn-sm" onclick="preset('validate','validate all')">Validate All</button>
+            <button class="btn-muted btn-sm" onclick="preset('autofill','autofill inferable settings')">Autofill
+              Settings</button>
+            <button class="btn-muted btn-sm" onclick="preset('research','list available local GGUF models')">List Local
+              Models</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ SETTINGS ════════════════════════════════════════════════════════════ -->
+      <div class="pane" id="pane-settings">
+        <div class="section">
+          <div class="section-title">⚙️ Canonical Settings — Single Source of Truth</div>
+          <div class="grid2">
+            <div class="card">
+              <div class="card-title">Current State</div>
+              <pre id="settings-state-pre">Loading…</pre>
+              <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn-primary btn-sm" onclick="loadSettings()">🔄 Refresh</button>
+                <button class="btn-ok btn-sm" onclick="doAutofill()">🤖 Auto-Fill</button>
+                <button class="btn-warn btn-sm" onclick="doRepairAll()">🔧 Repair</button>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">Apply Setting</div>
+              <div class="row"><label>Key (dot-path)</label><input type="text" id="set-key"
+                  placeholder="e.g. runtime.log_level"></div>
+              <div class="row"><label>Value</label><input type="text" id="set-val" placeholder="value (JSON or string)">
+              </div>
+              <button class="btn-primary" onclick="applySetting()">Apply</button>
+              <div id="set-apply-msg" style="margin-top:8px"></div>
+              <div class="card-title" style="margin-top:14px">Mode Control</div>
+              <div class="row"><label>Mode</label>
+                <select id="mode-select" style="flex:1" onchange="setMode(this.value)">
+                  <option value="standard">Standard</option>
+                  <option value="yolo">YOLO</option>
+                  <option value="elevated">Elevated</option>
+                  <option value="readonly">Read-Only</option>
+                </select>
+              </div>
+              <div id="mode-msg" style="margin-top:8px"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid2" style="margin-top:14px">
+          <div class="card">
+            <div class="card-title">🌐 Hermes Pipeline — Bridge Config</div>
+            <div class="row"><label>Bridge URL</label>
+              <input type="text" id="hermes-bridge-url" placeholder="http://localhost:8091" style="flex:1">
+            </div>
+            <div class="row"><label>Approval Mode</label>
+              <select id="hermes-approval-mode" style="flex:1">
+                <option value="auto-low">Auto (low-risk only)</option>
+                <option value="auto-all">Auto (all tasks)</option>
+                <option value="manual">Manual approval</option>
+              </select>
+            </div>
+            <div class="row"><label>Enabled</label>
+              <input type="checkbox" id="hermes-enabled" style="width:18px;height:18px">
+            </div>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button class="btn-primary btn-sm" onclick="saveHermesConfig()">💾 Save</button>
+              <button class="btn-muted btn-sm" onclick="loadHermesConfig()">🔄 Load</button>
+              <button class="btn-info btn-sm" onclick="pingHermesBridge()">📡 Ping</button>
+            </div>
+            <div id="hermes-cfg-msg" style="margin-top:8px;font-size:12px"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">🔷 KiloCode VSIX — Pipeline Status</div>
+            <div style="display:flex;flex-direction:column;gap:7px;font-size:12px">
+              <div class="row"><label>Hermes Bridge</label><span id="set-kc-hermes" class="b-warn">unknown</span></div>
+              <div class="row"><label>Runtime Sync</label><span id="set-kc-sync" class="b-warn">unknown</span></div>
+              <div class="row"><label>Settings Wired</label><span id="set-kc-settings" class="b-warn">unknown</span>
+              </div>
+              <div class="row"><label>Autofill Ready</label><span id="set-kc-autofill" class="b-warn">unknown</span>
+              </div>
+              <div class="row"><label>Drift</label><span id="set-kc-drift" class="b-warn">—</span></div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button class="btn-ok btn-sm" onclick="checkKcPipeline()">▶ Check Pipeline</button>
+              <button class="btn-primary btn-sm" onclick="nav('kilocode')">→ KiloCode Tab</button>
+            </div>
+            <div id="set-kc-msg" style="margin-top:8px;font-size:12px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ PORTS ════════════════════════════════════════════════════════════════ -->
+      <div class="pane" id="pane-ports">
+        <div class="section">
+          <div class="section-title">🔌 Port Registry — All Services</div>
+          <div class="card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Service</th>
+                  <th>Current Port</th>
+                  <th>Reachable</th>
+                  <th>Pending Change</th>
+                  <th>New Port</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="ports-body">
+                <tr>
+                  <td colspan="6" style="color:var(--muted)">Loading…</td>
+                </tr>
+              </tbody>
+            </table>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <button class="btn-primary" onclick="applyPorts()">Apply Pending Changes</button>
+              <button class="btn-muted btn-sm" onclick="loadPorts()">Refresh</button>
+            </div>
+            <div id="ports-msg" style="margin-top:10px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ QUEUE ════════════════════════════════════════════════════════════════ -->
+      <div class="pane" id="pane-queue">
+        <div class="section">
+          <div class="section-title">📋 Active Queue &amp; Events</div>
+          <div class="grid3" style="margin-bottom:14px">
+            <div class="stat-card">
+              <div class="stat-label">Queue Depth</div>
+              <div class="stat-val info" id="q-depth">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Active Tasks</div>
+              <div class="stat-val acc" id="q-active">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Events (24h)</div>
+              <div class="stat-val" id="q-events">0</div>
+            </div>
+          </div>
+          <div class="grid2">
+            <div class="card">
+              <div class="card-title">Active Packets</div>
+              <div id="queue-list" class="log-box">No active packets.</div>
+              <button class="btn-muted btn-sm" style="margin-top:8px" onclick="loadQueue()">Refresh</button>
+            </div>
+            <div class="card">
+              <div class="card-title">Recent Events</div>
+              <div id="events-list" class="log-box">Loading…</div>
+              <button class="btn-muted btn-sm" style="margin-top:8px" onclick="loadEvents()">Refresh</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ EVIDENCE ════════════════════════════════════════════════════════════ -->
+      <div class="pane" id="pane-evidence">
+        <div class="section">
+          <div class="section-title">📁 Evidence Ledger</div>
+          <div class="card">
+            <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+              <input type="text" id="ev-filter" placeholder="Filter by subsystem, agent, type…"
+                style="flex:1;max-width:300px">
+              <button class="btn-muted btn-sm" onclick="loadEvidence()">🔄 Refresh</button>
+              <button class="btn-primary btn-sm" onclick="exportEvidence()">Export</button>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Type</th>
+                  <th>Agent</th>
+                  <th>Subsystem</th>
+                  <th>Result</th>
+                  <th>Detail</th>
+                </tr>
+              </thead>
+              <tbody id="evidence-body">
+                <tr>
+                  <td colspan="6" style="color:var(--muted)">Loading…</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ REPAIRS ═════════════════════════════════════════════════════════════ -->
+      <div class="pane" id="pane-repairs">
+        <div class="section">
+          <div class="section-title">🔧 Repair Timeline</div>
+          <div class="grid2">
+            <div class="card">
+              <div class="card-title">Repair History</div>
+              <div id="repairs-timeline" class="log-box">Loading…</div>
+              <button class="btn-muted btn-sm" style="margin-top:8px" onclick="loadRepairs()">Refresh</button>
+            </div>
+            <div class="card">
+              <div class="card-title">Trigger Repair</div>
+              <div class="row"><label>Subsystem</label>
+                <select id="repair-sub" style="flex:1">
+                  <option value="">All</option>
+                  <option value="providers">Providers</option>
+                  <option value="runtime">Runtime</option>
+                  <option value="hermes">Hermes</option>
+                  <option value="zeroclaw">ZeroClaw</option>
+                  <option value="ports">Ports</option>
+                  <option value="settings">Settings</option>
+                </select>
+              </div>
+              <div class="row"><label>Agent</label>
+                <select id="repair-agent" style="flex:1">
+                  <option value="hermes">Hermes</option>
+                  <option value="zeroclaw">ZeroClaw</option>
+                  <option value="system">System</option>
+                </select>
+              </div>
+              <button class="btn-warn" onclick="triggerRepair()">🔧 Run Repair</button>
+              <div id="repair-result" style="margin-top:10px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ AUDIT TRAIL ═════════════════════════════════════════════════════════ -->
+      <div class="pane" id="pane-audit">
+        <div class="section">
+          <div class="section-title">📜 Settings Audit Trail</div>
+          <div class="card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Subsystem</th>
+                  <th>Changed By</th>
+                  <th>Fields</th>
+                  <th>Validation</th>
+                  <th>Disruptive</th>
+                  <th>Restart</th>
+                </tr>
+              </thead>
+              <tbody id="audit-body">
+                <tr>
+                  <td colspan="7" style="color:var(--muted)">Loading…</td>
+                </tr>
+              </tbody>
+            </table>
+            <button class="btn-muted btn-sm" style="margin-top:10px" onclick="loadAudit()">🔄 Refresh</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ QUESTIONS ════════════════════════════════════════════════════════════ -->
+      <div class="pane" id="pane-questions">
+        <div class="section">
+          <div class="section-title">❓ Unanswered Questions — Agent fills what it can; only secrets need you</div>
+          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+            <button class="btn-primary btn-sm" onclick="doAutofill()">🤖 Auto-Fill Inferable</button>
+            <button class="btn-ok btn-sm" onclick="loadQuestions()">🔄 Refresh</button>
+          </div>
+          <div id="questions-container">
+            <div style="color:var(--muted);padding:20px;text-align:center">Loading questions…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ MAINTENANCE ══════════════════════════════════════════════════════════ -->
+      <div class="pane" id="pane-maintenance">
+        <div class="section">
+          <div class="section-title">🪟 Maintenance Window</div>
+          <div class="grid2">
+            <div class="card">
+              <div class="card-title">Schedule Window</div>
+              <div class="row"><label>Reason</label><input type="text" id="mw-reason" placeholder="e.g. Port migration">
+              </div>
+              <div class="row"><label>Duration (min)</label><input type="number" id="mw-duration" value="10" min="1"
+                  max="240" style="width:80px"></div>
+              <button class="btn-warn" onclick="scheduleMw()">Schedule</button>
+              <div id="mw-msg" style="margin-top:10px"></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Current Window</div>
+              <pre id="mw-current">None scheduled.</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ DISCORD HERMES BOTS ══════════════════════════════════════════════════ -->
+      <div class="pane" id="pane-discord">
+        <div class="section">
+          <div class="section-title">💬 Discord Hermes Bots — Live Status</div>
+          <div class="grid3" style="margin-bottom:14px">
+            <div class="stat-card">
+              <div class="stat-label">Bots Online</div>
+              <div class="stat-val ok" id="discord-bots-online">—</div>
+              <div class="stat-sub">of 5 total</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Guild</div>
+              <div class="stat-val info">1490068195208331334</div>
+              <div class="stat-sub">KiloCode Guild</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Last Audit</div>
+              <div class="stat-val acc" id="discord-last-audit">Apr 17 2026</div>
+              <div class="stat-sub">all features ✅</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bot cards -->
+        <div class="grid3">
+          <div class="card" id="bot-card-hermes1">
+            <div class="card-title">🤖 hermes1 — Planning Strategist</div>
+            <div class="row"><label>Channel</label><span class="b-ok">#general</span></div>
+            <div class="row"><label>Status</label><span id="bot-stat-hermes1" class="b-warn">checking…</span></div>
+            <div class="row"><label>Container</label><code style="font-size:10px">hermes1</code></div>
+            <div class="row"><label>Skills</label><span style="color:var(--muted);font-size:11px">79 bundled + 311
+                ext</span></div>
+          </div>
+          <div class="card" id="bot-card-hermes2">
+            <div class="card-title">🎨 hermes2 — Creative Brainstormer</div>
+            <div class="row"><label>Channel</label><span class="b-ok">#planning</span></div>
+            <div class="row"><label>Status</label><span id="bot-stat-hermes2" class="b-warn">checking…</span></div>
+            <div class="row"><label>Container</label><code style="font-size:10px">hermes2</code></div>
+            <div class="row"><label>Model</label><span style="color:var(--muted);font-size:11px">SiliconFlow /
+                MiniMax</span></div>
+          </div>
+          <div class="card" id="bot-card-hermes3">
+            <div class="card-title">🏗️ hermes3 — System Architect</div>
+            <div class="row"><label>Channel</label><span class="b-ok">#design</span></div>
+            <div class="row"><label>Status</label><span id="bot-stat-hermes3" class="b-warn">checking…</span></div>
+            <div class="row"><label>Container</label><code style="font-size:10px">hermes3</code></div>
+            <div class="row"><label>Memory</label><span style="color:var(--muted);font-size:11px">Shiba @ :18789</span>
+            </div>
+          </div>
+          <div class="card" id="bot-card-hermes4">
+            <div class="card-title">🐛 hermes4 — Bug Triage Specialist</div>
+            <div class="row"><label>Channel</label><span class="b-ok">#issues</span></div>
+            <div class="row"><label>Status</label><span id="bot-stat-hermes4" class="b-warn">checking…</span></div>
+            <div class="row"><label>Container</label><code style="font-size:10px">hermes4</code></div>
+            <div class="row"><label>gh CLI</label><span style="color:var(--muted);font-size:11px">v2.89.0 /
+                Ghenghis</span></div>
+          </div>
+          <div class="card" id="bot-card-hermes5">
+            <div class="card-title">🔍 hermes5 — Root Cause Analyst</div>
+            <div class="row"><label>Channel</label><span class="b-ok">#problems</span></div>
+            <div class="row"><label>Status</label><span id="bot-stat-hermes5" class="b-warn">checking…</span></div>
+            <div class="row"><label>Container</label><code style="font-size:10px">hermes5</code></div>
+            <div class="row"><label>SSH</label><span style="color:var(--muted);font-size:11px">ed25519 → VPS host</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">⚙️ Actions</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <button class="btn-ok" onclick="loadDiscordBots()">🔄 Refresh All</button>
+              <button class="btn-primary" onclick="discordBroadcast()">📢 Broadcast to Guild</button>
+              <button class="btn-warn" onclick="discordIptablesFix()">🔧 Fix iptables (Shiba)</button>
+              <button class="btn-info" onclick="discordAudit()">📋 Run Bot Audit</button>
+            </div>
+            <div id="discord-action-msg" style="margin-top:10px;font-size:12px"></div>
+          </div>
+        </div>
+
+        <div class="card section">
+          <div class="card-title">⚠️ Known Limitations</div>
+          <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted)">
+            <div>• No Docker inside containers (nested Docker unavailable)</div>
+            <div>• ~30 macOS skills incompatible with Debian containers</div>
+            <div>• Discord slash commands: 53 skills over 8000-char limit — cosmetic only, all skills work via messages
+            </div>
+            <div>• ⚠️ iptables rule for Shiba (port 18789) is NOT persistent — needs iptables-save on VPS reboot</div>
+            <div>• GITHUB_TOKEN not in /opt/data/.env — gh auth works via /root/.config/gh/hosts.yml</div>
+          </div>
+        </div>
+
+        <div class="card section">
+          <div class="card-title">📡 Bot Activity Log</div>
+          <div class="log-box" id="discord-log">No activity yet. Click Refresh to poll bot health.</div>
+        </div>
+      </div>
+
+      <!-- ════ KILOCODE VSIX ═════════════════════════════════════════════════════ -->
+      <div class="pane" id="pane-kilocode">
+        <div class="section">
+          <div class="section-title">🔷 KiloCode VSIX — VS Code Extension Control</div>
+          <div class="grid3">
+            <div class="stat-card">
+              <div class="stat-label">Sync Status</div>
+              <div class="stat-val" id="kc-synced" style="color:var(--warn)">unknown</div>
+              <div class="stat-sub">WebUI → VSIX</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Last Sync</div>
+              <div class="stat-val info" id="kc-last-sync" style="font-size:13px">—</div>
+              <div class="stat-sub">runtime truth</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Drift</div>
+              <div class="stat-val" id="kc-drift" style="color:var(--muted);font-size:13px">—</div>
+              <div class="stat-sub">settings delta</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="card">
+            <div class="card-title">🔷 VSIX Command Registry</div>
+            <div id="vsix-commands" style="display:flex;flex-direction:column;gap:8px">
+              <div class="row" style="align-items:center">
+                <span id="vsix-cmd-sync" class="b-warn" style="min-width:68px">pending</span>
+                <span style="font-size:12px;flex:1">kilocode.syncRuntimeSettings</span>
+                <button class="btn-sm btn-primary" onclick="vsixCmd('syncRuntimeSettings')">Run</button>
+              </div>
+              <div class="row" style="align-items:center">
+                <span id="vsix-cmd-autofill" class="b-warn" style="min-width:68px">pending</span>
+                <span style="font-size:12px;flex:1">kilocode.applyAutofillResults</span>
+                <button class="btn-sm btn-primary" onclick="vsixCmd('applyAutofillResults')">Run</button>
+              </div>
+              <div class="row" style="align-items:center">
+                <span id="vsix-cmd-packet" class="b-warn" style="min-width:68px">pending</span>
+                <span style="font-size:12px;flex:1">kilocode.submitCompletionPacket</span>
+                <button class="btn-sm btn-primary" onclick="vsixCmd('submitCompletionPacket')">Run</button>
+              </div>
+              <div class="row" style="align-items:center">
+                <span id="vsix-cmd-health" class="b-warn" style="min-width:68px">pending</span>
+                <span style="font-size:12px;flex:1">kilocode.refreshProviderHealth</span>
+                <button class="btn-sm btn-primary" onclick="vsixCmd('refreshProviderHealth')">Run</button>
+              </div>
+              <div class="row" style="align-items:center">
+                <span id="vsix-cmd-mode" class="b-warn" style="min-width:68px">pending</span>
+                <span style="font-size:12px;flex:1">kilocode.setOperationMode</span>
+                <button class="btn-sm btn-primary" onclick="vsixCmd('setOperationMode')">Run</button>
+              </div>
+              <div class="row" style="align-items:center">
+                <span id="vsix-cmd-boot" class="b-warn" style="min-width:68px">pending</span>
+                <span style="font-size:12px;flex:1">kilocode.bootGateCheck</span>
+                <button class="btn-sm btn-primary" onclick="vsixCmd('bootGateCheck')">Run</button>
+              </div>
+              <div class="row" style="align-items:center">
+                <span id="vsix-cmd-repair" class="b-warn" style="min-width:68px">pending</span>
+                <span style="font-size:12px;flex:1">kilocode.triggerRepair</span>
+                <button class="btn-sm btn-warn" onclick="vsixCmd('triggerRepair')">Run</button>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <button class="btn-primary btn-sm" onclick="forceSyncKc()">⚡ Force Full Sync</button>
+              <button class="btn-muted btn-sm" onclick="loadKcStatus()">🔄 Refresh</button>
+            </div>
+            <div id="kc-msg" style="margin-top:8px;font-size:12px"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">📋 Integration Checklist</div>
+            <div style="display:flex;flex-direction:column;gap:7px;font-size:12px">
+              <div class="row"><span id="vsix-chk-webui" class="b-warn">⬜</span><span>WebUI Hub stable on :8095</span>
+              </div>
+              <div class="row"><span id="vsix-chk-runtime" class="b-warn">⬜</span><span>Runtime health OK on
+                  :8081</span></div>
+              <div class="row"><span id="vsix-chk-settings" class="b-warn">⬜</span><span>Settings service OK on
+                  :8082</span></div>
+              <div class="row"><span id="vsix-chk-autofill" class="b-warn">⬜</span><span>Auto-fill returns valid
+                  payload</span></div>
+              <div class="row"><span id="vsix-chk-sync" class="b-warn">⬜</span><span>VSIX startup sync loads runtime
+                  payload</span></div>
+              <div class="row"><span id="vsix-chk-drift" class="b-warn">⬜</span><span>Drift detection operational</span>
+              </div>
+              <div class="row"><span id="vsix-chk-e2e" class="b-warn">⬜</span><span>Playwright E2E all pass</span></div>
+            </div>
+            <button class="btn-ok btn-sm" style="margin-top:12px" onclick="runVsixChecklist()">▶ Run Checklist</button>
+            <div id="vsix-chk-msg" style="margin-top:8px;font-size:12px"></div>
+          </div>
+        </div>
+
+        <div class="card section">
+          <div class="card-title">📜 VSIX Activity Log</div>
+          <div class="log-box" id="vsix-log">No VSIX activity yet.</div>
+        </div>
+      </div>
+
+      <!-- ════ SPEECH ══════════════════════════════════════════════════════════════ -->
+      <div class="pane" id="pane-speech">
+        <div class="section">
+          <div class="section-title">🔊 Speech — Text-to-Speech Configuration</div>
+          <div class="grid2">
+            <div class="card">
+              <div class="card-title">Provider &amp; Global</div>
+              <div class="row"><label>Enabled</label>
+                <input type="checkbox" id="sp-enabled" style="width:18px;height:18px">
+              </div>
+              <div class="row"><label>Provider</label>
+                <select id="sp-provider" style="flex:1" onchange="spShowProvider(this.value)">
+                  <option value="openai">OpenAI TTS</option>
+                  <option value="elevenlabs">ElevenLabs</option>
+                  <option value="azure">Azure Cognitive</option>
+                  <option value="google">Google Cloud TTS</option>
+                  <option value="polly">Amazon Polly</option>
+                </select>
+              </div>
+              <div class="row"><label>Volume (0–100)</label>
+                <input type="range" id="sp-volume" min="0" max="100" value="80" style="flex:1">
+                <span id="sp-volume-val" style="min-width:32px;font-size:12px">80</span>
+              </div>
+              <div class="row"><label>Auto-speak replies</label>
+                <input type="checkbox" id="sp-autospeak" style="width:18px;height:18px">
+              </div>
+              <div class="row"><label>Interrupt on type</label>
+                <input type="checkbox" id="sp-interrupt" style="width:18px;height:18px">
+              </div>
+              <div class="row"><label>Multi-voice mode</label>
+                <input type="checkbox" id="sp-multivoice" style="width:18px;height:18px">
+              </div>
+              <div class="row"><label>Interaction Mode</label>
+                <select id="sp-interaction" style="flex:1">
+                  <option value="push-to-talk">Push-to-Talk</option>
+                  <option value="always-on">Always On</option>
+                  <option value="manual">Manual</option>
+                </select>
+              </div>
+              <div class="row"><label>Debug Mode</label>
+                <input type="checkbox" id="sp-debug" style="width:18px;height:18px">
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">Voice Tuning</div>
+              <div class="row"><label>Rate (0.5×–2.0×)</label>
+                <input type="range" id="sp-rate" min="50" max="200" value="100" style="flex:1">
+                <span id="sp-rate-val" style="min-width:40px;font-size:12px">1.0×</span>
+              </div>
+              <div class="row"><label>Pitch (–50%–+50%)</label>
+                <input type="range" id="sp-pitch" min="-50" max="50" value="0" style="flex:1">
+                <span id="sp-pitch-val" style="min-width:40px;font-size:12px">0%</span>
+              </div>
+              <div class="row"><label>Sentiment Intensity</label>
+                <input type="range" id="sp-sentiment" min="0" max="100" value="50" style="flex:1">
+                <span id="sp-sentiment-val" style="min-width:32px;font-size:12px">50</span>
+              </div>
+              <div class="row"><label>Sentence Pause (ms)</label>
+                <input type="number" id="sp-sentpause" value="200" min="0" max="2000" style="flex:1">
+              </div>
+              <div class="row"><label>Paragraph Break (ms)</label>
+                <input type="number" id="sp-parabr" value="500" min="0" max="5000" style="flex:1">
+              </div>
+              <div class="row"><label>Audio Format</label>
+                <select id="sp-audioformat" style="flex:1">
+                  <option value="mp3">MP3</option>
+                  <option value="opus">Opus</option>
+                  <option value="aac">AAC</option>
+                  <option value="wav">WAV</option>
+                </select>
+              </div>
+              <div class="row"><label>Style</label>
+                <input type="text" id="sp-style" placeholder="e.g. cheerful, narration" style="flex:1">
+              </div>
+              <div class="row"><label>Style Degree</label>
+                <input type="range" id="sp-styledeg" min="50" max="200" value="100" style="flex:1">
+                <span id="sp-styledeg-val" style="min-width:40px;font-size:12px">1.0×</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Provider API Keys -->
+          <div class="grid2" style="margin-top:14px">
+            <div class="card" id="sp-card-openai">
+              <div class="card-title">🔑 OpenAI TTS</div>
+              <div class="row"><label>API Key</label>
+                <input type="password" id="sp-openai-key" placeholder="sk-…" style="flex:1">
+              </div>
+            </div>
+            <div class="card" id="sp-card-elevenlabs">
+              <div class="card-title">🔑 ElevenLabs</div>
+              <div class="row"><label>API Key</label>
+                <input type="password" id="sp-elevenlabs-key" placeholder="el-…" style="flex:1">
+              </div>
+            </div>
+            <div class="card" id="sp-card-azure">
+              <div class="card-title">🔑 Azure Cognitive Speech</div>
+              <div class="row"><label>API Key</label>
+                <input type="password" id="sp-azure-key" placeholder="Azure key" style="flex:1">
+              </div>
+              <div class="row"><label>Region</label>
+                <input type="text" id="sp-azure-region" placeholder="e.g. eastus" style="flex:1">
+              </div>
+              <div class="row"><label>Voice ID</label>
+                <input type="text" id="sp-azure-voice" placeholder="e.g. en-US-JennyNeural" style="flex:1">
+              </div>
+            </div>
+            <div class="card" id="sp-card-google">
+              <div class="card-title">🔑 Google Cloud TTS</div>
+              <div class="row"><label>API Key</label>
+                <input type="password" id="sp-google-key" placeholder="AIza…" style="flex:1">
+              </div>
+            </div>
+            <div class="card" id="sp-card-polly">
+              <div class="card-title">🔑 Amazon Polly</div>
+              <div class="row"><label>Access Key ID</label>
+                <input type="text" id="sp-polly-access" placeholder="AKIA…" style="flex:1">
+              </div>
+              <div class="row"><label>Secret Access Key</label>
+                <input type="password" id="sp-polly-secret" placeholder="secret" style="flex:1">
+              </div>
+              <div class="row"><label>Region</label>
+                <input type="text" id="sp-polly-region" placeholder="us-east-1" style="flex:1">
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;margin-top:14px">
+            <button class="btn-primary" onclick="saveSpeechConfig()">💾 Save All Speech Settings</button>
+            <button class="btn-muted btn-sm" onclick="loadSpeechConfig()">🔄 Load</button>
+            <button class="btn-info btn-sm" onclick="testSpeech()">🔊 Test Voice</button>
+          </div>
+          <div id="speech-msg" style="margin-top:8px;font-size:12px"></div>
+        </div>
+      </div>
+
+      <!-- ════ ROUTING ══════════════════════════════════════════════════════════════ -->
+      <div class="pane" id="pane-routing">
+        <div class="section">
+          <div class="section-title">🔀 Routing — Provider &amp; Model Routing</div>
+          <div class="grid2">
+            <div class="card">
+              <div class="card-title">Routing Mode</div>
+              <div class="row"><label>Mode</label>
+                <select id="rt-mode" style="flex:1">
+                  <option value="auto">Auto (cost-aware)</option>
+                  <option value="local-first">Local First</option>
+                  <option value="cloud-first">Cloud First</option>
+                  <option value="manual">Manual selection</option>
+                </select>
+              </div>
+              <div class="row"><label>Cost Threshold (USD/req)</label>
+                <input type="number" id="rt-cost" min="0" step="0.001" value="0.05" style="flex:1">
+              </div>
+              <div class="row"><label>Privacy Mode (prefer local)</label>
+                <input type="checkbox" id="rt-privacy" style="width:18px;height:18px">
+              </div>
+              <div style="margin-top:10px">
+                <button class="btn-primary btn-sm" onclick="saveRoutingConfig()">💾 Save</button>
+                <button class="btn-muted btn-sm" onclick="loadRoutingConfig()" style="margin-left:8px">🔄 Load</button>
+              </div>
+              <div id="rt-msg" style="margin-top:8px;font-size:12px"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">Workstation Hardware Profile</div>
+              <div class="row"><label>Workstation Name</label>
+                <input type="text" id="ws-name" placeholder="my-rig" style="flex:1">
+              </div>
+              <div class="row"><label>GPU Model</label>
+                <input type="text" id="ws-gpu" placeholder="RTX 4090" style="flex:1">
+              </div>
+              <div class="row"><label>VRAM (GB)</label>
+                <input type="number" id="ws-vram" min="0" step="1" value="24" style="flex:1">
+              </div>
+              <div class="row"><label>RAM (GB)</label>
+                <input type="number" id="ws-ram" min="0" step="1" value="64" style="flex:1">
+              </div>
+              <div class="row"><label>Max GPU Memory (MB)</label>
+                <input type="number" id="ws-maxgpu" value="20000" style="flex:1">
+              </div>
+              <div class="row"><label>Max Parallel Jobs</label>
+                <input type="number" id="ws-parallel" value="4" min="1" style="flex:1">
+              </div>
+              <div style="margin-top:10px">
+                <button class="btn-primary btn-sm" onclick="saveWorkstationConfig()">💾 Save Hardware</button>
+              </div>
+              <div id="ws-msg" style="margin-top:8px;font-size:12px"></div>
+            </div>
+          </div>
+
+          <div class="grid2" style="margin-top:14px">
+            <div class="card">
+              <div class="card-title">📂 Model Library Paths</div>
+              <div class="row"><label>LM Studio Models</label>
+                <input type="text" id="ml-lmstudio" placeholder="C:/Users/.../models" style="flex:1">
+              </div>
+              <div class="row"><label>Ollama Models</label>
+                <input type="text" id="ml-ollama" placeholder="/usr/share/ollama/.ollama/models" style="flex:1">
+              </div>
+              <div class="row"><label>ComfyUI Models</label>
+                <input type="text" id="ml-comfyui" placeholder="C:/ComfyUI/models" style="flex:1">
+              </div>
+              <div class="row"><label>LoRA Adapters</label>
+                <input type="text" id="ml-lora" placeholder="/path/to/loras" style="flex:1">
+              </div>
+              <div class="row"><label>Media Models</label>
+                <input type="text" id="ml-media" placeholder="/path/to/media-models" style="flex:1">
+              </div>
+              <div class="row"><label>Total Estimated Size (GB)</label>
+                <input type="number" id="ml-total" value="0" style="flex:1">
+              </div>
+              <div style="margin-top:10px">
+                <button class="btn-primary btn-sm" onclick="saveModelLibrary()">💾 Save Paths</button>
+              </div>
+              <div id="ml-msg" style="margin-top:8px;font-size:12px"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">🧠 Memory &amp; Training</div>
+              <div class="row"><label>Shiba Memory Enabled</label>
+                <input type="checkbox" id="mem-enabled" style="width:18px;height:18px">
+              </div>
+              <div class="row"><label>Memory Endpoint</label>
+                <input type="text" id="mem-endpoint" placeholder="http://localhost:18789" style="flex:1">
+              </div>
+              <div class="row"><label>Training Subsystem Enabled</label>
+                <input type="checkbox" id="train-enabled" style="width:18px;height:18px">
+              </div>
+              <div class="row"><label>Claude Code Compat</label>
+                <input type="checkbox" id="rt-claudecompat" style="width:18px;height:18px">
+              </div>
+              <div class="row"><label>Show Task Timeline</label>
+                <input type="checkbox" id="rt-timeline" style="width:18px;height:18px">
+              </div>
+              <div style="margin-top:10px">
+                <button class="btn-primary btn-sm" onclick="saveMemoryTraining()">💾 Save</button>
+                <button class="btn-muted btn-sm" onclick="loadMemoryTraining()" style="margin-left:8px">🔄 Load</button>
+              </div>
+              <div id="mem-msg" style="margin-top:8px;font-size:12px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ GOVERNANCE ═══════════════════════════════════════════════════════════ -->
+      <div class="pane" id="pane-governance">
+        <div class="section">
+          <div class="section-title">🏛 Governance — Release Readiness &amp; Risk Verdicts</div>
+          <div class="grid2">
+            <div class="card">
+              <div class="card-title">Engine Settings</div>
+              <div class="row"><label>Governance Enabled</label>
+                <input type="checkbox" id="gov-enabled" style="width:18px;height:18px">
+              </div>
+              <div class="row"><label>Default Tier</label>
+                <select id="gov-tier" style="flex:1">
+                  <option value="standard">Standard</option>
+                  <option value="elevated">Elevated</option>
+                  <option value="strict">Strict</option>
+                </select>
+              </div>
+              <div style="margin-top:10px">
+                <button class="btn-primary btn-sm" onclick="saveGovernanceConfig()">💾 Save</button>
+                <button class="btn-muted btn-sm" onclick="loadGovernanceConfig()" style="margin-left:8px">🔄
+                  Load</button>
+              </div>
+              <div id="gov-msg" style="margin-top:8px;font-size:12px"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">📊 Current Release Readiness</div>
+              <div class="row"><label>Overall Verdict</label>
+                <span id="gov-verdict" class="b-warn">unknown</span>
+              </div>
+              <div class="row"><label>Critical Defects</label>
+                <span id="gov-critical" class="b-err">—</span>
+              </div>
+              <div class="row"><label>High Defects</label>
+                <span id="gov-high" class="b-warn">—</span>
+              </div>
+              <div class="row"><label>Rollback Ready</label>
+                <span id="gov-rollback" class="b-warn">—</span>
+              </div>
+              <div style="margin-top:10px">
+                <button class="btn-ok btn-sm" onclick="loadGovernanceStatus()">🔄 Refresh Status</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Create Verdict -->
+          <div class="card" style="margin-top:14px">
+            <div class="card-title">✍ Create Release Verdict</div>
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+              <div>
+                <label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">Scope (e.g. v2.1.0
+                  release)</label>
+                <input type="text" id="gov-scope" placeholder="v2.1.0" style="width:100%">
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">Critical Defects</label>
+                <input type="number" id="gov-crit-count" value="0" min="0" style="width:100%">
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">High Defects</label>
+                <input type="number" id="gov-high-count" value="0" min="0" style="width:100%">
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">Decision</label>
+                <select id="gov-decision" style="width:100%">
+                  <option value="pass">PASS</option>
+                  <option value="conditional_pass">CONDITIONAL PASS</option>
+                  <option value="fail">FAIL</option>
+                </select>
+              </div>
+            </div>
+            <div class="row"><label>Risk Summary</label>
+              <textarea id="gov-risk-summary" rows="2" placeholder="Summary of risks…"
+                style="flex:1;resize:vertical;font-family:inherit;font-size:12px"></textarea>
+            </div>
+            <div class="row"><label>Rollback Plan</label>
+              <textarea id="gov-rollback-plan" rows="2" placeholder="Steps to rollback if issues arise…"
+                style="flex:1;resize:vertical;font-family:inherit;font-size:12px"></textarea>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button class="btn-primary" onclick="createVerdict()">📋 Create Verdict</button>
+              <button class="btn-muted btn-sm" onclick="loadVerdicts()">🔄 Load History</button>
+            </div>
+            <div id="gov-verdict-msg" style="margin-top:8px;font-size:12px"></div>
+          </div>
+
+          <!-- Verdict History -->
+          <div class="card" style="margin-top:14px">
+            <div class="card-title">📜 Verdict History</div>
+            <div id="gov-verdict-list" style="min-height:50px">
+              <div style="color:var(--muted);font-size:12px;padding:8px 0">No verdicts yet.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main><!-- /content -->
+  </div><!-- /layout -->
+
+  <div id="toast"></div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════════════════════════════════════ -->
+  <script>
+    'use strict';
+    // ── Core API ────────────────────────────────────────────────────────────────
+    const API = {
+      runtime: '/api/runtime',
+      settings: '/api/settings',
+      hermes: '/api/hermes',
+      lmstudio: '/api/lmstudio',
+      ollama: '/api/ollama',
+      litellm: '/api/litellm',
+      healthall: '/api/healthall',
+    };
+
+    async function call(method, path, body = null) {
+      try {
+        const opts = { method, headers: { 'Content-Type': 'application/json' } };
+        if (body) opts.body = JSON.stringify(body);
+        const r = await fetch(path, opts);
+        return await r.json();
+      } catch (e) { return { error: e.message }; }
+    }
+    const GET = p => call('GET', p);
+    const POST = (p, b) => call('POST', p, b);
+    const PUT = (p, b) => call('PUT', p, b);
+
+    // ── Toast ───────────────────────────────────────────────────────────────────
+    function toast(msg, type = 'ok') {
+      const el = document.getElementById('toast');
+      const colors = { ok: 'var(--ok)', err: 'var(--danger)', warn: 'var(--warn)', info: 'var(--info)' };
+      el.textContent = msg;
+      el.style.display = 'block';
+      el.style.borderColor = colors[type] || colors.ok;
+      clearTimeout(el._t);
+      el._t = setTimeout(() => el.style.display = 'none', 3500);
+    }
+
+    function msg(id, html, type = 'ok') {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = `<div class="msg msg-${type}">${html}</div>`;
+    }
+
+    // ── Panel alias IDs (for Playwright selectors: #panel-xxx) ──────────────────
+    var _PANEL_ALIAS = {
+      overview: 'overview', bootgate: 'bootgate', lmstudio: 'lmstudio', ollama: 'ollama',
+      providers: 'providers', hermes: 'hermes', zeroclaw: 'zeroclaw', dispatch: 'dispatch',
+      settings: 'settings', ports: 'ports', queue: 'queue', evidence: 'evidence',
+      repairs: 'repairs', audit: 'audit', questions: 'questions', maintenance: 'maintenance',
+      discord: 'discord', kilocode: 'vsix',
+    };
+
+    // ── Navigation ──────────────────────────────────────────────────────────────
+    function nav(name) {
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+      const ni = document.getElementById('nav-' + name);
+      const pn = document.querySelector('.pane[data-pane-name="' + name + '"]') || document.getElementById('pane-' + name);
+      if (ni) ni.classList.add('active');
+      if (pn) pn.classList.add('active');
+      const loaders = {
+        overview: loadOverview, bootgate: bootGateCheck,
+        lmstudio: loadLmStudio, ollama: loadOllama, providers: loadProviders,
+        hermes: loadHermes, zeroclaw: loadZeroClaw,
+        dispatch: loadDispatch,
+        settings: () => { loadSettings(); loadHermesConfig(); }, ports: loadPorts, queue: () => { loadQueue(); loadEvents(); },
+        evidence: loadEvidence, repairs: loadRepairs, audit: loadAudit,
+        questions: loadQuestions, maintenance: loadMaintenance, kilocode: loadKcStatus,
+        discord: loadDiscordBots,
+        speech: loadSpeechConfig, routing: loadRoutingConfig, governance: loadGovernanceConfig,
+      };
+      if (loaders[name]) loaders[name]();
+      _syncPanelSentinels(name);
+    }
+
+    (function addPanelAliases() {
+      for (const [pane, alias] of Object.entries(_PANEL_ALIAS)) {
+        const el = document.getElementById('pane-' + pane);
+        if (el) { el.dataset.paneName = pane; el.dataset.panelAlias = alias; }
+      }
+    })();
+    function _paneEl(name) {
+      return document.querySelector('[data-pane-name="' + name + '"]') ||
+        document.getElementById('pane-' + name);
+    }
+    function _syncPanelSentinels(activePaneName) {
+      const alias = _PANEL_ALIAS[activePaneName];
+      if (!alias) return;
+      document.querySelectorAll('.pane[data-panel-alias]').forEach(el => {
+        const a = el.dataset.panelAlias;
+        const old = 'panel-' + a;
+        if (el.id === old) el.id = 'pane-' + el.dataset.paneName;
+      });
+      const activeEl = document.querySelector('.pane[data-pane-name="' + activePaneName + '"]');
+      if (activeEl) activeEl.id = 'panel-' + alias;
+    }
+
+    // ── Clock ───────────────────────────────────────────────────────────────────
+    function tick() {
+      document.getElementById('header-time').textContent =
+        new Date().toLocaleTimeString('en-US', { hour12: false });
+    }
+    setInterval(tick, 1000); tick();
+
+    // ── Dot status helper ────────────────────────────────────────────────────────
+    function setDot(id, ok) {
+      const el = document.getElementById('dot-' + id);
+      if (el) el.style.background = ok ? 'var(--ok)' : 'var(--danger)';
+    }
+    function setHBadge(id, ok, label) {
+      const el = document.getElementById('h-' + id);
+      if (!el) return;
+      el.textContent = label || id;
+      el.style.background = ok ? '#14532d' : '#7f1d1d';
+      el.style.color = ok ? 'var(--ok)' : 'var(--danger)';
+    }
+
+    // ── Full health sweep ────────────────────────────────────────────────────────
+    let _healthCache = {};
+    async function sweepHealth() {
+      const data = await GET(API.healthall);
+      _healthCache = data;
+      const services = {
+        runtime: { dot: 'runtime', badge: 'runtime' },
+        settings: { dot: 'settings' },
+        hermes: { dot: 'hermes', badge: 'hermes' },
+        lmstudio: { dot: 'lms', badge: 'lmstudio' },
+        ollama: { dot: 'ollama' },
+        litellm: { dot: 'litellm' },
+      };
+      let anyDown = false;
+      Object.entries(services).forEach(([svc, cfg]) => {
+        const ok = data[svc]?.ok;
+        if (!ok) anyDown = true;
+        setDot(cfg.dot, ok);
+        if (cfg.badge) setHBadge(cfg.badge, ok, cfg.badge === 'lmstudio' ? 'LM Studio' : cfg.badge);
+      });
+      return { data, anyDown };
+    }
+
+    // ── Overview ─────────────────────────────────────────────────────────────────
+    async function loadOverview() {
+      const { data, anyDown } = await sweepHealth();
+
+      // Stat cards
+      const rt = data.runtime;
+      document.getElementById('ov-runtime').innerHTML = rt?.ok
+        ? '<span class="ok">Healthy</span>' : '<span class="err">Down</span>';
+      document.getElementById('ov-hermes').innerHTML = data.hermes?.ok
+        ? '<span class="ok">Healthy</span>' : '<span class="err">Down</span>';
+      document.getElementById('ov-lms').innerHTML = data.lmstudio?.ok
+        ? '<span class="gpu">Online</span>' : '<span class="warn">Offline</span>';
+      document.getElementById('ov-lms-sub').textContent = data.lmstudio?.ok
+        ? 'GPU Active' : 'RTX 3090Ti · 700GB models';
+
+      // Mode
+      const state = await GET(API.settings + '/settings/state');
+      const mode = state?.canonical?.mode || state?.mode || '—';
+      document.getElementById('ov-mode').textContent = mode;
+      document.getElementById('h-mode').textContent = mode;
+      document.getElementById('header-mode').textContent = 'mode: ' + mode;
+
+      // Health matrix table
+      const rows = [
+        { n: 'kilocode-runtime', port: 8081, svc: 'runtime' },
+        { n: 'kilocode-settings', port: 8082, svc: 'settings' },
+        { n: 'kilocode-hermes', port: 8091, svc: 'hermes' },
+        { n: 'LM Studio', port: 1234, svc: 'lmstudio' },
+        { n: 'Ollama', port: 11434, svc: 'ollama' },
+        { n: 'LiteLLM', port: 4000, svc: 'litellm' },
+        { n: 'NATS', port: 4222, svc: null },
+      ];
+      const tbody = document.getElementById('ov-health-body');
+      tbody.innerHTML = rows.map(r => {
+        const ok = r.svc ? data[r.svc]?.ok : null;
+        const status = ok === true ? '<span class="b-ok">healthy</span>'
+          : ok === false ? '<span class="b-err">down</span>'
+            : '<span class="b-warn">unknown</span>';
+        const lat = data[r.svc]?.data?.latency_ms || '—';
+        return `<tr>
+      <td>${r.n}</td>
+      <td style="font-size:11px;color:var(--muted)">:${r.port}</td>
+      <td>${status}</td>
+      <td style="color:var(--muted);font-size:11px">${lat}ms</td>
+      <td><button class="btn-muted btn-sm" onclick="pingService('${r.svc || r.n}','${r.port}')">Ping</button></td>
+    </tr>`;
+      }).join('');
+
+      // LM Studio overview
+      const lmsD = data.lmstudio?.data;
+      if (lmsD && !lmsD.error && lmsD.data) {
+        const models = lmsD.data || [];
+        document.getElementById('lms-status-ov').innerHTML = '<span class="b-ok">Online</span>';
+        document.getElementById('lms-model-ov').textContent = models[0]?.id || 'none loaded';
+      } else {
+        document.getElementById('lms-status-ov').innerHTML = '<span class="b-warn">Offline / No response</span>';
+        document.getElementById('lms-model-ov').textContent = '—';
+      }
+
+      // Ollama overview
+      const olD = data.ollama?.data;
+      if (olD && !olD.error && olD.models) {
+        document.getElementById('ollama-status-ov').innerHTML = '<span class="b-ok">Online</span>';
+        const names = (olD.models || []).slice(0, 5).map(m => m.name).join(', ');
+        document.getElementById('ollama-models-ov').innerHTML =
+          `<span style="color:var(--model);font-size:11px">${names || 'no models'}</span>`;
+      } else {
+        document.getElementById('ollama-status-ov').innerHTML = '<span class="b-warn">Offline</span>';
+      }
+
+      // LiteLLM overview
+      document.getElementById('litellm-status-ov').innerHTML = data.litellm?.ok
+        ? '<span class="b-ok">Online</span>' : '<span class="b-warn">Offline</span>';
+    }
+
+    // ── Boot Gate ─────────────────────────────────────────────────────────────────
+    const BOOT_CHECKS = [
+      { id: 'runtime', label: 'Runtime Core (8081)', svc: 'runtime' },
+      { id: 'settings', label: 'Settings Service (8082)', svc: 'settings' },
+      { id: 'hermes', label: 'Hermes Agent (8091)', svc: 'hermes' },
+      { id: 'nats', label: 'NATS Event Bus (4222)', svc: null },
+      { id: 'lms', label: 'LM Studio (1234)', svc: 'lmstudio' },
+      { id: 'ollama', label: 'Ollama (11434)', svc: 'ollama' },
+      { id: 'litellm', label: 'LiteLLM Proxy (4000)', svc: 'litellm' },
+      { id: 'settings-q', label: 'Required Questions', svc: null },
+    ];
+
+    async function bootGateCheck() {
+      hideSafemode();
+      // Reset
+      BOOT_CHECKS.forEach(c => {
+        const el = document.getElementById('bc-' + c.id);
+        if (el) { el.querySelector('.boot-icon').textContent = '⏳'; el.style.borderColor = 'var(--border)'; }
+        const bs = document.getElementById('bs-' + c.id);
+        if (bs) bs.innerHTML = 'checking…';
+      });
+      document.getElementById('bg-icon').textContent = '⏳';
+      document.getElementById('bg-title').textContent = 'Running checks…';
+      document.getElementById('bg-sub').textContent = '';
+      document.getElementById('bg-issues').innerHTML = '';
+
+      const health = await GET(API.healthall);
+      const questions = await GET(API.settings + '/settings/questions');
+      const unansweredRequired = Array.isArray(questions)
+        ? questions.filter(q => q.required && !q.answered).length : 0;
+
+      let fails = [];
+      BOOT_CHECKS.forEach(c => {
+        let ok = false;
+        if (c.id === 'settings-q') {
+          ok = unansweredRequired === 0;
+        } else if (c.svc && health[c.svc] !== undefined) {
+          ok = health[c.svc].ok === true;
+        } else {
+          ok = true; // NATS: assume ok if runtime is up
+        }
+        const el = document.getElementById('bc-' + c.id);
+        const bs = document.getElementById('bs-' + c.id);
+        if (el) {
+          el.querySelector('.boot-icon').textContent = ok ? '✅' : '❌';
+          el.style.borderColor = ok ? 'var(--ok)' : 'var(--danger)';
+        }
+        if (bs) bs.innerHTML = ok
+          ? '<span class="b-ok">PASS</span>'
+          : (c.id === 'settings-q'
+            ? `<span class="b-err">${unansweredRequired} unanswered</span>`
+            : '<span class="b-err">FAIL</span>');
+        if (!ok) fails.push(c.label);
+      });
+
+      const passed = fails.length === 0;
+      document.getElementById('bg-icon').textContent = passed ? '✅' : '🚨';
+      document.getElementById('bg-title').textContent = passed ? 'ALL CHECKS PASS' : 'FAILURES DETECTED';
+      document.getElementById('bg-sub').textContent = passed
+        ? 'System is healthy — normal operations unlocked'
+        : `${fails.length} critical check(s) failed`;
+      if (!passed && !health.error) {
+        document.getElementById('bg-issues').innerHTML = fails.map(f =>
+          `<div class="msg msg-err">❌ ${f}</div>`).join('');
+        showSafemode(fails.join('; '));
+      } else {
+        hideSafemode();
+        msg('boot-gate-result', 'All boot checks passed ✅', 'ok');
+        const badge = document.getElementById('boot-badge');
+        if (badge) badge.style.display = 'none';
+      }
+      return passed;
+    }
+
+    function showSafemode(reason) {
+      const b = document.getElementById('safemode-banner');
+      b.classList.add('show');
+      document.getElementById('safemode-reason').textContent = '— ' + reason;
+      document.getElementById('boot-badge').style.display = '';
+    }
+    function hideSafemode() {
+      document.getElementById('safemode-banner').classList.remove('show');
+    }
+    function dismissSafemode() {
+      document.getElementById('safemode-banner').classList.remove('show');
+    }
+
+    async function pingService(svc, port) {
+      toast(`Pinging ${svc}:${port}…`, 'info');
+      await sweepHealth();
+      toast(`Ping complete — check dots`, 'ok');
+    }
+
+    // ── LM Studio ─────────────────────────────────────────────────────────────────
+    async function loadLmStudio() {
+      const data = await GET(API.lmstudio + '/v1/models');
+      const list = document.getElementById('lms-models-list');
+      if (data.error || !data.data) {
+        list.innerHTML = `<div class="msg msg-warn">LM Studio not reachable at localhost:1234 — is it running?<br><small>${data.error || ''}</small></div>`;
+        document.getElementById('lms-active-model').textContent = 'Offline';
+        return;
+      }
+      const models = data.data || [];
+      document.getElementById('lms-active-model').textContent = models[0]?.id || 'None loaded';
+      document.getElementById('lms-context').textContent = models[0]?.context_window
+        ? `${models[0].context_window} ctx` : 'RTX 3090Ti · GPU ready';
+      list.innerHTML = models.length ? models.map(m => `
+    <div class="model-item" onclick="selectLmsModel('${m.id}')">
+      <span class="model-name">${m.id}</span>
+      <span class="model-type">${m.object || 'model'}</span>
+      <span class="b-gpu">GPU</span>
+    </div>`).join('')
+        : '<div class="msg msg-warn">No models currently loaded in LM Studio. Load a model first.</div>';
+    }
+
+    function selectLmsModel(id) {
+      document.getElementById('lms-test-model').value = id;
+      toast('Model selected: ' + id);
+    }
+
+    async function lmsInfer() {
+      const model = document.getElementById('lms-test-model').value.trim();
+      const prompt = document.getElementById('lms-prompt').value.trim();
+      const temp = parseFloat(document.getElementById('lms-temp').value) || 0.7;
+      const maxTok = parseInt(document.getElementById('lms-max-tokens').value) || 256;
+      if (!prompt) { toast('Enter a prompt', 'warn'); return; }
+      msg('lms-infer-result', '⏳ Running inference on RTX 3090Ti…', 'info');
+      const body = {
+        model: model || undefined,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: temp, max_tokens: maxTok, stream: false,
+      };
+      const r = await POST(API.lmstudio + '/v1/chat/completions', body);
+      const resultEl = document.getElementById('lms-infer-result');
+      if (r.error) {
+        resultEl.innerHTML = `<div class="msg msg-err">${r.error}</div>`;
+      } else {
+        const content = r.choices?.[0]?.message?.content || JSON.stringify(r);
+        resultEl.innerHTML = `<pre>${escHtml(content)}</pre>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">
+        Tokens: ${r.usage?.total_tokens || '—'} · Model: ${r.model || model}
+      </div>`;
+        toast('Inference complete ✓', 'ok');
+      }
+    }
+
+    async function saveLmsUrl() {
+      const url = document.getElementById('lms-url').value.trim();
+      if (!url) return;
+      await POST(API.settings + '/settings/apply', { settings: { 'providers.lmstudio.base_url': url }, changed_by: 'user' });
+      toast('LM Studio URL saved', 'ok');
+    }
+
+    async function testLmsViaLiteLLM() {
+      msg('lms-infer-result', '⏳ Testing via LiteLLM proxy…', 'info');
+      const r = await GET(API.litellm + '/health');
+      msg('lms-infer-result', r.error ? `LiteLLM error: ${r.error}` : `LiteLLM OK: ${JSON.stringify(r)}`, r.error ? 'err' : 'ok');
+    }
+
+    // ── Ollama ────────────────────────────────────────────────────────────────────
+    async function loadOllama() {
+      const data = await GET(API.ollama + '/api/tags');
+      const list = document.getElementById('ollama-models-list');
+      if (data.error || !data.models) {
+        list.innerHTML = `<div class="msg msg-warn">Ollama not reachable — ${data.error || 'no response'}</div>`;
+        return;
+      }
+      const models = data.models || [];
+      list.innerHTML = models.length ? models.map(m => `
+    <div class="model-item" onclick="selectOllamaModel('${m.name}')">
+      <span class="model-name">${m.name}</span>
+      <span class="model-size">${fmtSize(m.size)}</span>
+      <span class="b-mod">ollama</span>
+    </div>`).join('')
+        : '<div class="msg msg-info">No models installed. Pull one below.</div>';
+    }
+
+    function selectOllamaModel(name) {
+      document.getElementById('ollama-test-model').value = name;
+      toast('Selected: ' + name);
+    }
+
+    async function ollamaPull() {
+      const name = document.getElementById('ollama-pull-name').value.trim();
+      if (!name) { toast('Enter model name', 'warn'); return; }
+      msg('ollama-pull-msg', `⏳ Pulling ${name}…`, 'info');
+      const r = await POST(API.ollama + '/api/pull', { name });
+      msg('ollama-pull-msg', r.error ? `Error: ${r.error}` : `Pull started: ${JSON.stringify(r)}`, r.error ? 'err' : 'ok');
+    }
+
+    async function ollamaInfer() {
+      const model = document.getElementById('ollama-test-model').value.trim();
+      const prompt = document.getElementById('ollama-prompt').value.trim();
+      if (!prompt || !model) { toast('Enter model and prompt', 'warn'); return; }
+      msg('ollama-infer-result', '⏳ Running…', 'info');
+      const r = await POST(API.ollama + '/api/generate', { model, prompt, stream: false });
+      const el = document.getElementById('ollama-infer-result');
+      if (r.error) el.innerHTML = `<div class="msg msg-err">${r.error}</div>`;
+      else el.innerHTML = `<pre>${escHtml(r.response || JSON.stringify(r))}</pre>`;
+    }
+
+    // ── Providers ──────────────────────────────────────────────────────────────────
+    async function loadProviders() {
+      const { data } = await sweepHealth();
+      const plist = [
+        { id: 'lmstudio', name: 'LM Studio', url: 'localhost:1234', pri: 1, gpu: true },
+        { id: 'ollama', name: 'Ollama', url: 'localhost:11434', pri: 2 },
+        { id: 'litellm', name: 'LiteLLM', url: 'localhost:4000', pri: 3 },
+        { id: 'minimax', name: 'MiniMax', url: 'api.minimaxi.com', pri: 4 },
+      ];
+      const tbody = document.getElementById('providers-body');
+      tbody.innerHTML = plist.map(p => {
+        const ok = data[p.id]?.ok;
+        const status = ok ? '<span class="b-ok">healthy</span>' : ok === false ? '<span class="b-err">down</span>' : '<span class="b-warn">unknown</span>';
+        const circuit = ok ? '<span class="b-ok">closed</span>' : '<span class="b-err">open</span>';
+        return `<tr>
+      <td>${p.name}${p.gpu ? ' <span class="b-gpu">GPU</span>' : ''}</td>
+      <td style="font-size:11px;color:var(--muted)">${p.url}</td>
+      <td>${status}</td>
+      <td style="color:var(--muted);font-size:11px">—</td>
+      <td>${circuit}</td>
+      <td style="color:var(--muted)">${p.pri}</td>
+      <td><button class="btn-muted btn-sm" onclick="toast('Testing ${p.name}…','info')">Test</button></td>
+    </tr>`;
+      }).join('');
+    }
+
+    async function forceFailover() {
+      const prov = document.getElementById('fo-provider').value;
+      msg('fo-result', `⏳ Triggering failover test for ${prov}…`, 'info');
+      const r = await POST(API.runtime + '/events', {
+        type: 'provider.failover.test', payload: { provider: prov, reason: 'manual_test' }
+      });
+      msg('fo-result', r.error ? `Error: ${r.error}` : `Failover event published. Monitor circuit breaker in provider table.`, r.error ? 'err' : 'ok');
+      setTimeout(loadProviders, 2000);
+    }
+
+    // ── Hermes ────────────────────────────────────────────────────────────────────
+    async function loadHermes() {
+      const r = await GET(API.hermes + '/health');
+      document.getElementById('hermes-stat').innerHTML = r.error
+        ? '<span class="err">Down</span>' : '<span class="ok">Healthy</span>';
+      const state = await GET(API.settings + '/settings/state');
+      const hermesConf = state?.canonical?.hermes || {};
+      document.getElementById('hermes-intake-mode').textContent = hermesConf.intake_mode || 'standard';
+      document.getElementById('hermes-queue').textContent = '0'; // would come from real NATS
+    }
+
+    async function hermesRepair() { const r = await POST(API.settings + '/settings/repair', { changed_by: 'hermes' }); logHermes('repair', r); }
+    async function hermesValidate() { const r = await POST(API.settings + '/settings/validate', {}); logHermes('validate', r); }
+    async function hermesAutofill() { const r = await POST(API.settings + '/settings/auto-fill', {}); logHermes('autofill', r); }
+    async function hermesTestIntake() {
+      const r = await POST(API.hermes + '/intake', { task_type: 'shell', description: 'echo hermes-test', evidence: [] });
+      logHermes('intake', r);
+    }
+
+    function logHermes(action, data) {
+      const box = document.getElementById('hermes-log');
+      const line = document.createElement('div');
+      line.className = 'log-line ' + (data.error ? 'log-err' : 'log-ok');
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${action}: ${JSON.stringify(data).slice(0, 120)}`;
+      box.insertBefore(line, box.firstChild);
+      msg('hermes-action-msg', data.error ? `Error: ${data.error}` : `${action} complete`, data.error ? 'err' : 'ok');
+      toast(action + ' done', data.error ? 'err' : 'ok');
+    }
+
+    async function applyHermesConfig() {
+      const mode = document.getElementById('hermes-intake-sel').value;
+      const r = await POST(API.settings + '/settings/apply', { settings: { 'hermes.intake_mode': mode }, changed_by: 'user' });
+      msg('hermes-config-msg', r.error ? `Error: ${r.error}` : `Intake mode set to ${mode}`, r.error ? 'err' : 'ok');
+    }
+
+    // ── ZeroClaw ─────────────────────────────────────────────────────────────────
+    async function loadZeroClaw() {
+      const r = await call(API.settings + '/kilocode/zeroclaw');
+      if (!r.error) {
+        const en = document.getElementById('zc-enabled');
+        const aa = document.getElementById('zc-auto-approve');
+        if (en) en.checked = !!r.enabled;
+        if (aa && r.autoApproveLevel) aa.value = r.autoApproveLevel;
+        const s = document.getElementById('zc-status');
+        if (s) { s.textContent = r.enabled ? 'enabled' : 'disabled'; s.className = 'stat-val ' + (r.enabled ? 'ok' : 'err'); }
+      }
+      await zcRefresh();
+    }
+
+    async function zcRefresh() {
+      const r = await call(API.settings + '/kilocode/zeroclaw/tasks');
+      const list = document.getElementById('zc-task-list');
+      if (!list) return;
+      const tasks = r.tasks || r || [];
+      if (!Array.isArray(tasks) || tasks.length === 0) {
+        list.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:10px 0">No tasks in queue.</div>';
+        ['zc-queued', 'zc-running', 'zc-blocked'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '0'; });
+        return;
+      }
+      document.getElementById('zc-queued').textContent = tasks.filter(t => t.status === 'queued').length;
+      document.getElementById('zc-running').textContent = tasks.filter(t => t.status === 'running').length;
+      document.getElementById('zc-blocked').textContent = tasks.filter(t => t.status === 'blocked').length;
+      const RISK_COLOR = { low: 'b-ok', medium: 'b-warn', high: 'b-err' };
+      const STATUS_COLOR = { queued: 'b-info', running: 'b-warn', completed: 'b-ok', failed: 'b-err', blocked: 'b-err' };
+      list.innerHTML = tasks.map(t => `
+        <div style="border:1px solid var(--border);border-radius:4px;padding:10px 12px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span class="${STATUS_COLOR[t.status] || 'b-warn'}">${t.status}</span>
+            <span class="${RISK_COLOR[t.riskLevel] || 'b-warn'}">${t.riskLevel || '?'}</span>
+            <span style="flex:1;font-size:12px;font-weight:600">${esc(t.description || '—')}</span>
+            <span style="font-size:11px;color:var(--muted)">${t.taskId ? t.taskId.slice(0, 8) : ''}</span>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">${esc(t.projectPath || '')}</div>
+          ${t.status === 'blocked' ? `
+            <div style="background:var(--card-bg,#1a1a1a);border:1px solid var(--warn);border-radius:3px;padding:8px;margin-bottom:6px">
+              <div style="font-size:11px;font-weight:600;color:var(--warn);margin-bottom:4px">⚠ Waiting for approval</div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input type="text" id="zc-approver-${t.taskId}" placeholder="Approver name" style="flex:1;font-size:12px">
+                <input type="text" id="zc-reason-${t.taskId}" placeholder="Reason (optional)" style="flex:1;font-size:12px">
+                <button class="btn-ok btn-sm" onclick="zcApprove('${t.taskId}')">✓ Approve</button>
+                <button class="btn-err btn-sm" onclick="zcReject('${t.taskId}')">✗ Reject</button>
+              </div>
+            </div>` : ''}
+          ${t.status === 'running' || t.status === 'queued' ? `<button class="btn-warn btn-sm" onclick="zcCancel('${t.taskId}')">⛔ Cancel</button>` : ''}
+          ${t.status === 'failed' ? `<button class="btn-muted btn-sm" onclick="zcRetry('${t.taskId}')">🔁 Retry</button>` : ''}
+          ${(t.logs || []).length ? `<details style="margin-top:6px"><summary style="font-size:11px;cursor:pointer;color:var(--muted)">Logs (${t.logs.length})</summary><pre style="font-size:10px;max-height:100px;overflow-y:auto;margin:4px 0 0">${esc(t.logs.join('\n'))}</pre></details>` : ''}
+        </div>`).join('');
+    }
+
+    async function zcSubmit() {
+      const desc = (document.getElementById('zc-desc').value || '').trim();
+      const path = (document.getElementById('zc-path').value || '').trim();
+      if (!desc || !path) { msg('zc-submit-msg', 'Description and Project Path are required', 'err'); return; }
+      const body = {
+        description: desc, projectPath: path,
+        riskLevel: document.getElementById('zc-risk').value,
+        networkPolicy: document.getElementById('zc-net').value,
+        writePolicy: document.getElementById('zc-write').value,
+        workspaceScope: (document.getElementById('zc-scope').value || '').split(',').map(s => s.trim()).filter(Boolean),
+        limits: {
+          timeoutSec: parseInt(document.getElementById('zc-timeout').value) || 300,
+          memoryMb: parseInt(document.getElementById('zc-mem').value) || 512,
+          cpu: parseFloat(document.getElementById('zc-cpu').value) || 1
+        }
+      };
+      const r = await POST(API.settings + '/kilocode/zeroclaw/tasks', body);
+      if (r.error) { msg('zc-submit-msg', 'Error: ' + r.error, 'err'); return; }
+      msg('zc-submit-msg', 'Task submitted: ' + (r.taskId || 'ok'), 'ok');
+      document.getElementById('zc-desc').value = '';
+      await zcRefresh();
+    }
+
+    async function zcApprove(taskId) {
+      const approver = (document.getElementById('zc-approver-' + taskId) || {}).value || 'WebUI';
+      const reason = (document.getElementById('zc-reason-' + taskId) || {}).value || '';
+      const r = await POST(API.settings + '/kilocode/zeroclaw/tasks/' + taskId + '/approve', { approver, reason });
+      toast(r.error ? 'Approve failed: ' + r.error : 'Task approved', r.error ? 'err' : 'ok');
+      await zcRefresh();
+    }
+
+    async function zcReject(taskId) {
+      const reason = (document.getElementById('zc-reason-' + taskId) || {}).value || 'Rejected via WebUI';
+      const r = await POST(API.settings + '/kilocode/zeroclaw/tasks/' + taskId + '/reject', { reason });
+      toast(r.error ? 'Reject failed: ' + r.error : 'Task rejected', r.error ? 'err' : 'ok');
+      await zcRefresh();
+    }
+
+    async function zcCancel(taskId) {
+      const r = await POST(API.settings + '/kilocode/zeroclaw/tasks/' + taskId + '/cancel', {});
+      toast(r.error ? 'Cancel failed: ' + r.error : 'Task cancelled', r.error ? 'err' : 'ok');
+      await zcRefresh();
+    }
+
+    async function zcRetry(taskId) {
+      const r = await POST(API.settings + '/kilocode/zeroclaw/tasks/' + taskId + '/retry', {});
+      toast(r.error ? 'Retry failed: ' + r.error : 'Task queued for retry', r.error ? 'err' : 'ok');
+      await zcRefresh();
+    }
+
+    async function zcSetEnabled(val) {
+      const r = await POST(API.settings + '/kilocode/zeroclaw/config', { enabled: val });
+      toast(r.error ? 'Save failed: ' + r.error : 'ZeroClaw ' + (val ? 'enabled' : 'disabled'), r.error ? 'err' : 'ok');
+    }
+
+    async function zcSetAutoApprove(val) {
+      const r = await POST(API.settings + '/kilocode/zeroclaw/config', { autoApproveLevel: val });
+      toast(r.error ? 'Save failed: ' + r.error : 'Auto-approve level saved', r.error ? 'err' : 'ok');
+    }
+
+    async function zcTest() {
+      const adapter = document.getElementById('zc-test-adapter').value;
+      const cmd = document.getElementById('zc-test-cmd').value.trim() || 'echo zc-test';
+      msg('zc-test-result', '⏳ Dispatching to ZeroClaw…', 'info');
+      const r = await POST(API.hermes + '/intake', { task_type: adapter, description: cmd, evidence: [] });
+      msg('zc-test-result', r.error ? `Error: ${r.error}` : `Task: ${r.task_id || 'accepted'} | ${r.status || 'dispatched'}`, r.error ? 'err' : 'ok');
+    }
+
+    // ── Dispatch ──────────────────────────────────────────────────────────────────
+    function addTermLine(text, cls = 'term-out') {
+      const term = document.getElementById('dispatch-terminal');
+      const line = document.createElement('div');
+      line.className = 'term-line';
+      line.innerHTML = `<span class="term-prompt">hub &gt; </span><span class="${cls}">${escHtml(text)}</span>`;
+      term.appendChild(line);
+      term.scrollTop = term.scrollHeight;
+    }
+
+    async function dispatchTask() {
+      const agent = document.getElementById('disp-agent').value;
+      const type = document.getElementById('disp-type').value;
+      const desc = document.getElementById('disp-desc').value.trim();
+      const model = document.getElementById('disp-model').value.trim();
+      let evidence = [];
+      try { evidence = JSON.parse(document.getElementById('disp-evidence').value || '[]'); } catch (e) { }
+      if (!desc) { toast('Enter a description', 'warn'); return; }
+      addTermLine(`dispatching ${type} task to ${agent}: "${desc}"`, 'term-prompt');
+      const body = { task_type: type, description: desc, evidence, model: model || undefined };
+      const r = await POST(API.hermes + '/intake', body);
+      addTermLine(JSON.stringify(r, null, 2), r.error ? 'term-err' : 'term-out');
+      msg('disp-result', r.error ? `Error: ${r.error}` : `Dispatched ✓ task_id: ${r.task_id || 'n/a'}`, r.error ? 'err' : 'ok');
+    }
+
+    async function dispatchDryRun() {
+      const type = document.getElementById('disp-type').value;
+      const desc = document.getElementById('disp-desc').value.trim() || '(no description)';
+      addTermLine(`[DRY RUN] Would dispatch: type=${type} desc="${desc}"`, 'term-prompt');
+      addTermLine('No actual dispatch performed.', 'term-out');
+      toast('Dry run complete', 'info');
+    }
+
+    function preset(type, desc) {
+      document.getElementById('disp-type').value = type;
+      document.getElementById('disp-desc').value = desc;
+      nav('dispatch');
+      toast('Preset loaded — hit Dispatch', 'info');
+    }
+
+    function clearTerminal() {
+      const t = document.getElementById('dispatch-terminal');
+      t.innerHTML = '<div class="term-line"><span class="term-prompt">hub &gt; </span><span class="term-out">Terminal cleared.</span></div>';
+    }
+    function copyTerminal() {
+      const t = document.getElementById('dispatch-terminal');
+      navigator.clipboard?.writeText(t.innerText || t.textContent);
+      toast('Terminal copied', 'ok');
+    }
+
+    async function loadDispatch() { /* dispatch panel loads its own terminal state */ }
+
+    // ── Speech ────────────────────────────────────────────────────────────────────
+    function spShowProvider(val) {
+      ['openai', 'elevenlabs', 'azure', 'google', 'polly'].forEach(p => {
+        const el = document.getElementById('sp-card-' + p);
+        if (el) el.style.display = (p === val) ? '' : 'none';
+      });
+    }
+
+    function _spBind(id, handler) {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', () => handler(el));
+    }
+
+    async function loadSpeechConfig() {
+      const r = await call(API.settings + '/kilocode/speech');
+      if (r.error) return;
+      const set = (id, v) => { const el = document.getElementById(id); if (el && v !== undefined) { if (el.type === 'checkbox') el.checked = !!v; else el.value = v; } };
+      set('sp-enabled', r.enabled); set('sp-provider', r.provider); set('sp-volume', r.volume ?? 80);
+      set('sp-autospeak', r.autoSpeak); set('sp-interrupt', r.interruptOnType); set('sp-multivoice', r.multiVoiceMode);
+      set('sp-interaction', r.interactionMode); set('sp-debug', r.debugMode);
+      const t = r.tuning || {};
+      set('sp-rate', (t.rate || 1) * 100); set('sp-pitch', t.pitch ?? 0); set('sp-sentiment', r.sentimentIntensity ?? 50);
+      set('sp-sentpause', t.sentencePause ?? 200); set('sp-parabr', t.paragraphBreak ?? 500);
+      set('sp-audioformat', t.audioFormat || 'mp3'); set('sp-style', t.style || ''); set('sp-styledeg', (t.styleDegree || 1) * 100);
+      set('sp-openai-key', (r.openai || {}).apiKey || ''); set('sp-elevenlabs-key', (r.elevenlabs || {}).apiKey || '');
+      set('sp-azure-key', (r.azure || {}).apiKey || ''); set('sp-azure-region', (r.azure || {}).region || ''); set('sp-azure-voice', (r.azure || {}).voiceId || '');
+      set('sp-google-key', (r.google || {}).apiKey || ''); set('sp-polly-access', (r.polly || {}).accessKeyId || '');
+      set('sp-polly-secret', (r.polly || {}).secretAccessKey || ''); set('sp-polly-region', (r.polly || {}).region || '');
+      if (r.provider) spShowProvider(r.provider);
+      document.getElementById('sp-volume-val').textContent = r.volume ?? 80;
+      document.getElementById('sp-rate-val').textContent = ((t.rate || 1)).toFixed(1) + '×';
+      document.getElementById('sp-pitch-val').textContent = (t.pitch ?? 0) + '%';
+      document.getElementById('sp-sentiment-val').textContent = r.sentimentIntensity ?? 50;
+      document.getElementById('sp-styledeg-val').textContent = (t.styleDegree || 1).toFixed(1) + '×';
+    }
+
+    async function saveSpeechConfig() {
+      const get = id => { const el = document.getElementById(id); return el ? (el.type === 'checkbox' ? el.checked : el.value) : undefined; };
+      const body = {
+        enabled: get('sp-enabled'), provider: get('sp-provider'), volume: +get('sp-volume'),
+        autoSpeak: get('sp-autospeak'), interruptOnType: get('sp-interrupt'), multiVoiceMode: get('sp-multivoice'),
+        interactionMode: get('sp-interaction'), debugMode: get('sp-debug'), sentimentIntensity: +get('sp-sentiment'),
+        tuning: {
+          rate: +get('sp-rate') / 100, pitch: +get('sp-pitch'), sentencePause: +get('sp-sentpause'),
+          paragraphBreak: +get('sp-parabr'), audioFormat: get('sp-audioformat'), style: get('sp-style'),
+          styleDegree: +get('sp-styledeg') / 100
+        },
+        openai: { apiKey: get('sp-openai-key') }, elevenlabs: { apiKey: get('sp-elevenlabs-key') },
+        azure: { apiKey: get('sp-azure-key'), region: get('sp-azure-region'), voiceId: get('sp-azure-voice') },
+        google: { apiKey: get('sp-google-key') },
+        polly: { accessKeyId: get('sp-polly-access'), secretAccessKey: get('sp-polly-secret'), region: get('sp-polly-region') }
+      };
+      const r = await POST(API.settings + '/kilocode/speech', body);
+      msg('speech-msg', r.error ? 'Error: ' + r.error : 'Speech settings saved', r.error ? 'err' : 'ok');
+      toast(r.error ? 'Save failed' : 'Speech saved', r.error ? 'err' : 'ok');
+    }
+
+    async function testSpeech() {
+      const r = await POST(API.settings + '/kilocode/speech/test', { text: 'Hello from ContractKit WebUI' });
+      msg('speech-msg', r.error ? 'Test failed: ' + r.error : 'Test audio triggered', r.error ? 'err' : 'ok');
+    }
+
+    // ── Routing / Workstation ─────────────────────────────────────────────────────
+    async function loadRoutingConfig() {
+      const r = await call(API.settings + '/kilocode/routing');
+      if (r.error) return;
+      const set = (id, v) => { const el = document.getElementById(id); if (el && v !== undefined) { if (el.type === 'checkbox') el.checked = !!v; else el.value = v; } };
+      set('rt-mode', r.mode); set('rt-cost', r.costThreshold ?? 0.05); set('rt-privacy', r.privacyMode);
+      const ws = r.workstation || {};
+      set('ws-name', ws.name); set('ws-gpu', (ws.hardware || {}).gpu?.model); set('ws-vram', (ws.hardware || {}).gpu?.vramGb ?? 0);
+      set('ws-ram', (ws.hardware || {}).ramGb ?? 0); set('ws-maxgpu', (ws.limits || {}).maxGpuMemoryMb ?? 0);
+      set('ws-parallel', (ws.limits || {}).maxParallelJobs ?? 4);
+      const ml = ws.modelLibrary || {};
+      set('ml-lmstudio', ml.lmStudioModelsPath); set('ml-ollama', ml.ollamaModelsPath);
+      set('ml-comfyui', ml.comfyuiModelsPath); set('ml-lora', ml.loraPath);
+      set('ml-media', ml.mediaModelsPath); set('ml-total', ml.totalEstimatedSizeGb ?? 0);
+      set('rt-claudecompat', r.claudeCodeCompat); set('rt-timeline', r.showTaskTimeline);
+    }
+
+    async function saveRoutingConfig() {
+      const get = id => { const el = document.getElementById(id); return el ? (el.type === 'checkbox' ? el.checked : el.value) : undefined; };
+      const r = await POST(API.settings + '/kilocode/routing', { mode: get('rt-mode'), costThreshold: +get('rt-cost'), privacyMode: get('rt-privacy') });
+      msg('rt-msg', r.error ? 'Error: ' + r.error : 'Routing saved', r.error ? 'err' : 'ok');
+    }
+
+    async function saveWorkstationConfig() {
+      const get = id => { const el = document.getElementById(id); return el ? el.value : undefined; };
+      const body = { workstation: { name: get('ws-name'), hardware: { gpu: { model: get('ws-gpu'), vramGb: +get('ws-vram') }, ramGb: +get('ws-ram') }, limits: { maxGpuMemoryMb: +get('ws-maxgpu'), maxParallelJobs: +get('ws-parallel') } } };
+      const r = await POST(API.settings + '/kilocode/workstation', body);
+      msg('ws-msg', r.error ? 'Error: ' + r.error : 'Hardware profile saved', r.error ? 'err' : 'ok');
+    }
+
+    async function saveModelLibrary() {
+      const get = id => document.getElementById(id)?.value;
+      const body = { lmStudioModelsPath: get('ml-lmstudio'), ollamaModelsPath: get('ml-ollama'), comfyuiModelsPath: get('ml-comfyui'), loraPath: get('ml-lora'), mediaModelsPath: get('ml-media'), totalEstimatedSizeGb: +get('ml-total') };
+      const r = await POST(API.settings + '/kilocode/workstation/modellibrary', body);
+      msg('ml-msg', r.error ? 'Error: ' + r.error : 'Model paths saved', r.error ? 'err' : 'ok');
+    }
+
+    // ── Memory & Training ─────────────────────────────────────────────────────────
+    async function loadMemoryTraining() {
+      const r = await call(API.settings + '/kilocode/memory');
+      if (r.error) return;
+      const set = (id, v) => { const el = document.getElementById(id); if (el && v !== undefined) { if (el.type === 'checkbox') el.checked = !!v; else el.value = v; } };
+      set('mem-enabled', r.enabled); set('mem-endpoint', r.endpoint);
+      set('train-enabled', r.trainingEnabled); set('rt-claudecompat', r.claudeCodeCompat); set('rt-timeline', r.showTaskTimeline);
+    }
+
+    async function saveMemoryTraining() {
+      const get = id => { const el = document.getElementById(id); return el ? (el.type === 'checkbox' ? el.checked : el.value) : undefined; };
+      const r = await POST(API.settings + '/kilocode/memory', { enabled: get('mem-enabled'), endpoint: get('mem-endpoint'), trainingEnabled: get('train-enabled'), claudeCodeCompat: get('rt-claudecompat'), showTaskTimeline: get('rt-timeline') });
+      msg('mem-msg', r.error ? 'Error: ' + r.error : 'Memory/Training settings saved', r.error ? 'err' : 'ok');
+    }
+
+    // ── Governance ────────────────────────────────────────────────────────────────
+    async function loadGovernanceConfig() {
+      const r = await call(API.settings + '/kilocode/governance');
+      if (r.error) return;
+      const set = (id, v) => { const el = document.getElementById(id); if (el && v !== undefined) { if (el.type === 'checkbox') el.checked = !!v; else el.value = v; } };
+      set('gov-enabled', r.enabled); set('gov-tier', r.defaultTier || 'standard');
+      await loadGovernanceStatus();
+      await loadVerdicts();
+    }
+
+    async function saveGovernanceConfig() {
+      const get = id => { const el = document.getElementById(id); return el ? (el.type === 'checkbox' ? el.checked : el.value) : undefined; };
+      const r = await POST(API.settings + '/kilocode/governance', { enabled: get('gov-enabled'), defaultTier: get('gov-tier') });
+      msg('gov-msg', r.error ? 'Error: ' + r.error : 'Governance config saved', r.error ? 'err' : 'ok');
+    }
+
+    async function loadGovernanceStatus() {
+      const r = await call(API.settings + '/kilocode/governance/status');
+      if (r.error) return;
+      const VERDICT_CLS = { pass: 'b-ok', conditional_pass: 'b-warn', fail: 'b-err' };
+      const vEl = document.getElementById('gov-verdict');
+      if (vEl) { vEl.textContent = r.releaseReadiness || 'unknown'; vEl.className = VERDICT_CLS[r.releaseReadiness] || 'b-warn'; }
+      const cEl = document.getElementById('gov-critical'); if (cEl) cEl.textContent = r.criticalDefects ?? '—';
+      const hEl = document.getElementById('gov-high'); if (hEl) hEl.textContent = r.highDefects ?? '—';
+      const rbEl = document.getElementById('gov-rollback'); if (rbEl) { rbEl.textContent = r.rollbackReady ? '✓ Yes' : '✗ No'; rbEl.className = r.rollbackReady ? 'b-ok' : 'b-err'; }
+    }
+
+    async function createVerdict() {
+      const get = id => document.getElementById(id)?.value;
+      const body = { scope: get('gov-scope'), criticalDefects: +get('gov-crit-count'), highDefects: +get('gov-high-count'), decision: get('gov-decision'), riskSummary: get('gov-risk-summary'), rollbackPlan: get('gov-rollback-plan') };
+      if (!body.scope) { msg('gov-verdict-msg', 'Scope is required', 'err'); return; }
+      const r = await POST(API.settings + '/kilocode/governance/verdicts', body);
+      msg('gov-verdict-msg', r.error ? 'Error: ' + r.error : 'Verdict created', r.error ? 'err' : 'ok');
+      if (!r.error) { await loadVerdicts(); await loadGovernanceStatus(); }
+    }
+
+    async function loadVerdicts() {
+      const r = await call(API.settings + '/kilocode/governance/verdicts');
+      const list = document.getElementById('gov-verdict-list');
+      if (!list) return;
+      const verdicts = r.verdicts || r || [];
+      if (!Array.isArray(verdicts) || verdicts.length === 0) { list.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px 0">No verdicts yet.</div>'; return; }
+      const CLS = { pass: 'b-ok', conditional_pass: 'b-warn', fail: 'b-err' };
+      list.innerHTML = verdicts.slice().reverse().map(v => `
+        <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px">
+          <span class="${CLS[v.decision] || 'b-warn'}" style="min-width:110px">${v.decision?.toUpperCase().replace('_', ' ')}</span>
+          <span style="flex:1;font-weight:600">${esc(v.scope || '—')}</span>
+          <span style="color:var(--err)">crit: ${v.criticalDefects ?? 0}</span>
+          <span style="color:var(--warn)">high: ${v.highDefects ?? 0}</span>
+          <span style="color:var(--muted)">${v.timestamp ? new Date(v.timestamp).toLocaleString() : ''}</span>
+        </div>`).join('');
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────────
+    function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+    // ── Settings ──────────────────────────────────────────────────────────────────
+    async function loadSettings() {
+      const r = await GET(API.settings + '/settings/state');
+      document.getElementById('settings-state-pre').textContent = JSON.stringify(r.canonical || r, null, 2);
+    }
+
+    async function applySetting() {
+      const key = document.getElementById('set-key').value.trim();
+      const val = document.getElementById('set-val').value.trim();
+      if (!key) { toast('Enter a key', 'warn'); return; }
+      let parsed = val;
+      try { parsed = JSON.parse(val); } catch (e) { }
+      const r = await POST(API.settings + '/settings/apply', { settings: { [key]: parsed }, changed_by: 'user' });
+      msg('set-apply-msg', r.error ? `Error: ${r.error}` : `Applied ✓ Validation: ${r.validation?.result}`, r.error ? 'err' : 'ok');
+      if (!r.error) { loadSettings(); toast('Setting applied', 'ok'); }
+    }
+
+    async function setMode(mode) {
+      const r = await POST(API.settings + '/mode/' + mode, {});
+      msg('mode-msg', r.error ? `Error: ${r.error}` : `Mode set to ${r.mode}`, r.error ? 'err' : 'ok');
+      if (r.mode) {
+        document.getElementById('h-mode').textContent = r.mode;
+        document.getElementById('ov-mode').textContent = r.mode;
+        const ms = document.getElementById('mode-select'); if (ms) ms.value = r.mode;
+        toast('Mode: ' + r.mode, 'ok');
+      }
+    }
+
+    // ── Hermes Bridge Config ──────────────────────────────────────────────────────
+    const HERMES_CFG_KEY = 'kilo_hermes_config';
+
+    async function loadHermesConfig() {
+      const stored = JSON.parse(localStorage.getItem(HERMES_CFG_KEY) || '{}');
+      if (stored.baseUrl) document.getElementById('hermes-bridge-url').value = stored.baseUrl;
+      if (stored.approvalMode) document.getElementById('hermes-approval-mode').value = stored.approvalMode;
+      document.getElementById('hermes-enabled').checked = stored.enabled === true;
+      const r = await GET(API.settings + '/settings/state');
+      const hermesUrl = r.canonical?.hermes_bridge_url || r.hermes_bridge_url;
+      if (hermesUrl && !stored.baseUrl) document.getElementById('hermes-bridge-url').value = hermesUrl;
+      msg('hermes-cfg-msg', 'Config loaded', 'ok');
+    }
+
+    async function saveHermesConfig() {
+      const baseUrl = document.getElementById('hermes-bridge-url').value.trim();
+      const approvalMode = document.getElementById('hermes-approval-mode').value;
+      const enabled = document.getElementById('hermes-enabled').checked;
+      if (!baseUrl) { toast('Enter a Bridge URL', 'warn'); return; }
+      const cfg = { baseUrl, approvalMode, enabled };
+      localStorage.setItem(HERMES_CFG_KEY, JSON.stringify(cfg));
+      const r = await POST(API.settings + '/settings/apply', {
+        settings: { hermes_bridge_url: baseUrl, hermes_approval_mode: approvalMode, hermes_enabled: enabled },
+        changed_by: 'user'
+      });
+      msg('hermes-cfg-msg', r.error ? `Error: ${r.error}` : 'Saved to settings service ✓', r.error ? 'err' : 'ok');
+      if (!r.error) toast('Hermes config saved', 'ok');
+    }
+
+    async function pingHermesBridge() {
+      const url = document.getElementById('hermes-bridge-url').value.trim() || 'http://localhost:8091';
+      msg('hermes-cfg-msg', 'Pinging…', 'info');
+      try {
+        const started = Date.now();
+        const r = await fetch(url + '/health', { signal: AbortSignal.timeout(4000) });
+        const latency = Date.now() - started;
+        const ok = r.ok;
+        msg('hermes-cfg-msg', ok ? `Bridge online ✓ (${latency}ms)` : `Bridge returned HTTP ${r.status}`, ok ? 'ok' : 'warn');
+      } catch (e) {
+        msg('hermes-cfg-msg', `Bridge unreachable: ${e.message}`, 'err');
+      }
+    }
+
+    // ── KiloCode Pipeline Check ───────────────────────────────────────────────────
+    async function checkKcPipeline() {
+      msg('set-kc-msg', 'Checking…', 'info');
+      const setSpan = (id, ok, label) => {
+        const el = document.getElementById(id);
+        if (el) { el.textContent = label; el.className = ok ? 'b-ok' : 'b-err'; }
+      };
+      const hermesCfg = JSON.parse(localStorage.getItem(HERMES_CFG_KEY) || '{}');
+      const bridgeUrl = hermesCfg.baseUrl || 'http://localhost:8091';
+      let hermesOk = false;
+      try {
+        const r = await fetch(bridgeUrl + '/health', { signal: AbortSignal.timeout(3000) });
+        hermesOk = r.ok;
+      } catch (_) { hermesOk = false; }
+      setSpan('set-kc-hermes', hermesOk, hermesOk ? 'reachable' : 'unreachable');
+
+      const runtime = await GET(API.runtime + '/health');
+      const runtimeOk = !runtime.error;
+      setSpan('set-kc-sync', runtimeOk, runtimeOk ? 'ok' : 'down');
+
+      const settings = await GET(API.settings + '/health');
+      const settingsOk = !settings.error;
+      setSpan('set-kc-settings', settingsOk, settingsOk ? 'wired' : 'down');
+
+      const autofill = await GET(API.settings + '/settings/auto-fill');
+      const autofillOk = !autofill.error;
+      setSpan('set-kc-autofill', autofillOk, autofillOk ? 'ready' : 'error');
+
+      const kcStatus = await GET(API.runtime + '/kilocode/status');
+      const drift = kcStatus.drift || 0;
+      const driftEl = document.getElementById('set-kc-drift');
+      if (driftEl) { driftEl.textContent = drift ? `${drift} keys` : 'none'; driftEl.className = drift ? 'b-warn' : 'b-ok'; }
+
+      const pass = [hermesOk, runtimeOk, settingsOk, autofillOk].filter(Boolean).length;
+      msg('set-kc-msg', `${pass}/4 pipeline checks passed`, pass === 4 ? 'ok' : 'warn');
+    }
+
+    // ── Ports ──────────────────────────────────────────────────────────────────────
+    async function loadPorts() {
+      const data = await GET(API.settings + '/ports');
+      const tbody = document.getElementById('ports-body');
+      if (!data.services) { tbody.innerHTML = '<tr><td colspan="6">Error</td></tr>'; return; }
+      tbody.innerHTML = Object.entries(data.services).map(([svc, info]) => `
+    <tr>
+      <td>${svc}</td>
+      <td>${info.port}</td>
+      <td>${info.reachable ? '<span class="b-ok">live</span>' : '<span class="b-err">down</span>'}</td>
+      <td>${info.pending ? `<span class="b-pend">${info.pending}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
+      <td><input type="number" id="np-${svc.replace(/[^a-z0-9]/gi, '_')}" placeholder="${info.port}" style="width:80px"></td>
+      <td><button class="btn-warn btn-sm" onclick="stagePort('${svc}','${svc.replace(/[^a-z0-9]/gi, '_')}')">Stage</button></td>
+    </tr>`).join('');
+    }
+
+    async function stagePort(svc, safeId) {
+      const val = document.getElementById('np-' + safeId).value;
+      if (!val) { toast('Enter port number', 'warn'); return; }
+      const r = await PUT(API.settings + '/ports/' + svc, { port: parseInt(val), changed_by: 'user' });
+      msg('ports-msg', r.error ? `Error: ${r.error}` : `Staged: ${svc} → ${r.pending_port}`, r.error ? 'err' : 'ok');
+      if (!r.error) { toast('Port staged for ' + svc, 'ok'); loadPorts(); }
+    }
+
+    async function applyPorts() {
+      const r = await POST(API.settings + '/ports/apply', {});
+      msg('ports-msg', r.error ? `Error: ${r.error}` : `Applied: ${JSON.stringify(r.applied)} — restart services`, r.error ? 'err' : 'ok');
+      if (!r.error) { toast('Ports applied', 'ok'); loadPorts(); }
+    }
+
+    // ── Queue & Events ────────────────────────────────────────────────────────────
+    async function loadQueue() {
+      const r = await GET(API.runtime + '/api/events');
+      const events = r.events || r || [];
+      document.getElementById('q-depth').textContent = Array.isArray(events) ? events.length : 0;
+      document.getElementById('q-active').textContent = Array.isArray(events) ? events.filter(e => e.status === 'active').length : 0;
+      const box = document.getElementById('queue-list');
+      if (!Array.isArray(events) || !events.length) { box.innerHTML = 'No active packets.'; return; }
+      box.innerHTML = events.slice(-20).map(e => `
+    <div class="log-line log-info">[${(e.timestamp || '').slice(11, 19)}] ${e.type || e.event_type || 'event'}: ${JSON.stringify(e.payload || e).slice(0, 80)}</div>`).join('');
+    }
+    async function loadEvents() {
+      await loadQueue();
+      const r = await GET(API.runtime + '/api/events');
+      const events = r.events || r || [];
+      document.getElementById('q-events').textContent = Array.isArray(events) ? events.length : 0;
+      const box = document.getElementById('events-list');
+      if (!Array.isArray(events) || !events.length) { box.innerHTML = 'No events.'; return; }
+      box.innerHTML = events.slice().reverse().slice(0, 30).map(e => `
+    <div class="log-line">[${(e.timestamp || '').slice(11, 19)}] <span class="log-info">${e.type || e.event_type || '—'}</span>: ${JSON.stringify(e.payload || {}).slice(0, 80)}</div>`).join('');
+    }
+
+    // ── Evidence ──────────────────────────────────────────────────────────────────
+    async function loadEvidence() {
+      const r = await GET(API.settings + '/settings/audit?limit=50');
+      const tbody = document.getElementById('evidence-body');
+      const entries = Array.isArray(r) ? r : [];
+      if (!entries.length) { tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted)">No evidence yet.</td></tr>'; return; }
+      tbody.innerHTML = [...entries].reverse().map(e => `
+    <tr>
+      <td style="font-size:11px;color:var(--muted)">${(e.timestamp || '').slice(0, 19).replace('T', ' ')}</td>
+      <td><span class="b-info">${e.subsystem || '—'}</span></td>
+      <td>${e.changed_by || '—'}</td>
+      <td style="font-size:11px">${(e.changed_fields || []).join(', ') || '—'}</td>
+      <td>${e.validation_result === 'healthy' ? '<span class="b-ok">healthy</span>' : '<span class="b-warn">' + (e.validation_result || '—') + '</span>'}</td>
+      <td style="font-size:11px;color:var(--muted)">${JSON.stringify(e).slice(0, 60)}</td>
+    </tr>`).join('');
+    }
+
+    function exportEvidence() {
+      GET(API.settings + '/settings/audit?limit=500').then(r => {
+        const a = document.createElement('a');
+        a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(r, null, 2));
+        a.download = 'evidence_' + Date.now() + '.json';
+        a.click();
+        toast('Evidence exported', 'ok');
+      });
+    }
+
+    // ── Repairs ───────────────────────────────────────────────────────────────────
+    async function loadRepairs() {
+      const r = await GET(API.settings + '/settings/audit?limit=50');
+      const entries = Array.isArray(r) ? r.filter(e => e.subsystem && e.subsystem.includes('repair') || e.changed_fields?.length) : [];
+      const box = document.getElementById('repairs-timeline');
+      if (!entries.length) { box.innerHTML = 'No repair history.'; return; }
+      box.innerHTML = [...entries].reverse().slice(0, 20).map(e => `
+    <div class="log-line ${e.validation_result === 'healthy' ? 'log-ok' : 'log-warn'}">
+      [${(e.timestamp || '').slice(0, 19).replace('T', ' ')}] ${e.changed_by} → ${e.subsystem} | fields: ${(e.changed_fields || []).join(',') || 'none'} | ${e.validation_result}
+    </div>`).join('');
+    }
+
+    async function triggerRepair() {
+      const sub = document.getElementById('repair-sub').value;
+      const agent = document.getElementById('repair-agent').value;
+      const body = { changed_by: agent };
+      if (sub) body.subsystem = sub;
+      const r = await POST(API.settings + '/settings/repair', body);
+      msg('repair-result',
+        r.error ? `Error: ${r.error}` : `Repaired: ${(r.repaired || []).join(', ') || 'nothing'} | Validation: ${r.validation?.result}`,
+        r.error ? 'err' : 'ok');
+      if (!r.error) { toast('Repair done', 'ok'); setTimeout(loadRepairs, 500); }
+    }
+
+    // ── Audit ──────────────────────────────────────────────────────────────────────
+    async function loadAudit() {
+      const r = await GET(API.settings + '/settings/audit?limit=100');
+      const tbody = document.getElementById('audit-body');
+      const entries = Array.isArray(r) ? r : [];
+      if (!entries.length) { tbody.innerHTML = '<tr><td colspan="7" style="color:var(--muted)">No audit entries.</td></tr>'; return; }
+      tbody.innerHTML = [...entries].reverse().map(e => `
+    <tr>
+      <td style="font-size:11px;color:var(--muted)">${(e.timestamp || '').slice(0, 19).replace('T', ' ')}</td>
+      <td>${e.subsystem || '—'}</td>
+      <td>${e.changed_by || '—'}</td>
+      <td style="font-size:11px">${(e.changed_fields || []).join(', ') || '—'}</td>
+      <td>${e.validation_result === 'healthy' ? '<span class="b-ok">healthy</span>' : '<span class="b-warn">' + (e.validation_result || '?') + '</span>'}</td>
+      <td>${e.disruptive ? '<span class="b-err">yes</span>' : '—'}</td>
+      <td>${e.restart_required ? '<span class="b-warn">yes</span>' : '—'}</td>
+    </tr>`).join('');
+    }
+
+    // ── Questions ──────────────────────────────────────────────────────────────────
+    async function loadQuestions() {
+      const qs = await GET(API.settings + '/settings/questions');
+      const el = document.getElementById('questions-container');
+      if (!Array.isArray(qs)) { el.innerHTML = '<div class="msg msg-err">Error loading questions</div>'; return; }
+      const unanswered = qs.filter(q => !q.answered);
+      const nbadge = document.getElementById('q-badge');
+      if (nbadge) { nbadge.style.display = unanswered.length ? '' : 'none'; nbadge.textContent = unanswered.length; }
+      if (!unanswered.length) {
+        el.innerHTML = '<div class="msg msg-ok">✅ All questions answered — no user input required.</div>';
+        return;
+      }
+      el.innerHTML = unanswered.map(q => `
+    <div style="margin-bottom:14px;padding:14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
+      <div style="font-weight:600;margin-bottom:6px">${q.label}
+        <span class="b-warn" style="margin-left:6px">${q.type}</span>
+        ${q.required ? '<span class="b-err" style="margin-left:4px">required</span>' : ''}
+      </div>
+      ${q.hint ? `<div style="color:var(--muted);font-size:11px;margin-bottom:8px">${q.hint}</div>` : ''}
+      <div style="display:flex;gap:8px">
+        <input type="${q.type === 'secret' ? 'password' : 'text'}" id="ans-${q.id}" placeholder="Enter ${q.label}" style="flex:1">
+        <button class="btn-primary btn-sm" onclick="answerQ('${q.id}')">Save</button>
+      </div>
+      <div id="ans-msg-${q.id}"></div>
+    </div>`).join('');
+    }
+
+    async function answerQ(qid) {
+      const val = document.getElementById('ans-' + qid)?.value;
+      if (!val) { toast('Enter a value', 'warn'); return; }
+      const r = await POST(API.settings + '/settings/questions/' + qid + '/answer', { value: val, changed_by: 'user' });
+      const el = document.getElementById('ans-msg-' + qid);
+      if (el) el.innerHTML = r.answered
+        ? '<div class="msg msg-ok">Saved ✓</div>'
+        : `<div class="msg msg-err">${r.detail || r.error}</div>`;
+      if (r.answered) { toast('Answer saved', 'ok'); setTimeout(loadQuestions, 800); }
+    }
+
+    // ── Maintenance ───────────────────────────────────────────────────────────────
+    async function loadMaintenance() {
+      const r = await GET(API.settings + '/settings/state');
+      const mw = r.canonical?.maintenance_window || r.maintenance_window;
+      document.getElementById('mw-current').textContent = mw ? JSON.stringify(mw, null, 2) : 'None scheduled.';
+    }
+
+    async function scheduleMw() {
+      const reason = document.getElementById('mw-reason').value || 'Manual';
+      const dur = parseInt(document.getElementById('mw-duration').value) || 10;
+      const r = await POST(API.settings + '/maintenance/window', { reason, duration_minutes: dur });
+      msg('mw-msg', r.error ? `Error: ${r.error}` : `Window scheduled: ${r.scheduled_at?.slice(0, 19).replace('T', ' ')} for ${r.duration_minutes}min`, r.error ? 'err' : 'ok');
+      if (!r.error) { toast('Maintenance window scheduled', 'ok'); loadMaintenance(); }
+    }
+
+    // ── Global actions ────────────────────────────────────────────────────────────
+    async function doAutofill() {
+      const r = await POST(API.settings + '/settings/auto-fill', {});
+      msg('ov-action-msg', r.error ? `Error: ${r.error}` : `Auto-fill: ${(r.filled || []).join(', ') || 'nothing new'} | Needs user: ${(r.skipped_need_user || []).join(', ') || 'none'}`, r.error ? 'err' : 'ok');
+      toast('Auto-fill complete', 'ok');
+      loadQuestions();
+    }
+
+    async function doRepairAll() {
+      const r = await POST(API.settings + '/settings/repair', { changed_by: 'hermes' });
+      msg('ov-action-msg', r.error ? `Error: ${r.error}` : `Repaired: ${(r.repaired || []).join(', ') || 'nothing'} | ${r.validation?.result}`, r.error ? 'err' : 'ok');
+      toast('Repair done', 'ok');
+      hideSafemode();
+    }
+
+    async function doValidate() {
+      const r = await POST(API.settings + '/settings/validate', {});
+      const ok = r.result === 'healthy';
+      msg('ov-action-msg', r.error ? `Error: ${r.error}` : `Validation: ${r.result} ${(r.issues || []).join('; ')}`, r.error ? 'err' : ok ? 'ok' : 'warn');
+      toast('Validated: ' + r.result, ok ? 'ok' : 'warn');
+    }
+
+    function fullRefresh() { loadOverview(); toast('Refreshed', 'ok'); }
+
+    // ── Utilities ─────────────────────────────────────────────────────────────────
+    function escHtml(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    function fmtSize(bytes) {
+      if (!bytes) return '—';
+      const gb = bytes / 1073741824;
+      return gb >= 1 ? gb.toFixed(1) + 'GB' : (bytes / 1048576).toFixed(0) + 'MB';
+    }
+
+    // ── Auto-refresh header dots every 30s ───────────────────────────────────────
+    setInterval(sweepHealth, 30000);
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // DISCORD HERMES BOTS
+    // ══════════════════════════════════════════════════════════════════════════════
+    const BOTS = ['hermes1', 'hermes2', 'hermes3', 'hermes4', 'hermes5'];
+
+    async function loadDiscordBots() {
+      const log = document.getElementById('discord-log');
+      log.textContent = 'Polling bot health via runtime API…';
+      let online = 0;
+      const lines = [];
+      for (const bot of BOTS) {
+        const r = await call('GET', `${API.runtime}/discord/bots/${bot}/health`);
+        const ok = r && !r.error && r.status === 'online';
+        if (ok) online++;
+        const el = document.getElementById(`bot-stat-${bot}`);
+        if (el) {
+          el.textContent = ok ? 'online' : (r.error ? 'unreachable' : (r.status || 'unknown'));
+          el.className = ok ? 'b-ok' : 'b-warn';
+        }
+        const card = document.getElementById(`bot-card-${bot}`);
+        if (card) card.style.borderColor = ok ? 'var(--ok)' : 'var(--warn)';
+        lines.push(`[${ok ? 'OK' : 'WARN'}] ${bot}: ${ok ? 'online' : (r.error || r.status || 'unknown')}`);
+      }
+      const onlineEl = document.getElementById('discord-bots-online');
+      if (onlineEl) {
+        onlineEl.textContent = `${online}/5`;
+        onlineEl.className = 'stat-val ' + (online === 5 ? 'ok' : online > 0 ? 'acc' : 'err');
+      }
+      log.textContent = lines.join('\n') + `\n\nRefreshed: ${new Date().toLocaleTimeString()}`;
+    }
+
+    async function discordBroadcast() {
+      const msg = document.getElementById('discord-action-msg');
+      msg.textContent = 'Broadcasting…';
+      const r = await call('POST', `${API.hermes}/discord/broadcast`, { message: 'Hub broadcast ping', guild: '1490068195208331334' });
+      msg.textContent = r.error ? `Error: ${r.error}` : 'Broadcast sent ✓';
+    }
+
+    async function discordIptablesFix() {
+      const msg = document.getElementById('discord-action-msg');
+      msg.textContent = 'Applying iptables fix for Shiba :18789…';
+      const r = await call('POST', `${API.runtime}/discord/iptables-fix`, {});
+      msg.textContent = r.error ? `Error: ${r.error}` : 'iptables rule applied ✓ (run iptables-save on VPS for persistence)';
+    }
+
+    async function discordAudit() {
+      const msg = document.getElementById('discord-action-msg');
+      const log = document.getElementById('discord-log');
+      msg.textContent = 'Running audit…';
+      const r = await call('POST', `${API.runtime}/discord/audit`, {});
+      if (r.error) { msg.textContent = `Error: ${r.error}`; return; }
+      msg.textContent = 'Audit complete ✓';
+      const lines = Object.entries(r).map(([k, v]) => `${k}: ${JSON.stringify(v)}`);
+      log.textContent = lines.join('\n') + `\n\nAudit at: ${new Date().toLocaleTimeString()}`;
+      document.getElementById('discord-last-audit').textContent = new Date().toLocaleDateString();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // KILOCODE VSIX
+    // ══════════════════════════════════════════════════════════════════════════════
+    const VSIX_CMD_IDS = {
+      syncRuntimeSettings: 'vsix-cmd-sync',
+      applyAutofillResults: 'vsix-cmd-autofill',
+      submitCompletionPacket: 'vsix-cmd-packet',
+      refreshProviderHealth: 'vsix-cmd-health',
+      setOperationMode: 'vsix-cmd-mode',
+      bootGateCheck: 'vsix-cmd-boot',
+      triggerRepair: 'vsix-cmd-repair',
+    };
+
+    async function loadKcStatus() {
+      const r = await call('GET', `${API.runtime}/kilocode/status`);
+      const synced = !r.error && r.synced;
+      const el = document.getElementById('kc-synced');
+      if (el) { el.textContent = synced ? 'synced' : (r.error ? 'unreachable' : 'not synced'); el.className = 'stat-val ' + (synced ? 'ok' : 'err'); }
+      const ls = document.getElementById('kc-last-sync');
+      if (ls) ls.textContent = r.last_sync || '—';
+      const dr = document.getElementById('kc-drift');
+      if (dr) dr.textContent = r.drift ? `${r.drift} keys` : 'none';
+      if (r.commands) {
+        for (const [cmd, status] of Object.entries(r.commands)) {
+          const spanId = VSIX_CMD_IDS[cmd];
+          if (spanId) {
+            const s = document.getElementById(spanId);
+            if (s) { s.textContent = status; s.className = status === 'ok' ? 'b-ok' : status === 'running' ? 'b-info' : 'b-warn'; }
+          }
+        }
+      }
+      appendLog('vsix-log', `Status loaded: ${synced ? 'synced' : 'not synced'}`);
+    }
+
+    async function forceSyncKc() {
+      const msg = document.getElementById('kc-msg');
+      msg.textContent = 'Forcing sync…';
+      const r = await call('POST', `${API.runtime}/kilocode/sync`, {});
+      msg.textContent = r.error ? `Error: ${r.error}` : 'Sync triggered ✓';
+      appendLog('vsix-log', `Force sync: ${r.error || 'triggered'}`);
+      setTimeout(loadKcStatus, 1500);
+    }
+
+    async function vsixCmd(cmd) {
+      const spanId = VSIX_CMD_IDS[cmd];
+      const span = spanId ? document.getElementById(spanId) : null;
+      if (span) { span.textContent = 'running'; span.className = 'b-info'; }
+      const r = await call('POST', `${API.runtime}/kilocode/cmd/${cmd}`, {});
+      const ok = !r.error;
+      if (span) { span.textContent = ok ? 'ok' : 'error'; span.className = ok ? 'b-ok' : 'b-err'; }
+      appendLog('vsix-log', `${cmd}: ${ok ? 'OK' : r.error}`);
+      toast(ok ? `${cmd} ✓` : `${cmd} failed: ${r.error}`, ok ? 'ok' : 'err');
+    }
+
+    async function runVsixChecklist() {
+      const msg = document.getElementById('vsix-chk-msg');
+      msg.textContent = 'Running checklist…';
+      const checks = [
+        ['vsix-chk-webui', () => call('GET', '/health')],
+        ['vsix-chk-runtime', () => call('GET', `${API.runtime}/health`)],
+        ['vsix-chk-settings', () => call('GET', `${API.settings}/health`)],
+        ['vsix-chk-autofill', () => call('GET', `${API.settings}/autofill`)],
+        ['vsix-chk-sync', () => call('GET', `${API.runtime}/kilocode/status`)],
+        ['vsix-chk-drift', () => call('GET', `${API.runtime}/kilocode/status`)],
+        ['vsix-chk-e2e', () => call('GET', `${API.runtime}/e2e/status`)],
+      ];
+      let pass = 0;
+      for (const [id, fn] of checks) {
+        const el = document.getElementById(id);
+        const r = await fn();
+        const ok = r && !r.error;
+        if (ok) pass++;
+        if (el) { el.textContent = ok ? '✅' : '❌'; el.className = ok ? 'b-ok' : 'b-err'; }
+      }
+      msg.textContent = `${pass}/${checks.length} checks passed`;
+      appendLog('vsix-log', `Checklist: ${pass}/${checks.length} passed`);
+    }
+
+    function appendLog(id, line) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const ts = new Date().toLocaleTimeString();
+      el.textContent = `[${ts}] ${line}\n` + el.textContent;
+    }
+
+    // ── Boot ──────────────────────────────────────────────────────────────────────
+    (async function init() {
+      _syncPanelSentinels('overview');
+      await loadOverview();
+      const passed = await bootGateCheck();
+      if (!passed) nav('bootgate');
+      loadQuestions();
+    })();
+  </script>
+</body>
+
+</html>

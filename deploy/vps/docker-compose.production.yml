@@ -1,0 +1,287 @@
+version: "3.9"
+
+networks:
+  kilo-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  nats-data:
+
+services:
+  # ── Infrastructure ──────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: shb
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: shb
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks: [kilo-net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nats:
+    image: nats:latest
+    container_name: nats
+    restart: unless-stopped
+    command: ["-js", "-m", "8222"]
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    volumes:
+      - nats-data:/data
+    networks: [kilo-net]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8222/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Shiba Memory Gateway ─────────────────────────────────────────────────────
+  shiba:
+    image: ghcr.io/shiba-memory/shiba:latest
+    container_name: shiba
+    restart: unless-stopped
+    ports:
+      - "18789:8000"
+    environment:
+      DATABASE_URL: postgresql://shb:${POSTGRES_PASSWORD}@postgres:5432/shb
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [kilo-net]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ── Runtime Core API ─────────────────────────────────────────────────────────
+  runtime-core:
+    image: contract-kit/runtime-core:latest
+    container_name: runtime-core
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      NATS_URL: nats://nats:4222
+      SHIBA_URL: http://shiba:8000
+      POSTGRES_URL: postgresql://shb:${POSTGRES_PASSWORD}@postgres:5432/shb
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY:-}
+      SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY:-}
+      LOG_LEVEL: INFO
+    depends_on:
+      nats:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    volumes:
+      - /opt/contract-kit/config:/app/config:ro
+    networks: [kilo-net]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ── Hermes Gateway ───────────────────────────────────────────────────────────
+  hermes-gateway:
+    image: contract-kit/hermes-gateway:latest
+    container_name: hermes-gateway
+    restart: unless-stopped
+    ports:
+      - "8091:8000"
+    environment:
+      NATS_URL: nats://nats:4222
+      RUNTIME_URL: http://runtime-core:8000
+      SHIBA_URL: http://shiba:8000
+      LOG_LEVEL: INFO
+    depends_on:
+      runtime-core:
+        condition: service_healthy
+    networks: [kilo-net]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ── Hermes Agents (5 specialist instances) ────────────────────────────────────
+  hermes1:
+    image: contract-kit/hermes-agent:latest
+    container_name: hermes1
+    restart: unless-stopped
+    ports: ["8081:8000"]
+    environment:
+      AGENT_ID: hermes1
+      AGENT_ROLE: planning_strategist
+      NATS_URL: nats://nats:4222
+      RUNTIME_URL: http://runtime-core:8000
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY:-}
+      SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY:-}
+    depends_on:
+      hermes-gateway:
+        condition: service_healthy
+    networks: [kilo-net]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  hermes2:
+    image: contract-kit/hermes-agent:latest
+    container_name: hermes2
+    restart: unless-stopped
+    ports: ["8082:8000"]
+    environment:
+      AGENT_ID: hermes2
+      AGENT_ROLE: creative_brainstormer
+      NATS_URL: nats://nats:4222
+      RUNTIME_URL: http://runtime-core:8000
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY:-}
+      SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY:-}
+    depends_on:
+      hermes-gateway:
+        condition: service_healthy
+    networks: [kilo-net]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  hermes3:
+    image: contract-kit/hermes-agent:latest
+    container_name: hermes3
+    restart: unless-stopped
+    ports: ["8083:8000"]
+    environment:
+      AGENT_ID: hermes3
+      AGENT_ROLE: system_architect
+      NATS_URL: nats://nats:4222
+      RUNTIME_URL: http://runtime-core:8000
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY:-}
+      SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY:-}
+    depends_on:
+      hermes-gateway:
+        condition: service_healthy
+    networks: [kilo-net]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  hermes4:
+    image: contract-kit/hermes-agent:latest
+    container_name: hermes4
+    restart: unless-stopped
+    ports: ["8084:8000"]
+    environment:
+      AGENT_ID: hermes4
+      AGENT_ROLE: bug_triage
+      NATS_URL: nats://nats:4222
+      RUNTIME_URL: http://runtime-core:8000
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY:-}
+      SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY:-}
+    depends_on:
+      hermes-gateway:
+        condition: service_healthy
+    networks: [kilo-net]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  hermes5:
+    image: contract-kit/hermes-agent:latest
+    container_name: hermes5
+    restart: unless-stopped
+    ports: ["8085:8000"]
+    environment:
+      AGENT_ID: hermes5
+      AGENT_ROLE: root_cause_analyst
+      NATS_URL: nats://nats:4222
+      RUNTIME_URL: http://runtime-core:8000
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY:-}
+      SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY:-}
+    depends_on:
+      hermes-gateway:
+        condition: service_healthy
+    networks: [kilo-net]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  # ── LiteLLM Proxy ────────────────────────────────────────────────────────────
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: litellm
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    environment:
+      DATABASE_URL: postgresql://shb:${POSTGRES_PASSWORD}@postgres:5432/shb
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY:-}
+      SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY:-}
+    volumes:
+      - /opt/contract-kit/litellm-config.yaml:/app/config.yaml:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [kilo-net]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ── Open WebUI ───────────────────────────────────────────────────────────────
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:latest
+    container_name: open-webui
+    restart: unless-stopped
+    ports:
+      - "3000:8080"
+    environment:
+      OLLAMA_BASE_URL: http://litellm:8000
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY}
+    volumes:
+      - /opt/contract-kit/webui-data:/app/backend/data
+    depends_on:
+      litellm:
+        condition: service_healthy
+    networks: [kilo-net]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080 || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  # ── Contract Kit WebUI (hub.html) ─────────────────────────────────────────────
+  hub:
+    image: nginx:alpine
+    container_name: hub
+    restart: unless-stopped
+    ports:
+      - "8095:80"
+    volumes:
+      - /opt/contract-kit/webui:/usr/share/nginx/html:ro
+      - /opt/contract-kit/nginx-hub.conf:/etc/nginx/conf.d/default.conf:ro
+    networks: [kilo-net]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:80 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3

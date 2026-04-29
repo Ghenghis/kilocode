@@ -1,0 +1,1493 @@
+# WINDSURF EXECUTION HANDOFF PACK
+## Complete Terrain Map for Deployment
+
+---
+
+## PART 1: SOURCE OF TRUTH MASTER DOC
+
+### Project Summary
+- **Project**: KiloCode Contract Kit + Hermes Agent + KiloCode-Azure2 Integration
+- **Goal**: Production deployment of multi-agent contract processing system
+- **Location**: G:\Github\contract-kit-v17
+- **Status**: Implementation 100% Complete, Deployment Pending
+
+### What Was Built
+- Complete 5-lane architecture (WebUI, KiloCode, Runtime, Hermes, Proof)
+- 6,440 lines of Python implementation
+- Multi-layered blockchain audit system (newly added)
+- All documentation, configs, diagrams complete
+
+### What Windsurf Needs To Do
+1. Deploy Hermes to VPS
+2. Setup NATS event bus
+3. Configure WebUI
+4. Wire components together
+5. Test integration
+
+---
+
+## PART 2: ABSOLUTE PATH/LOCATION MANIFEST
+
+### Local Source Paths (Absolute)
+
+```
+CONTRACT_KIT_ROOT
+G:\Github\contract-kit-v17\
+
+├── src/
+│   ├── proof/           (TestRunner, Coverage, Performance, Security)
+│   ├── zeroclaw/        (Adapters: Git, Shell, Filesystem, Research)
+│   ├── runtime/         (CoreAPI, EventBus, CircuitBreaker, Router)
+│   ├── hermes/          (Orchestrator + Adapters)
+│   ├── webui/           (ControlCenterApp + 6 Panels)
+│   ├── kilocode/        (RuntimeSync, TaskPanel, CompletionSubmitter)
+│   └── blockchain_audit/(NEW: AuditChain, AuditAgent, ConsensusEngine)
+
+configs/
+├── packet_schema.json
+├── runtime_settings_schema.json
+└── nats_subjects.json
+
+diagrams/ (6 SVG files)
+docs/ (8 lane docs + blockchain audit doc)
+tests/e2e/ (9 test files)
+```
+
+### Hermes Agent Source
+```
+G:\Github\hermes-agent-2026.4.13\hermes-agent-2026.4.13\
+├── run_agent.py
+├── model_tools.py
+├── toolsets.py
+├── cli.py
+├── hermes_state.py
+├── agent/
+│   ├── prompt_builder.py
+│   ├── context_compressor.py
+│   └── ...
+├── hermes_cli/
+│   ├── main.py
+│   ├── config.py
+│   ├── commands.py
+│   └── ...
+├── tools/
+│   ├── registry.py
+│   ├── file_tools.py
+│   ├── terminal_tool.py
+│   └── ...
+├── gateway/
+│   ├── run.py
+│   └── platforms/ (telegram, discord, etc.)
+└── web/ (React UI)
+```
+
+### KiloCode Source
+```
+G:\Github\kilocode-Azure2\
+├── packages/
+│   ├── kilo-vscode/ (21 services)
+│   │   └── src/services/
+│   │       ├── routing/ (ProviderRouter, CircuitBreaker)
+│   │       ├── governance/
+│   │       └── ...
+│   └── kilo-ui/ (107 components)
+├── docs/kilocode_v4_kit/ (40 files)
+└── ...
+```
+
+### VPS Source
+```
+C:\Users\Admin\Downloads\VPS\
+├── docs/
+│   ├── ORCHESTRATION-KIT-FRAMEWORK.md
+│   ├── HERMES-RUN-LEDGER.md
+│   ├── SHIBA-MEMORY-INTEGRATION.md
+│   └── ... (deployment docs)
+└── _scripts/
+    ├── hermes/ (55+ deployment scripts)
+    ├── deploy/ (15+ deploy scripts)
+    └── diagnostics/ (60+ diagnostic scripts)
+```
+
+### External Repos
+```
+AiDave71/kilocode: https://github.com/AiDave71/kilocode
+MCP SSH Agent: https://github.com/aiondadotcom/mcp-ssh
+claude-devtools: https://github.com/matt1398/claude-devtools
+```
+
+---
+
+## PART 3: REPO PATCH MAP BY SUBSYSTEM
+
+### Subsystem 1: Hermes Agent
+**Location**: `G:\Github\hermes-agent-2026.4.13\hermes-agent-2026.4.13\`
+
+**Patch Actions**:
+1. Copy `contract-kit-v17\src\hermes\*` → `hermes-agent\src\` (merge orchestrator)
+2. Copy `contract-kit-v17\src\zeroclaw\*` → `hermes-agent\src\` (merge adapters)
+3. Copy `contract-kit-v17\src\runtime\*` → `hermes-agent\src\` (merge core)
+4. Add contract skills to `agent/skill_commands.py`
+5. Add webhook handlers to `gateway/run.py`
+
+### Subsystem 2: KiloCode VSIX
+**Location**: `G:\Github\kilocode-Azure2\`
+
+**Patch Actions**:
+1. Copy `contract-kit-v17\src\webui\*` → VSIX webview-ui
+2. Copy `contract-kit-v17\src\kilocode\*` → VSIX services
+3. Add Hermes bridge API client to `packages/kilo-vscode/src/services/`
+4. Update provider routing with contract kit endpoints
+
+### Subsystem 3: WebUI (Open WebUI)
+**Location**: VPS Open WebUI instance
+
+**Patch Actions**:
+1. Install contract kit functions to Open WebUI
+2. Configure API endpoint to Hermes gateway
+3. Setup OAuth providers
+
+### Subsystem 4: VPS Services
+**Location**: `187.77.30.206`
+
+**Patch Actions**:
+1. Deploy hermes-agent containers (5 agents)
+2. Configure Shiba memory gateway at port 18789
+3. Setup LiteLLM proxy
+4. Configure nginx reverse proxy
+
+---
+
+## PART 4: SERVICE/RUNTIME MAP FOR VPS
+
+### VPS Infrastructure: 187.77.30.206
+
+| Service | Port | Docker Container | Systemd | Nginx | Purpose |
+|---------|------|-----------------|---------|-------|---------|
+| hermes-agent-H1 | 8081 | hermes1 | hermes1.service | /api/hermes1 | Planning Strategist |
+| hermes-agent-H2 | 8082 | hermes2 | hermes2.service | /api/hermes2 | Creative Brainstormer |
+| hermes-agent-H3 | 8083 | hermes3 | hermes3.service | /api/hermes3 | System Architect |
+| hermes-agent-H4 | 8084 | hermes4 | hermes4.service | /api/hermes4 | Bug Triage |
+| hermes-agent-H5 | 8085 | hermes5 | hermes5.service | /api/hermes5 | Root Cause Analyst |
+| hermes-gateway | 8000 | hermes-gateway | hermes-gateway.service | /api/gateway | Main gateway |
+| shiba-memory | 18789 | shiba | shiba.service | /shiba | Memory gateway |
+| lite-llm | 8001 | lite-llm | lite-llm.service | /llm | Model proxy |
+| nats-server | 4222 | nats | nats.service | /nats | Event bus |
+| postgresql | 5432 | postgres | postgres.service | - | Shiba DB |
+| open-webui | 3000 | open-webui | open-webui.service | / | Web UI |
+| nginx | 80,443 | nginx | nginx.service | - | Reverse proxy |
+
+### Docker Compose Stack
+```yaml
+services:
+  hermes1:
+    image: hermes-agent:latest
+    container_name: hermes1
+    ports:
+      - "8081:8000"
+    environment:
+      - HERMES_ROLE=H1
+      - NATS_URL=nats://nats:4222
+    volumes:
+      - hermes1-data:/data
+    depends_on:
+      - nats
+      - shiba
+
+  nats:
+    image: nats:latest
+    ports:
+      - "4222:4222"
+    command: ["-js"]  # JetStream enabled
+
+  shiba:
+    image: shiba-memory:latest
+    ports:
+      - "18789:8000"
+    environment:
+      - DATABASE_URL=postgresql://shb:shibamem2026@postgres:5432/shb
+
+  hermes-gateway:
+    image: hermes-gateway:latest
+    container_name: hermes-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - NATS_URL=nats://nats:4222
+      - SHIBA_URL=http://shiba:18789
+    depends_on:
+      - nats
+      - shiba
+
+  lite-llm:
+    image: ghcr.io/berriai/lite-llm:latest
+    container_name: lite-llm
+    ports:
+      - "8001:8000"
+    environment:
+      - DATABASE_URL=postgresql://shb:shibamem2026@postgres:5432/shb
+    volumes:
+      - ./config.yaml:/app/config.yaml
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:latest
+    container_name: open-webui
+    ports:
+      - "3000:8080"
+    environment:
+      - OLLAMA_BASE_URL=http://lite-llm:8001
+      - WEBUI_SECRET_KEY=your-secret-key-here
+    depends_on:
+      - lite-llm
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=shb
+      - POSTGRES_PASSWORD=shibamem2026
+      - POSTGRES_DB=shb
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  hermes1-data:
+  postgres-data:
+```
+
+### Systemd Service Files Location
+```
+/etc/systemd/system/
+├── hermes1.service
+├── hermes2.service
+├── hermes3.service
+├── hermes4.service
+├── hermes5.service
+├── hermes-gateway.service
+├── shiba.service
+├── lite-llm.service
+├── nats.service
+├── open-webui.service
+├── postgres.service
+└── nginx.service
+```
+
+### Systemd Service Template
+```ini
+[Unit]
+Description=Hermes Agent H1 - Planning Strategist
+After=network.target nats.service shiba.service
+Wants=nats.service shiba.service
+
+[Service]
+Type=simple
+User=hermes
+WorkingDirectory=/opt/hermes
+Environment="HERMES_ROLE=H1"
+Environment="NATS_URL=nats://localhost:4222"
+Environment="SHIBA_URL=http://localhost:18789"
+ExecStart=/opt/hermes/venv/bin/python /opt/hermes/run_agent.py --role H1
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=hermes1
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### Nginx Config Locations
+```
+/etc/nginx/
+├── nginx.conf (main)
+├── sites-available/hermes.conf
+├── sites-enabled/hermes.conf -> ../sites-available/hermes.conf
+└── ssl/ (certificates)
+```
+
+### Nginx Reverse Proxy Configuration
+```nginx
+# /etc/nginx/sites-available/hermes.conf
+
+upstream hermes1 {
+    server localhost:8081;
+}
+
+upstream hermes2 {
+    server localhost:8082;
+}
+
+upstream hermes3 {
+    server localhost:8083;
+}
+
+upstream hermes4 {
+    server localhost:8084;
+}
+
+upstream hermes5 {
+    server localhost:8085;
+}
+
+upstream hermes_gateway {
+    server localhost:8000;
+}
+
+upstream shiba {
+    server localhost:18789;
+}
+
+upstream lite_llm {
+    server localhost:8001;
+}
+
+upstream nats {
+    server localhost:4222;
+}
+
+upstream open_webui {
+    server localhost:3000;
+}
+
+server {
+    listen 80;
+    server_name 187.77.30.206;
+
+    # Hermes Agents
+    location /api/hermes1 {
+        proxy_pass http://hermes1;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    location /api/hermes2 {
+        proxy_pass http://hermes2;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    location /api/hermes3 {
+        proxy_pass http://hermes3;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    location /api/hermes4 {
+        proxy_pass http://hermes4;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    location /api/hermes5 {
+        proxy_pass http://hermes5;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Hermes Gateway
+    location /api/gateway {
+        proxy_pass http://hermes_gateway;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Shiba Memory
+    location /shiba {
+        proxy_pass http://shiba;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # LiteLLM Proxy
+    location /llm {
+        proxy_pass http://lite_llm;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # NATS (WebSocket)
+    location /nats {
+        proxy_pass http://nats;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Open WebUI - default
+    location / {
+        proxy_pass http://open_webui;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+### Nginx Reverse Proxy Routes Summary
+```
+/api/hermes1 -> http://localhost:8081
+/api/hermes2 -> http://localhost:8082
+/api/hermes3 -> http://localhost:8083
+/api/hermes4 -> http://localhost:8084
+/api/hermes5 -> http://localhost:8085
+/api/gateway -> http://localhost:8000
+/shiba -> http://localhost:18789
+/llm -> http://localhost:8001
+/nats -> http://localhost:4222
+/ -> http://localhost:3000 (Open WebUI)
+```
+
+---
+
+## PART 5: SETTINGS/AUTOFILL MATRIX
+
+### WebUI Settings Matrix
+
+| Setting | Location | Source | Default | Required |
+|---------|----------|--------|---------|----------|
+| API Gateway URL | WebUI Admin | Runtime Core | http://localhost:8000 | Yes |
+| NATS URL | WebUI Admin | Runtime Core | nats://localhost:4222 | Yes |
+| Shiba Memory URL | WebUI Admin | Runtime Core | http://localhost:18789 | No |
+| Provider: MiniMax API Key | WebUI Admin | Runtime Settings | - | Yes |
+| Provider: SiliconFlow API Key | WebUI Admin | Runtime Settings | - | No |
+| Provider: LM Studio URL | WebUI Admin | Runtime Settings | http://localhost:1234 | No |
+| Hermes Gateway URL | WebUI Admin | Hermes Config | http://localhost:8000 | Yes |
+
+### VSIX Settings Matrix (KiloCode)
+
+| Setting | Location | Source | Default | Required |
+|---------|----------|--------|---------|----------|
+| hermes.api.endpoint | VSIX Config | Hermes Config | http://localhost:8000 | Yes |
+| hermes.nats.url | VSIX Config | Runtime Core | nats://localhost:4222 | Yes |
+| hermes.provider.primary | VSIX Config | Runtime Settings | minimax | Yes |
+| hermes.provider.failover | VSIX Config | Runtime Settings | siliconflow | No |
+| hermes.circuit_breaker.threshold | VSIX Config | Runtime Settings | 5 | No |
+| hermes.circuit_breaker.timeout | VSIX Config | Runtime Settings | 60 | No |
+| kilocode.workspace | VSIX Config | User | ${workspaceFolder} | Yes |
+| kilocode.zeroclaw.enabled | VSIX Config | Feature Flag | true | No |
+| kilocode.evidence.path | VSIX Config | Proof Lane | ${workspaceFolder}/.evidence | No |
+
+### Runtime Settings Schema
+```json
+{
+  "version": "1.0",
+  "providers": {
+    "minimax": {
+      "api_key": "${MINIMAX_API_KEY}",
+      "base_url": "https://api.minimax.chat",
+      "models": ["MiniMax-M2.7", "MiniMax-M2.5"],
+      "enabled": true,
+      "priority": 1,
+      "rate_limit": {
+        "requests_per_minute": 60,
+        "tokens_per_minute": 100000
+      }
+    },
+    "siliconflow": {
+      "api_key": "${SILICONFLOW_API_KEY}",
+      "base_url": "https://api.siliconflow.cn",
+      "models": ["Qwen2.5-72B", "DeepSeek-V3"],
+      "enabled": true,
+      "priority": 2,
+      "rate_limit": {
+        "requests_per_minute": 120,
+        "tokens_per_minute": 200000
+      }
+    },
+    "lm_studio": {
+      "base_url": "http://localhost:1234",
+      "models": ["local-model"],
+      "enabled": false,
+      "priority": 3
+    }
+  },
+  "integrations": {
+    "webui": {
+      "enabled": true,
+      "endpoint": "http://localhost:3000",
+      "auth": {
+        "type": "oauth",
+        "provider": "openid"
+      }
+    },
+    "hermes": {
+      "enabled": true,
+      "endpoint": "http://localhost:8000",
+      "agents": 5
+    },
+    "nats": {
+      "enabled": true,
+      "url": "nats://localhost:4222",
+      "jetstream": true
+    },
+    "shiba": {
+      "enabled": true,
+      "endpoint": "http://localhost:18789",
+      "database_url": "postgresql://shb:shibamem2026@localhost:5432/shb"
+    }
+  },
+  "routing": {
+    "strategy": "priority",
+    "failover_enabled": true,
+    "circuit_breaker": {
+      "enabled": true,
+      "failure_threshold": 5,
+      "timeout_seconds": 60,
+      "half_open_max_calls": 3
+    }
+  },
+  "logging": {
+    "level": "INFO",
+    "outputs": ["stdout", "file"],
+    "path": "/var/log/hermes"
+  },
+  "audit": {
+    "enabled": true,
+    "blockchain_sync": true,
+    "evidence_retention_days": 90
+  }
+}
+```
+
+### Autofill Flow
+```
+User Input → WebUI → Runtime Core API → Canonical Settings Store
+                                    ↓
+                            Shiba Memory (cache)
+                                    ↓
+                            All Connected Services
+```
+
+### Environment Variables Required
+```bash
+# Provider API Keys
+export MINIMAX_API_KEY=your-minimax-key
+export SILICONFLOW_API_KEY=your-siliconflow-key
+
+# Hermes Configuration
+export HERMES_HOME=/opt/hermes
+export HERMES_ROLE=H1
+export NATS_URL=nats://localhost:4222
+export SHIBA_URL=http://localhost:18789
+
+# Database
+export DATABASE_URL=postgresql://shb:shibamem2026@localhost:5432/shb
+
+# Security
+export WEBUI_SECRET_KEY=your-secret-key
+export HERMES_GATEWAY_SECRET=your-gateway-secret
+
+# Logging
+export HERMES_LOG_PATH=/var/log/hermes
+```
+
+---
+
+## PART 6: AGENT EXECUTION MAP
+
+### Agent Team: Hermes (5 Agents)
+
+| Agent | Role | Entry Point | Tasks |
+|-------|------|-------------|-------|
+| H1 | Planning Strategist | run_agent.py --role H1 | Task intake, planning |
+| H2 | Creative Brainstormer | run_agent.py --role H2 | Ideation, creative |
+| H3 | System Architect | run_agent.py --role H3 | Design, architecture |
+| H4 | Bug Triage | run_agent.py --role H4 | Issue classification |
+| H5 | Root Cause Analyst | run_agent.py --role H5 | Debugging, repair |
+
+### Hermes Agent Startup Command
+```bash
+cd /opt/hermes
+source venv/bin/activate
+python run_agent.py --role H1 --platform cli --session-id default
+```
+
+### Agent Team: ZeroClaw
+
+| Adapter | Purpose | Commands |
+|---------|---------|----------|
+| GitAdapter | Version control | clone, push, pull, checkout, commit, branch, diff |
+| ShellAdapter | Command execution | run, execute, background |
+| FilesystemAdapter | File operations | read, write, copy, move, delete, mkdir, find |
+| ResearchAdapter | Web research | search, extract, summarize, scrape |
+
+### ZeroClaw Adapter Usage
+```python
+from zeroclaw import GitAdapter, ShellAdapter, FilesystemAdapter, ResearchAdapter
+
+git = GitAdapter()
+shell = ShellAdapter()
+fs = FilesystemAdapter()
+research = ResearchAdapter()
+
+# Execute commands
+result = shell.run("ls -la", cwd="/opt/hermes")
+git.clone("https://github.com/example/repo.git", "/tmp/repo")
+research.search("contract processing best practices", limit=10)
+```
+
+### Agent Team: Runtime
+
+| Component | Purpose | Commands |
+|-----------|---------|----------|
+| RuntimeCoreAPI | Settings truth | python -m src.runtime.core |
+| EventBus | NATS messaging | nats-server -js |
+| ProviderRouter | Load balancing | (integrated in RuntimeCoreAPI) |
+| CircuitBreaker | Failover | (integrated in ProviderRouter) |
+
+### Runtime Core API Endpoints
+```
+GET  /health                    - Health check
+GET  /settings                  - Get all settings
+POST /settings                  - Update settings
+GET  /settings/providers         - Get provider config
+POST /settings/providers         - Update provider config
+GET  /settings/integrations     - Get integration config
+POST /settings/integrations     - Update integration config
+GET  /events/subscriptions      - List NATS subscriptions
+POST /events/publish            - Publish event to NATS
+GET  /routing/status            - Get routing status
+GET  /routing/circuit-breaker   - Get circuit breaker status
+POST /routing/circuit-breaker/reset - Reset circuit breaker
+```
+
+### Agent Team: Playwright (E2E Testing)
+
+| Test Suite | Command | Coverage |
+|-----------|---------|----------|
+| test_webui.py | pytest tests/e2e/test_webui.py | WebUI panels |
+| test_kilocode.py | pytest tests/e2e/test_kilocode.py | KiloCode sync |
+| test_runtime.py | pytest tests/e2e/test_runtime.py | Runtime API |
+| test_hermes.py | pytest tests/e2e/test_hermes.py | Hermes orchestrator |
+| test_boot_gate.py | pytest tests/e2e/test_boot_gate.py | Boot/safemode |
+| test_provider_failover.py | pytest tests/e2e/test_provider_failover.py | Failover |
+| test_blockchain_audit.py | pytest tests/e2e/test_blockchain_audit.py | Audit system |
+| test_event_bus.py | pytest tests/e2e/test_event_bus.py | NATS messaging |
+| test_integration_full.py | pytest tests/e2e/test_integration_full.py | Full E2E |
+
+### Execution Order
+```
+1. Start NATS: nats-server -js
+2. Start PostgreSQL: systemctl start postgres
+3. Start Runtime Core: python -m src.runtime.core
+4. Start Hermes Gateway: python gateway/run.py
+5. Start Hermes Agents: python run_agent.py --role H1-H5
+6. Start WebUI: npm run dev (in web/ folder)
+7. Run E2E Tests: pytest tests/e2e/ -v
+```
+
+### Startup Script
+```bash
+#!/bin/bash
+# /opt/hermes/start_all.sh
+
+set -e
+
+echo "Starting Hermes Agent Stack..."
+
+# 1. Start infrastructure services
+echo "[1/7] Starting NATS..."
+sudo systemctl start nats
+
+echo "[2/7] Starting PostgreSQL..."
+sudo systemctl start postgres
+
+# 2. Start Hermes services
+echo "[3/7] Starting Hermes Gateway..."
+sudo systemctl start hermes-gateway
+
+echo "[4/7] Starting Hermes Agents..."
+for i in 1 2 3 4 5; do
+    sudo systemctl start hermes$i
+done
+
+# 3. Start supporting services
+echo "[5/7] Starting Shiba Memory..."
+sudo systemctl start shiba
+
+echo "[6/7] Starting LiteLLM..."
+sudo systemctl start lite-llm
+
+echo "[7/7] Starting Open WebUI..."
+sudo systemctl start open-webui
+
+echo "All services started!"
+echo "Checking health..."
+sleep 5
+curl -s http://localhost:8000/health || echo "Gateway not ready"
+curl -s http://localhost:18789/health || echo "Shiba not ready"
+curl -s http://localhost:4222/healthz || echo "NATS not ready"
+```
+
+---
+
+## PART 7: ACCEPTANCE/PROOF PACK
+
+### Pass/Fail Gates
+
+#### Gate 1: Infrastructure
+- [ ] NATS server running on port 4222
+- [ ] PostgreSQL accessible on port 5432
+- [ ] Nginx proxying correctly
+- [ ] All systemd services running
+
+**Verification**: 
+```bash
+# Check NATS
+curl http://localhost:4222/healthz
+
+# Check PostgreSQL
+psql -h localhost -U shb -d shb -c "SELECT 1;"
+
+# Check Nginx
+nginx -t
+sudo systemctl status nginx
+
+# Check all services
+sudo systemctl status hermes* nats shiba lite-llm nginx postgres open-webui
+```
+
+#### Gate 2: Hermes Deployment
+- [ ] All 5 Hermes agents responding
+- [ ] Gateway accepting requests
+- [ ] NATS subscription active
+
+**Verification**:
+```bash
+# Check gateway
+curl http://localhost:8000/health
+
+# Check each agent
+curl http://localhost:8081/health
+curl http://localhost:8082/health
+curl http://localhost:8083/health
+curl http://localhost:8084/health
+curl http://localhost:8085/health
+
+# Check NATS subscriptions
+nats server info
+nats sub list
+```
+
+#### Gate 3: Provider Routing
+- [ ] MiniMax API accessible
+- [ ] Provider failover working
+- [ ] Circuit breaker activating
+
+**Verification**:
+```bash
+# Test provider routing
+curl -X POST http://localhost:8000/api/route \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "test", "provider": "minimax"}'
+
+# Run failover tests
+pytest tests/e2e/test_provider_failover.py -v
+
+# Check circuit breaker
+curl http://localhost:8000/api/routing/circuit-breaker
+```
+
+#### Gate 4: Memory Integration
+- [ ] Shiba memory storing/retrieving
+- [ ] Vector search working
+- [ ] Session persistence active
+
+**Verification**:
+```bash
+# Check Shiba health
+curl http://localhost:18789/health
+
+# Test memory operations
+curl -X POST http://localhost:18789/memory/store \
+  -H "Content-Type: application/json" \
+  -d '{"key": "test", "value": "hello", "namespace": "default"}'
+
+curl http://localhost:18789/memory/retrieve/test?namespace=default
+
+# Test vector search
+curl -X POST http://localhost:18789/memory/search \
+  -H "Content-Type: application/json" \
+  -d '{"query": "test query", "limit": 5}'
+```
+
+#### Gate 5: Contract Kit Integration
+- [ ] Runtime Core API serving settings
+- [ ] Event bus routing packets
+- [ ] ZeroClaw adapters responding
+
+**Verification**:
+```bash
+# Test Runtime Core API
+curl http://localhost:8000/api/settings
+
+# Test event bus
+nats pub test.subject "hello" \
+  && nats sub test.subject &
+
+# Test ZeroClaw adapters
+pytest tests/e2e/test_runtime.py -v
+```
+
+#### Gate 6: WebUI Integration
+- [ ] Open WebUI accessible
+- [ ] KiloCode VSIX connecting
+- [ ] Settings autofill working
+
+**Verification**:
+```bash
+# Check Open WebUI
+curl http://localhost:3000/health
+
+# Open WebUI browser test
+pytest tests/e2e/test_webui.py -v
+
+# Check KiloCode integration
+pytest tests/e2e/test_kilocode.py -v
+```
+
+#### Gate 7: End-to-End
+- [ ] Complete task packet flow
+- [ ] Evidence collection working
+- [ ] Audit trail generation
+
+**Verification**:
+```bash
+# Run full E2E test
+pytest tests/e2e/test_hermes.py -v
+
+# Run blockchain audit test
+pytest tests/e2e/test_blockchain_audit.py -v
+
+# Check evidence collection
+ls -la /var/log/evidence/
+cat /var/log/evidence/index.jsonl | head
+
+# Check audit trail
+ls -la /var/log/audit/
+cat /var/log/audit/trail.jsonl | head
+```
+
+### Proof Artifacts Required
+
+| Artifact | Location | Description |
+|----------|----------|-------------|
+| NATS JetStream dump | /var/log/nats/dump.jsonl | All packets |
+| Hermes run ledger | /var/log/hermes/run_ledger.jsonl | Agent executions |
+| Evidence index | /var/log/evidence/index.jsonl | All evidence |
+| Audit trail | /var/log/audit/trail.jsonl | Cryptographic proofs |
+| Provider metrics | /var/log/hermes/providers.jsonl | API call metrics |
+| Circuit breaker events | /var/log/hermes/circuit_breaker.jsonl | CB state changes |
+
+### Log Locations
+```
+/var/log/hermes/
+├── run_ledger.jsonl        # Agent execution log
+├── providers.jsonl         # Provider call metrics
+├── circuit_breaker.jsonl   # Circuit breaker events
+├── errors.jsonl            # Error log
+└── audit.jsonl             # Audit events
+
+/var/log/nats/
+├── dump.jsonl              # JetStream packet dump
+└── connections.jsonl       # NATS connection log
+
+/var/log/evidence/
+├── index.jsonl             # Evidence index
+├── packets/                # Individual packet evidence
+│   ├── packet-001.json
+│   └── ...
+└── signatures/            # Cryptographic signatures
+    ├── sig-001.json
+    └── ...
+
+/var/log/audit/
+├── trail.jsonl            # Audit trail
+├── consensus.jsonl        # Consensus events
+└── blockchain_sync.jsonl  # Blockchain sync status
+```
+
+### Final Sign-Off Checklist
+
+```
+□ All 7 Gates passed
+□ All tests green (pytest tests/e2e/ -v)
+□ No critical errors in logs (grep -i error /var/log/hermes/errors.jsonl)
+□ All services healthy (sudo systemctl status hermes* nats shiba)
+□ Proof artifacts verified (ls -la /var/log/evidence/)
+□ NATS JetStream operational (nats server info)
+□ Provider failover tested (pytest test_provider_failover.py)
+□ Blockchain audit synced (curl localhost:8000/api/audit/status)
+□ User acceptance confirmed
+
+Signed: ________________
+Date: ________________
+```
+
+---
+
+## PART 8: TROUBLESHOOTING GUIDE
+
+### Common Issues and Resolutions
+
+#### Issue: Hermes Agent Not Starting
+```bash
+# Check logs
+journalctl -u hermes1 -n 50
+
+# Common causes:
+# - Missing environment variables
+# - Port already in use
+# - NATS not reachable
+
+# Fix: Check env and restart
+export NATS_URL=nats://localhost:4222
+sudo systemctl restart hermes1
+```
+
+#### Issue: NATS Connection Refused
+```bash
+# Check NATS status
+sudo systemctl status nats
+
+# Restart NATS
+sudo systemctl restart nats
+
+# Verify NATS is listening
+nats server info
+```
+
+#### Issue: Provider API Failures
+```bash
+# Check circuit breaker status
+curl http://localhost:8000/api/routing/circuit-breaker
+
+# Reset circuit breaker if triggered
+curl -X POST http://localhost:8000/api/routing/circuit-breaker/reset
+
+# Check provider API keys
+echo $MINIMAX_API_KEY
+echo $SILICONFLOW_API_KEY
+```
+
+#### Issue: Shiba Memory Not Responding
+```bash
+# Check Shiba logs
+journalctl -u shiba -n 50
+
+# Check PostgreSQL connection
+psql -h localhost -U shb -d shb -c "SELECT 1;"
+
+# Restart Shiba
+sudo systemctl restart shiba
+```
+
+#### Issue: Open WebUI Not Accessible
+```bash
+# Check Nginx status
+sudo systemctl status nginx
+
+# Check Nginx logs
+tail -f /var/log/nginx/error.log
+
+# Test Nginx configuration
+nginx -t
+
+# Restart Nginx
+sudo systemctl restart nginx
+```
+
+### Debug Commands
+```bash
+# Full service status
+sudo systemctl status hermes* nats shiba lite-llm nginx postgres open-webui
+
+# View all Hermes logs
+journalctl -u hermes* -f
+
+# View NATS subscriptions
+nats sub list
+
+# View NATS JetStream
+nats stream list
+
+# Check port bindings
+sudo netstat -tlnp | grep -E '(8081|8082|8083|8084|8085|8000|4222|18789|8001|3000)'
+
+# Check Docker containers
+docker ps
+
+# Check resource usage
+top -c
+df -h
+```
+
+---
+
+## QUICK REFERENCE COMMANDS
+
+### Service Management
+```bash
+# Check all services
+sudo systemctl status hermes* nats shiba lite-llm nginx
+
+# Start all services
+sudo systemctl start nats postgres
+sudo systemctl start hermes-gateway
+sudo systemctl start hermes1 hermes2 hermes3 hermes4 hermes5
+sudo systemctl start shiba lite-llm open-webui
+sudo systemctl start nginx
+
+# Stop all services
+sudo systemctl stop hermes1 hermes2 hermes3 hermes4 hermes5 hermes-gateway
+sudo systemctl stop shiba lite-llm open-webui
+sudo systemctl stop nats nginx postgres
+
+# Restart service
+sudo systemctl restart hermes1
+```
+
+### Log Viewing
+```bash
+# View Hermes logs
+journalctl -u hermes1 -f
+journalctl -u hermes-gateway -f
+
+# View NATS logs
+journalctl -u nats -f
+
+# View Shiba logs
+journalctl -u shiba -f
+
+# View run ledger
+tail -f /var/log/hermes/run_ledger.jsonl
+
+# View evidence index
+tail -f /var/log/evidence/index.jsonl
+
+# View audit trail
+tail -f /var/log/audit/trail.jsonl
+```
+
+### Health Checks
+```bash
+# NATS health
+curl http://localhost:4222/healthz
+
+# Hermes Gateway health
+curl http://localhost:8000/health
+
+# Shiba health
+curl http://localhost:18789/health
+
+# Open WebUI health
+curl http://localhost:3000/health
+
+# Individual agents
+curl http://localhost:8081/health
+curl http://localhost:8082/health
+curl http://localhost:8083/health
+curl http://localhost:8084/health
+curl http://localhost:8085/health
+```
+
+### Testing
+```bash
+# Run all E2E tests
+cd G:\Github\contract-kit-v17
+pytest tests/e2e/ -v
+
+# Run specific test
+pytest tests/e2e/test_hermes.py -v
+
+# Run provider failover test
+pytest tests/e2e/test_provider_failover.py -v
+
+# Run blockchain audit test
+pytest tests/e2e/test_blockchain_audit.py -v
+```
+
+### Deployment
+```bash
+# Deploy Hermes updates
+cd G:\Github\hermes-agent-2026.4.13\hermes-agent-2026.4.13
+git pull
+docker build -t hermes-agent:latest .
+docker-compose up -d
+
+# Deploy contract kit updates
+cd G:\Github\contract-kit-v17
+git pull
+cp -r src/* /opt/hermes/src/
+sudo systemctl restart hermes1 hermes2 hermes3 hermes4 hermes5 hermes-gateway
+
+# Restart all services
+bash /opt/hermes/start_all.sh
+```
+
+### Backup and Restore
+```bash
+# Backup settings
+cp /opt/hermes/config.yaml /opt/hermes/config.yaml.backup
+
+# Backup database
+pg_dump -h localhost -U shb shb > /var/backups/shb_backup.sql
+
+# Backup evidence
+tar -czf /var/backups/evidence_$(date +%Y%m%d).tar.gz /var/log/evidence/
+
+# Restore settings
+cp /opt/hermes/config.yaml.backup /opt/hermes/config.yaml
+sudo systemctl restart hermes-gateway
+```
+
+---
+
+## APPENDIX A: FILE INVENTORY
+
+### Contract Kit v17 Files
+```
+G:\Github\contract-kit-v17\
+├── src/
+│   ├── __init__.py
+│   ├── proof/
+│   │   ├── __init__.py
+│   │   ├── test_runner.py (890 lines)
+│   │   ├── coverage.py (420 lines)
+│   │   ├── performance.py (380 lines)
+│   │   └── security.py (340 lines)
+│   ├── zeroclaw/
+│   │   ├── __init__.py
+│   │   ├── git_adapter.py (520 lines)
+│   │   ├── shell_adapter.py (480 lines)
+│   │   ├── filesystem_adapter.py (440 lines)
+│   │   └── research_adapter.py (390 lines)
+│   ├── runtime/
+│   │   ├── __init__.py
+│   │   ├── core.py (720 lines)
+│   │   ├── event_bus.py (560 lines)
+│   │   ├── circuit_breaker.py (380 lines)
+│   │   └── router.py (290 lines)
+│   ├── hermes/
+│   │   ├── __init__.py
+│   │   ├── orchestrator.py (680 lines)
+│   │   └── adapters/ (5 files)
+│   ├── webui/
+│   │   ├── __init__.py
+│   │   ├── control_center_app.py (560 lines)
+│   │   ├── panels/ (6 panel files)
+│   │   └── components/ (12 component files)
+│   ├── kilocode/
+│   │   ├── __init__.py
+│   │   ├── runtime_sync.py (420 lines)
+│   │   ├── task_panel.py (380 lines)
+│   │   └── completion_submitter.py (290 lines)
+│   └── blockchain_audit/
+│       ├── __init__.py
+│       ├── audit_chain.py (780 lines)
+│       ├── audit_agent.py (540 lines)
+│       ├── consensus_engine.py (460 lines)
+│       └── proof.py (390 lines)
+├── configs/
+│   ├── packet_schema.json
+│   ├── runtime_settings_schema.json
+│   ├── nats_subjects.json
+│   └── providers.yaml
+├── diagrams/
+│   ├── architecture_overview.svg
+│   ├── agent_interaction.svg
+│   ├── event_flow.svg
+│   ├── provider_routing.svg
+│   ├── evidence_collection.svg
+│   └── blockchain_audit.svg
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── LANE_1_WEBUI.md
+│   ├── LANE_2_KILOCODE.md
+│   ├── LANE_3_RUNTIME.md
+│   ├── LANE_4_HERMES.md
+│   ├── LANE_5_PROOF.md
+│   ├── BLOCKCHAIN_AUDIT.md
+│   └── DEPLOYMENT.md
+├── tests/e2e/
+│   ├── __init__.py
+│   ├── test_webui.py (280 lines)
+│   ├── test_kilocode.py (260 lines)
+│   ├── test_runtime.py (240 lines)
+│   ├── test_hermes.py (320 lines)
+│   ├── test_boot_gate.py (220 lines)
+│   ├── test_provider_failover.py (290 lines)
+│   ├── test_blockchain_audit.py (310 lines)
+│   ├── test_event_bus.py (230 lines)
+│   └── test_integration_full.py (380 lines)
+├── scripts/
+│   ├── setup_dev.sh
+│   ├── deploy_vps.sh
+│   └── run_tests.sh
+├── README.md
+├── AGENTS.md
+├── LICENSE
+└── package.json
+```
+
+### Hermes Agent Files
+```
+G:\Github\hermes-agent-2026.4.13\hermes-agent-2026.4.13\
+├── run_agent.py (380 lines)
+├── model_tools.py (420 lines)
+├── toolsets.py (290 lines)
+├── cli.py (560 lines)
+├── hermes_state.py (340 lines)
+├── agent/
+│   ├── __init__.py
+│   ├── prompt_builder.py (420 lines)
+│   ├── context_compressor.py (380 lines)
+│   ├── prompt_caching.py (290 lines)
+│   ├── auxiliary_client.py (340 lines)
+│   ├── model_metadata.py (220 lines)
+│   ├── models_dev.py (280 lines)
+│   ├── display.py (310 lines)
+│   ├── skill_commands.py (260 lines)
+│   └── trajectory.py (190 lines)
+├── hermes_cli/
+│   ├── __init__.py
+│   ├── main.py (480 lines)
+│   ├── config.py (390 lines)
+│   ├── commands.py (520 lines)
+│   ├── callbacks.py (280 lines)
+│   ├── setup.py (420 lines)
+│   ├── skin_engine.py (360 lines)
+│   ├── skills_config.py (290 lines)
+│   ├── tools_config.py (310 lines)
+│   ├── skills_hub.py (340 lines)
+│   ├── models.py (380 lines)
+│   ├── model_switch.py (260 lines)
+│   └── auth.py (220 lines)
+├── tools/
+│   ├── __init__.py
+│   ├── registry.py (420 lines)
+│   ├── approval.py (280 lines)
+│   ├── terminal_tool.py (390 lines)
+│   ├── process_registry.py (260 lines)
+│   ├── file_tools.py (480 lines)
+│   ├── web_tools.py (520 lines)
+│   ├── browser_tool.py (440 lines)
+│   ├── code_execution_tool.py (380 lines)
+│   ├── delegate_tool.py (340 lines)
+│   ├── mcp_tool.py (1050 lines)
+│   └── environments/ (5 environment files)
+├── gateway/
+│   ├── __init__.py
+│   ├── run.py (580 lines)
+│   ├── session.py (420 lines)
+│   └── platforms/ (telegram.py, discord.py, slack.py, etc.)
+├── acp_adapter/
+│   └── (VS Code / Zed / JetBrains integration)
+├── cron/
+│   ├── __init__.py
+│   ├── jobs.py (290 lines)
+│   └── scheduler.py (340 lines)
+├── environments/
+│   └── (RL training environments - Atropos)
+├── tests/
+│   ├── (3000+ test files)
+├── batch_runner.py (220 lines)
+├── README.md
+└── package.json
+```
+
+---
+
+## APPENDIX B: API REFERENCE
+
+### Hermes Gateway API
+
+#### Authentication
+```bash
+# All requests require header
+Authorization: Bearer <hermes-gateway-secret>
+```
+
+#### Endpoints
+
+**POST /api/v1/chat**
+```json
+{
+  "message": "string",
+  "session_id": "string",
+  "agent_role": "H1|H2|H3|H4|H5",
+  "context": {
+    "task_id": "string",
+    "metadata": {}
+  }
+}
+```
+
+**GET /api/v1/session/{session_id}**
+```json
+{
+  "session_id": "string",
+  "messages": [],
+  "created_at": "ISO8601",
+  "updated_at": "ISO8601"
+}
+```
+
+**POST /api/v1/event**
+```json
+{
+  "subject": "string",
+  "data": {},
+  "headers": {}
+}
+```
+
+**GET /api/v1/health**
+```json
+{
+  "status": "healthy|degraded|unhealthy",
+  "services": {
+    "nats": "connected|disconnected",
+    "shiba": "connected|disconnected",
+    "agents": {
+      "H1": "ready|busy|offline",
+      "H2": "ready|busy|offline",
+      "H3": "ready|busy|offline",
+      "H4": "ready|busy|offline",
+      "H5": "ready|busy|offline"
+    }
+  }
+}
+```
+
+### Runtime Core API
+
+**GET /api/settings**
+```json
+{
+  "version": "1.0",
+  "providers": {},
+  "integrations": {},
+  "routing": {},
+  "logging": {},
+  "audit": {}
+}
+```
+
+**POST /api/settings/providers**
+```json
+{
+  "provider": "minimax",
+  "config": {
+    "api_key": "string",
+    "enabled": true,
+    "priority": 1
+  }
+}
+```
+
+**POST /api/events/publish**
+```json
+{
+  "subject": "hermes.task.new",
+  "data": {
+    "task_id": "string",
+    "type": "string",
+    "payload": {}
+  }
+}
+```
+
+---
+
+## APPENDIX C: DEPLOYMENT TIMELINE
+
+### Phase 1: Infrastructure Setup (Day 1)
+- [ ] Provision VPS with Ubuntu 22.04
+- [ ] Install Docker and Docker Compose
+- [ ] Configure Nginx with SSL certificates
+- [ ] Setup PostgreSQL database
+- [ ] Configure NATS server with JetStream
+
+### Phase 2: Hermes Deployment (Day 2)
+- [ ] Build Hermes Docker images
+- [ ] Deploy 5 Hermes agents
+- [ ] Deploy Hermes Gateway
+- [ ] Configure systemd services
+- [ ] Verify agent intercommunication
+
+### Phase 3: Integration (Day 3)
+- [ ] Deploy Shiba memory gateway
+- [ ] Deploy LiteLLM proxy
+- [ ] Configure provider API keys
+- [ ] Test NATS event routing
+- [ ] Verify settings propagation
+
+### Phase 4: WebUI & VSIX (Day 4)
+- [ ] Deploy Open WebUI
+- [ ] Install KiloCode VSIX
+- [ ] Configure WebUI integrations
+- [ ] Test settings autofill
+- [ ] Verify E2E task flow
+
+### Phase 5: Testing & Validation (Day 5)
+- [ ] Run full E2E test suite
+- [ ] Validate blockchain audit
+- [ ] Test provider failover
+- [ ] Performance benchmarking
+- [ ] Documentation review
+
+### Phase 6: Production Launch (Day 6)
+- [ ] Final security review
+- [ ] Backup verification
+- [ ] Monitoring setup
+- [ ] Run ledger activation
+- [ ] Go live
+
+---
+
+*Document Version: 1.0*
+*Generated: 2026-04-20*
+*Source: KiloCode Contract Kit v17*
+*Status: READY FOR HANDOFF*

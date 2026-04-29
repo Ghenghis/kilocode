@@ -1,0 +1,227 @@
+{
+  "$schema": "https://daveai.tech/schemas/claude-code-task-packet.v2.json",
+  "version": "2.1.0",
+  "generated": "2026-04-26T05:08:00-07:00",
+  "generated_by": "Windsurf",
+  "audience": "Claude Code Opus 4.7 Max + 10 sub-agents",
+  "mission": "Update and stabilize the DaveAI ecosystem repos using Windsurf's evidence-based handoff. Never blind-sync.",
+  "default_mode": "REVIEW_MODE",
+  "primary_repo": {
+    "name": "contract-kit-v17",
+    "local_path": "G:/Github/contract-kit-v17",
+    "remote": "https://github.com/Ghenghis/contract-kit-v17",
+    "branch": "integration/main",
+    "head": "ca5d8f0d94ce328b227ae2d3b59f39ae518670fb"
+  },
+  "truth_map": [
+    {
+      "role": "contract-kit-v17 / WebUI / Hub",
+      "class": "SOURCE_OF_TRUTH_WEBUI_HUB_CONTRACTKIT",
+      "local_path": "G:/Github/contract-kit-v17",
+      "remote": "https://github.com/Ghenghis/contract-kit-v17",
+      "remote_head": "ca5d8f0d94ce328b227ae2d3b59f39ae518670fb",
+      "local_head": "ca5d8f0d94ce328b227ae2d3b59f39ae518670fb",
+      "ahead_count": 0,
+      "behind_count": 0,
+      "stash_count": 0,
+      "dirty": true,
+      "verdict": "EXACT_MATCH_DIRTY_TREE"
+    },
+    {
+      "role": "kilocode",
+      "class": "ACTIVE_KILOCODE_REPO",
+      "local_path": "G:/Github/kilocode-Azure2",
+      "remote_truth_map": "https://github.com/AiDave71/kilocode",
+      "configured_remotes": {
+        "origin": "https://github.com/Ghenghis/kilocode.git",
+        "upstream": "https://github.com/Kilo-Org/kilocode.git",
+        "aidave71": "https://github.com/AiDave71/kilocode.git"
+      },
+      "remote_head_aidave71_feat_azure_voice_studio": "574658008e82f88c9921d7f5b2d877fbf8a6dd86",
+      "remote_head_aidave71_main": "68a16ace7c9e4a740a36060969b39ca4ee0faf3f",
+      "local_branch": "feat/azure-voice-studio",
+      "local_head": "67bd133d6e87683414b8b7e6746aa772aecaa82d",
+      "ahead_behind": {
+        "vs_origin_feat_azure_voice_studio": [491, 0],
+        "vs_aidave71_feat_azure_voice_studio": [551, 3],
+        "vs_origin_main": [3304, 31],
+        "vs_upstream_main_kilo_org": [70, 385]
+      },
+      "stash_count": 1,
+      "dirty": true,
+      "verdict": "DIVERGED_REVIEW_REQUIRED"
+    },
+    {
+      "role": "zeroclaw",
+      "class": "ACTIVE_ZEROCLAW_FILESET_OR_REPO",
+      "local_path": "C:/Users/Admin/Downloads/VPS/zeroclaw",
+      "remote": "https://github.com/Ghenghis/zeroclaw",
+      "remote_head_main": "ff254b4bb392b7a2b5bac9e881a4327d0e61c870",
+      "local_head": null,
+      "is_git_repo": false,
+      "verdict": "UNINIT_FILESET_NEEDS_INIT_AND_DIFF"
+    },
+    {
+      "role": "hermes-agent",
+      "class": "ACTIVE_HERMES_FILESET",
+      "local_path": "G:/Github/hermes-agent-2026.4.13/hermes-agent-2026.4.13",
+      "remote": "https://github.com/Ghenghis/hermes-agent",
+      "remote_head_main": "5ef0fe1665611ebe81235ddec3e5e74a9fc1993e",
+      "local_head": null,
+      "is_git_repo": false,
+      "siblings": [
+        {"path": "G:/Github/hermes-agent-2026.4.13", "class": "FILESET_DUPLICATE_WRAPPER"},
+        {"path": "G:/Github/hermes-agent", "class": "FILESET_STALE_HERMES"}
+      ],
+      "verdict": "UNINIT_FILESET_NEEDS_FRESH_CLONE_AND_IMPORT"
+    },
+    {
+      "role": "open-webui",
+      "class": "MISSING_CLONE_TARGET",
+      "local_path_targets": ["G:/Github/open-webui", "G:/Github/open-webui-current"],
+      "remote": "https://github.com/Ghenghis/open-webui",
+      "remote_head_main": "8dae237a0bfdac4b7f55b463b3e2769ea4b94a0b",
+      "verdict": "PURE_CLONE"
+    },
+    {
+      "role": "secrets",
+      "class": "SECRET_ENV_SOURCE_DO_NOT_COMMIT",
+      "local_path": "C:/Users/Admin/Downloads/api",
+      "files": [".env", ".env-Azure", ".env-test", ".env.contract-kit", ".env.github",
+                "API_KEYS_VERIFICATION.md", "github.txt", "hf-token.txt",
+                "minimax.txt", "siliconflow.txt", "env/"],
+      "verdict": "QUARANTINE_NEVER_COMMIT"
+    }
+  ],
+  "agent_assignments": [
+    {
+      "id": "agent-01-inventory",
+      "role": "Location inventory verifier",
+      "owns": ["LOCAL_LOCATION_INVENTORY.csv", "LOCAL_LOCATION_INVENTORY.md"],
+      "mission": "Re-verify every path in the truth map exists with the stated class. Confirm the 21 protected paths in CUSTOM_DAVEAI_FILES.md exist (1 was already corrected: kilocode agents live at .kilo/agents/ only).",
+      "evidence_required": "artifacts/repo-sync/LOCAL_LOCATION_INVENTORY.md and .csv must agree byte-for-byte with disk."
+    },
+    {
+      "id": "agent-02-freshness",
+      "role": "Repo freshness / ahead-behind",
+      "owns": ["REPO_FRESHNESS_MATRIX.csv", "REPO_FRESHNESS_MATRIX.md", "REMOTE_CROSS_REFERENCE.md"],
+      "mission": "Re-run git fetch on every git repo. Re-measure ahead/behind against truth-map remotes. Use git ls-remote to confirm the 5 canonical URLs are still reachable.",
+      "evidence_required": "Updated CSV with current measurement timestamp."
+    },
+    {
+      "id": "agent-03-conflict-risk",
+      "role": "Conflict risk analyst",
+      "owns": ["CONFLICT_RISK_MATRIX.md"],
+      "mission": "Inspect kilocode-Azure2 stash@{0} and the 491/551 unpushed commits. Classify each commit as DaveAI-custom / upstream-style / build-artefact. Update CONFLICT_RISK_MATRIX.md with finer-grained risk per logical commit batch.",
+      "evidence_required": "Append a 'Stash inspection' section + 'Commit batch classification' table to CONFLICT_RISK_MATRIX.md."
+    },
+    {
+      "id": "agent-04-kilocode-sync",
+      "role": "KiloCode sync agent",
+      "owns": ["sync/aidave71-2026-04-26 branch on G:/Github/kilocode-Azure2"],
+      "mission": "Bring kilocode-Azure2 to AiDave71/feat/azure-voice-studio parity. Defer Kilo-Org upstream cherry-picks.",
+      "steps": [
+        "git stash show -p stash@{0} > artifacts/repo-sync/kilocode-stash-inspection.diff",
+        "git fetch aidave71 --prune",
+        "git checkout -b sync/aidave71-2026-04-26 67bd133",
+        "git rebase aidave71/feat/azure-voice-studio",
+        "Resolve conflicts respecting CUSTOM_DAVEAI_FILES.md allowlist",
+        "Run V06 + V07 + V09 + V15 + V42 + V79 + V80 + V81",
+        "git push aidave71 sync/aidave71-2026-04-26"
+      ],
+      "tests_required": ["V06_COMPILE", "V07_PACKAGE", "V09_VSIX_MANIFEST", "V15_ACTIVATION", "V42_SECRET_SCAN", "V79_skills_inventory", "V80_skills_audit_truth", "V81_service_lifecycle_truth"],
+      "hard_rules": ["never force push", "never rebase against origin/main", "no destructive reset"]
+    },
+    {
+      "id": "agent-05-hermes-sync",
+      "role": "Hermes import agent",
+      "owns": ["G:/Github/hermes-agent-fresh", "review/active-fileset-import branch"],
+      "mission": "Fresh clone Ghenghis/hermes-agent, mirror active fileset deltas, push review branch.",
+      "steps": [
+        "git clone https://github.com/Ghenghis/hermes-agent.git G:/Github/hermes-agent-fresh",
+        "robocopy G:/Github/hermes-agent-2026.4.13/hermes-agent-2026.4.13 G:/Github/hermes-agent-fresh /MIR /XD .git",
+        "cd G:/Github/hermes-agent-fresh",
+        "git checkout -b review/active-fileset-import",
+        "git add -A",
+        "git commit -m 'feat: import active fileset deltas (2026-04-26)'",
+        "git push -u origin review/active-fileset-import"
+      ],
+      "tests_required": ["V42_SECRET_SCAN", "V61_HERMES_RUNTIME_TRUTH"]
+    },
+    {
+      "id": "agent-06-zeroclaw-sync",
+      "role": "ZeroClaw init + adopt agent",
+      "owns": ["C:/Users/Admin/Downloads/VPS/zeroclaw/.git", "review/zeroclaw-import branch"],
+      "mission": "git init the active ZeroClaw fileset, adopt Ghenghis/zeroclaw as origin, produce a review branch.",
+      "steps": [
+        "cd C:/Users/Admin/Downloads/VPS/zeroclaw",
+        "git init",
+        "git remote add origin https://github.com/Ghenghis/zeroclaw.git",
+        "git fetch origin --prune",
+        "git checkout -b review/zeroclaw-import origin/main",
+        "robocopy . . /XD .git",
+        "git add -A",
+        "git commit -m 'feat: import active ZeroClaw fileset (2026-04-26)'",
+        "git push -u origin review/zeroclaw-import"
+      ],
+      "tests_required": ["V42_SECRET_SCAN", "V62_ZEROCLAW_RUNTIME_TRUTH", "V63_SHIBA_MEMORY_TRUTH"]
+    },
+    {
+      "id": "agent-07-openwebui-sync",
+      "role": "Open-WebUI clone agent",
+      "owns": ["G:/Github/open-webui", "G:/Github/open-webui-current"],
+      "mission": "Clone Ghenghis/open-webui to two targets and verify pipelines.",
+      "steps": [
+        "git clone https://github.com/Ghenghis/open-webui.git G:/Github/open-webui",
+        "git clone https://github.com/Ghenghis/open-webui.git G:/Github/open-webui-current",
+        "Verify deploy/pipelines/kilocode_agents_pipeline.py is intact"
+      ],
+      "tests_required": ["V42_SECRET_SCAN", "V68_OPENWEBUI_TRUTH"]
+    },
+    {
+      "id": "agent-08-repack-dedupe",
+      "role": "Repack dedupe agent",
+      "owns": ["REPACK_MERGE_MANIFEST.csv", "REPACK_MERGE_VERDICT.md"],
+      "mission": "Confirm repacks are byte-identical, archive v1, leave v2 inside contract-kit-v17 untouched.",
+      "evidence_required": "535 same / 0 diff confirmed. v1 archived to G:/Github/_archive/DaveAI_Ecosystem_Truth_Skills_Repack-v1.zip then deleted."
+    },
+    {
+      "id": "agent-09-vps-webui-server-ide",
+      "role": "VPS / Server-IDE integration agent",
+      "owns": ["docs/05_WEBUI_SERVER_IDE_CONTINUATION_SPEC implementation"],
+      "mission": "Stand up code-server / OpenVSCode Server behind Hub at /ide, KiloCode VSIX inside, Claude Code CLI sidecar, repo-sync service, all behind Cloudflare/Nginx.",
+      "tests_required": ["V42_SECRET_SCAN", "V67_settings_final_verdict"]
+    },
+    {
+      "id": "agent-10-evidence-final-verdict",
+      "role": "Evidence + final verdict agent",
+      "owns": ["artifacts/handoff-to-claude/FINAL_VERDICT.md", "artifacts/handoff-to-claude/EVIDENCE_LEDGER.md"],
+      "mission": "After all other agents complete, aggregate evidence, run V77_evidence_ledger_truth + V78_agentic_final_verdict, write FINAL_VERDICT.md.",
+      "tests_required": ["V77_EVIDENCE_LEDGER_TRUTH", "V78_AGENTIC_FINAL_VERDICT"]
+    }
+  ],
+  "hard_rules": [
+    "no force push to any remote",
+    "no destructive git reset --hard without backup branch",
+    "no commit of any file under C:/Users/Admin/Downloads/api",
+    "no overwrite of any path listed in CUSTOM_DAVEAI_FILES.md without explicit user approval",
+    "all sync work happens on review branches only",
+    "never rebase kilocode-Azure2 against origin/main (Ghenghis); only against aidave71/feat/azure-voice-studio",
+    "never auto-pull from upstream/main (Kilo-Org); cherry-pick only with the protected-file allowlist",
+    "tests required after every batch",
+    "final verdict only from evidence files in artifacts/"
+  ],
+  "evidence_paths": {
+    "inventory": "artifacts/repo-sync/LOCAL_LOCATION_INVENTORY.csv",
+    "freshness": "artifacts/repo-sync/REPO_FRESHNESS_MATRIX.csv",
+    "remote_cross_ref": "artifacts/repo-sync/REMOTE_CROSS_REFERENCE.md",
+    "conflict_risk": "artifacts/repo-sync/CONFLICT_RISK_MATRIX.md",
+    "protected_files": "artifacts/repo-sync/CUSTOM_DAVEAI_FILES.md",
+    "repack_manifest": "artifacts/repo-sync/REPACK_MERGE_MANIFEST.csv",
+    "repack_verdict": "artifacts/repo-sync/REPACK_MERGE_VERDICT.md",
+    "docs_audit": "artifacts/handoff-to-claude/DOCS_DIAGRAMS_AUDIT.md",
+    "stale_claims": "artifacts/handoff-to-claude/STALE_CLAIMS_REPORT.csv",
+    "current_state_handoff": "handoff/CLAUDE_CODE_AGENT_HANDOFF_CURRENT_STATE.md"
+  },
+  "windsurf_verdict": "READY_FOR_CLAUDE_AGENT_SYNC"
+}

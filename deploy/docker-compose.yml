@@ -1,0 +1,152 @@
+version: "3.9"
+
+# =============================================================================
+# KiloCode contract-kit-v17 — Docker Compose
+# Local dev:  docker compose up
+# VPS:        docker compose -f deploy/docker-compose.yml up -d
+# =============================================================================
+
+networks:
+  kilocode-network:
+    driver: bridge
+
+volumes:
+  kilocode-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/kilocode/data
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # NATS message bus
+  # ---------------------------------------------------------------------------
+  nats:
+    image: nats:alpine
+    container_name: kilocode-nats
+    restart: unless-stopped
+    ports:
+      - "4222:4222"   # client connections
+      - "8222:8222"   # HTTP monitoring
+    command: ["-m", "8222", "--js"]   # enable JetStream
+    networks:
+      - kilocode-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8222/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Runtime API (FastAPI on port 8080)
+  # ---------------------------------------------------------------------------
+  runtime:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: kilocode-runtime:latest
+    container_name: kilocode-runtime
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - SERVICE=runtime
+      - NATS_URL=nats://nats:4222
+      - KILOCODE_RUNTIME_URL=http://runtime:8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - kilocode-data:/opt/kilocode/data
+      - ../src:/opt/kilocode/src:ro
+    command: >
+      python -m uvicorn src.runtime.core:app
+        --host 0.0.0.0
+        --port 8080
+        --workers 2
+        --log-level info
+    depends_on:
+      nats:
+        condition: service_healthy
+    networks:
+      - kilocode-network
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ---------------------------------------------------------------------------
+  # Hermes Orchestrator (port 8090)
+  # ---------------------------------------------------------------------------
+  hermes:
+    image: kilocode-runtime:latest
+    container_name: kilocode-hermes
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - SERVICE=hermes
+      - NATS_URL=nats://nats:4222
+      - KILOCODE_RUNTIME_URL=http://runtime:8080
+    ports:
+      - "8090:8090"
+    volumes:
+      - kilocode-data:/opt/kilocode/data
+      - ../src:/opt/kilocode/src:ro
+    command: >
+      python -m uvicorn src.hermes.orchestrator:app
+        --host 0.0.0.0
+        --port 8090
+        --workers 1
+        --log-level info
+    depends_on:
+      runtime:
+        condition: service_healthy
+    networks:
+      - kilocode-network
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8090/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ---------------------------------------------------------------------------
+  # WebUI Control Center (port 7860 — Open WebUI convention)
+  # ---------------------------------------------------------------------------
+  webui:
+    image: kilocode-runtime:latest
+    container_name: kilocode-webui
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - SERVICE=webui
+      - KILOCODE_RUNTIME_URL=http://runtime:8080
+      - HERMES_URL=http://hermes:8090
+      - PORT=7860
+    ports:
+      - "7860:7860"
+    volumes:
+      - kilocode-data:/opt/kilocode/data
+      - ../src:/opt/kilocode/src:ro
+    command: >
+      python -m uvicorn src.webui.app:app
+        --host 0.0.0.0
+        --port 7860
+        --workers 1
+        --log-level info
+    depends_on:
+      hermes:
+        condition: service_healthy
+    networks:
+      - kilocode-network
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:7860/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s

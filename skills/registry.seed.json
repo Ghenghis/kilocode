@@ -1,0 +1,147 @@
+{
+  "version": "1.0.0",
+  "comment": "Seed registry for first install. Copy to ~/daveai/skills/registry.json on VPS or %USERPROFILE%/daveai/skills/registry.json on Windows. Hub overwrites generated/timestamp on first save.",
+  "generated": "1970-01-01T00:00:00Z",
+  "schema_url": "skills/manifest.schema.json",
+  "skills": {
+    "file_read": {
+      "manifest": {
+        "id": "file_read",
+        "name": "File Read",
+        "version": "1.0.0",
+        "description": "Read text content from a file inside an allowed workspace path.",
+        "permissions": ["fs_read"],
+        "executor": "python",
+        "entrypoint": "skills.file_ops:file_read",
+        "category": "fs",
+        "source": "builtin"
+      },
+      "verdict": "PASS",
+      "errors": [],
+      "dangerous": false,
+      "quarantine": false,
+      "permissions": ["fs_read"],
+      "executor": "python",
+      "approved": true,
+      "use_count": 0,
+      "success_count": 0,
+      "failure_count": 0
+    },
+    "file_write": {
+      "manifest": {
+        "id": "file_write",
+        "name": "File Write",
+        "version": "1.0.0",
+        "description": "Write text content to a file. Dangerous: requires explicit approval.",
+        "permissions": ["fs_write"],
+        "executor": "zeroclaw",
+        "entrypoint": "skills.file_ops:file_write",
+        "category": "fs",
+        "source": "builtin"
+      },
+      "verdict": "PASS_REQUIRES_APPROVAL",
+      "errors": [],
+      "dangerous": true,
+      "quarantine": false,
+      "permissions": ["fs_write"],
+      "executor": "zeroclaw",
+      "approved": false,
+      "use_count": 0,
+      "success_count": 0,
+      "failure_count": 0
+    },
+    "git_status": {
+      "manifest": {
+        "id": "git_status",
+        "name": "Git Status",
+        "version": "1.0.0",
+        "description": "Run git status -sb in a workspace.",
+        "permissions": ["shell"],
+        "executor": "zeroclaw",
+        "entrypoint": "skills.git_ops:git_status",
+        "category": "git",
+        "source": "builtin"
+      },
+      "verdict": "PASS_REQUIRES_APPROVAL",
+      "errors": [],
+      "dangerous": true,
+      "quarantine": false,
+      "permissions": ["shell"],
+      "executor": "zeroclaw",
+      "approved": true,
+      "use_count": 0,
+      "success_count": 0,
+      "failure_count": 0
+    },
+    "playwright_screenshot": {
+      "manifest": {
+        "id": "playwright_screenshot",
+        "name": "Playwright Screenshot",
+        "version": "1.0.0",
+        "description": "Open a URL in headless Chromium and capture a PNG.",
+        "permissions": ["browser"],
+        "executor": "node",
+        "entrypoint": "skills.qa.playwright:screenshot",
+        "category": "qa",
+        "source": "builtin"
+      },
+      "verdict": "PASS",
+      "errors": [],
+      "dangerous": false,
+      "quarantine": false,
+      "permissions": ["browser"],
+      "executor": "node",
+      "approved": true,
+      "use_count": 0,
+      "success_count": 0,
+      "failure_count": 0
+    },
+    "zeroclaw_shell": {
+      "manifest": {
+        "id": "zeroclaw_shell",
+        "name": "ZeroClaw Shell",
+        "version": "1.0.0",
+        "description": "Run an arbitrary shell command via ZeroClaw safe-exec. Dangerous.",
+        "permissions": ["shell"],
+        "executor": "zeroclaw",
+        "entrypoint": "zeroclaw.shell:run",
+        "category": "exec",
+        "source": "builtin"
+      },
+      "verdict": "PASS_REQUIRES_APPROVAL",
+      "errors": [],
+      "dangerous": true,
+      "quarantine": false,
+      "permissions": ["shell"],
+      "executor": "zeroclaw",
+      "approved": false,
+      "use_count": 0,
+      "success_count": 0,
+      "failure_count": 0
+    },
+    "obliteratus": {
+      "manifest": {
+        "id": "obliteratus",
+        "name": "Obliteratus",
+        "version": "research-only",
+        "description": "Refusal-bypass / guardrail-removal research prompt. NOT FOR PRODUCTION.",
+        "permissions": ["shell"],
+        "executor": "shell",
+        "entrypoint": "research/obliteratus.sh",
+        "category": "research",
+        "source": "external"
+      },
+      "verdict": "QUARANTINE",
+      "errors": [],
+      "dangerous": true,
+      "quarantine": true,
+      "permissions": ["shell"],
+      "executor": "shell",
+      "approved": false,
+      "use_count": 0,
+      "success_count": 0,
+      "failure_count": 0,
+      "quarantine_reason": "matches quarantine keyword: obliterat (refusal-bypass, guardrail-removal)"
+    }
+  }
+}

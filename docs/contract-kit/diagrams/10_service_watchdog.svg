@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 760" font-family="'Segoe UI',Arial,sans-serif" font-size="12">
+  <defs>
+    <marker id="arr-blue" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#3b82f6"/>
+    </marker>
+    <marker id="arr-grn" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#22c55e"/>
+    </marker>
+    <marker id="arr-amber" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#f59e0b"/>
+    </marker>
+  </defs>
+  <rect width="1100" height="760" fill="#0f172a"/>
+
+  <text x="550" y="32" text-anchor="middle" font-size="18" font-weight="bold" fill="#f8fafc">Service Lifecycle Watchdog — 5 Trigger Points · 14 Services · Auto-Start</text>
+  <text x="550" y="50" text-anchor="middle" font-size="11" fill="#94a3b8">Probe = HTTP &lt; 500 → reachable. Ensure = probe + auto-start any down service with start_cmd.</text>
+
+  <!-- Triggers (left column) -->
+  <rect x="30" y="80" width="280" height="500" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+  <text x="170" y="105" text-anchor="middle" fill="#e2e8f0" font-weight="bold" font-size="13">5 TRIGGER POINTS</text>
+
+  <rect x="50" y="125" width="240" height="60" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="2"/>
+  <text x="170" y="146" text-anchor="middle" fill="#60a5fa" font-weight="bold" font-size="12">① Hub Boot</text>
+  <text x="170" y="163" text-anchor="middle" fill="#93c5fd" font-size="10">@app.on_event("startup")</text>
+  <text x="170" y="178" text-anchor="middle" fill="#cbd5e1" font-size="10">background_ensure_on_startup(0.5)</text>
+
+  <rect x="50" y="200" width="240" height="60" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="2"/>
+  <text x="170" y="221" text-anchor="middle" fill="#60a5fa" font-weight="bold" font-size="12">② KiloCode Activate</text>
+  <text x="170" y="238" text-anchor="middle" fill="#93c5fd" font-size="10">HubServicesService.start()</text>
+  <text x="170" y="253" text-anchor="middle" fill="#cbd5e1" font-size="10">VS Code extension activate()</text>
+
+  <rect x="50" y="275" width="240" height="60" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="2"/>
+  <text x="170" y="296" text-anchor="middle" fill="#60a5fa" font-weight="bold" font-size="12">③ WebUI Refresh</text>
+  <text x="170" y="313" text-anchor="middle" fill="#93c5fd" font-size="10">panels/services.js init</text>
+  <text x="170" y="328" text-anchor="middle" fill="#cbd5e1" font-size="10">on mount + Ensure-all button</text>
+
+  <rect x="50" y="350" width="240" height="60" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="2"/>
+  <text x="170" y="371" text-anchor="middle" fill="#60a5fa" font-weight="bold" font-size="12">④ Periodic Poll</text>
+  <text x="170" y="388" text-anchor="middle" fill="#93c5fd" font-size="10">setInterval(30s)</text>
+  <text x="170" y="403" text-anchor="middle" fill="#cbd5e1" font-size="10">daveai.hub.pollSeconds</text>
+
+  <rect x="50" y="425" width="240" height="60" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="2"/>
+  <text x="170" y="446" text-anchor="middle" fill="#60a5fa" font-weight="bold" font-size="12">⑤ Manual</text>
+  <text x="170" y="463" text-anchor="middle" fill="#93c5fd" font-size="10">POST /api/services/ensure</text>
+  <text x="170" y="478" text-anchor="middle" fill="#cbd5e1" font-size="10">curl / WebUI / KiloCode cmd</text>
+
+  <text x="170" y="510" text-anchor="middle" fill="#94a3b8" font-size="10">All five funnel into</text>
+  <text x="170" y="525" text-anchor="middle" fill="#22c55e" font-weight="bold" font-size="11">ensure_all()</text>
+  <text x="170" y="544" text-anchor="middle" fill="#94a3b8" font-size="10">probe → start_if_needed → re-probe</text>
+  <text x="170" y="565" text-anchor="middle" fill="#94a3b8" font-size="10">emit services.ensured event</text>
+
+  <!-- Center: ensure_all flow -->
+  <rect x="360" y="80" width="370" height="160" rx="8" fill="#14532d" stroke="#22c55e" stroke-width="2"/>
+  <text x="545" y="105" text-anchor="middle" fill="#86efac" font-weight="bold" font-size="14">ensure_all()</text>
+  <text x="545" y="128" text-anchor="middle" fill="#bbf7d0" font-size="11">1. probe_all() → results</text>
+  <text x="545" y="146" text-anchor="middle" fill="#bbf7d0" font-size="11">2. for each unhealthy service:</text>
+  <text x="545" y="162" text-anchor="middle" fill="#bbf7d0" font-size="11">     if start_cmd: _spawn(detached)</text>
+  <text x="545" y="178" text-anchor="middle" fill="#bbf7d0" font-size="11">3. wait warmup (default 1.5s)</text>
+  <text x="545" y="194" text-anchor="middle" fill="#bbf7d0" font-size="11">4. probe_all() again</text>
+  <text x="545" y="216" text-anchor="middle" fill="#86efac" font-size="11" font-weight="bold">→ {started, failed, healthy, total}</text>
+
+  <!-- Probe rule box -->
+  <rect x="360" y="260" width="370" height="100" rx="8" fill="#1f2937" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="545" y="283" text-anchor="middle" fill="#e2e8f0" font-weight="bold" font-size="12">PROBE RULE</text>
+  <text x="545" y="305" text-anchor="middle" fill="#86efac" font-size="11">healthy = HTTP &lt; 500</text>
+  <text x="545" y="322" text-anchor="middle" fill="#cbd5e1" font-size="10">401 / 403 / 404 = "server up, just unauthed"</text>
+  <text x="545" y="338" text-anchor="middle" fill="#cbd5e1" font-size="10">connection_refused / timeout / 5xx = down</text>
+  <text x="545" y="354" text-anchor="middle" fill="#94a3b8" font-size="10">Per-service overrides: expect_status[], probe_method</text>
+
+  <!-- Spawn safety -->
+  <rect x="360" y="380" width="370" height="100" rx="8" fill="#1f2937" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="545" y="403" text-anchor="middle" fill="#e2e8f0" font-weight="bold" font-size="12">SPAWN SAFETY</text>
+  <text x="545" y="425" text-anchor="middle" fill="#cbd5e1" font-size="10">DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP</text>
+  <text x="545" y="441" text-anchor="middle" fill="#cbd5e1" font-size="10">child outlives Hub</text>
+  <text x="545" y="457" text-anchor="middle" fill="#cbd5e1" font-size="10">stdout/stderr → artifacts/services/&lt;id&gt;.log</text>
+  <text x="545" y="473" text-anchor="middle" fill="#fbbf24" font-size="10">spawn_failed → reported, not retried in same call</text>
+
+  <!-- Service registry (right) -->
+  <rect x="760" y="80" width="310" height="500" rx="8" fill="#1f2937" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="915" y="105" text-anchor="middle" fill="#e2e8f0" font-weight="bold" font-size="13">SERVICE REGISTRY (14)</text>
+
+  <text x="775" y="128" fill="#86efac" font-size="10">●</text><text x="790" y="128" fill="#cbd5e1" font-size="11">hub                  required · local</text>
+  <text x="775" y="146" fill="#86efac" font-size="10">●</text><text x="790" y="146" fill="#cbd5e1" font-size="11">lmstudio             provider</text>
+  <text x="775" y="164" fill="#fbbf24" font-size="10">●</text><text x="790" y="164" fill="#cbd5e1" font-size="11">ollama               provider · auto-start</text>
+  <text x="775" y="182" fill="#fbbf24" font-size="10">●</text><text x="790" y="182" fill="#cbd5e1" font-size="11">litellm              provider · auto-start</text>
+  <text x="775" y="200" fill="#86efac" font-size="10">●</text><text x="790" y="200" fill="#cbd5e1" font-size="11">minimax              required · remote</text>
+  <text x="775" y="218" fill="#86efac" font-size="10">●</text><text x="790" y="218" fill="#cbd5e1" font-size="11">siliconflow          remote</text>
+  <text x="775" y="236" fill="#fbbf24" font-size="10">●</text><text x="790" y="236" fill="#cbd5e1" font-size="11">openwebui            required · docker</text>
+  <text x="775" y="254" fill="#fbbf24" font-size="10">●</text><text x="790" y="254" fill="#cbd5e1" font-size="11">openwebui_pipelines  required · docker</text>
+  <text x="775" y="272" fill="#fbbf24" font-size="10">●</text><text x="790" y="272" fill="#cbd5e1" font-size="11">hermes               required · docker</text>
+  <text x="775" y="290" fill="#fbbf24" font-size="10">●</text><text x="790" y="290" fill="#cbd5e1" font-size="11">zeroclaw             required · :8090</text>
+  <text x="775" y="308" fill="#fbbf24" font-size="10">●</text><text x="790" y="308" fill="#cbd5e1" font-size="11">shiba                :18789</text>
+  <text x="775" y="326" fill="#fbbf24" font-size="10">●</text><text x="790" y="326" fill="#cbd5e1" font-size="11">runtime              KiloCode runtime</text>
+  <text x="775" y="344" fill="#fbbf24" font-size="10">●</text><text x="790" y="344" fill="#cbd5e1" font-size="11">settings             persistence</text>
+  <text x="775" y="362" fill="#86efac" font-size="10">●</text><text x="790" y="362" fill="#cbd5e1" font-size="11">skills               required · hub-internal</text>
+
+  <text x="775" y="395" fill="#94a3b8" font-size="10">Legend</text>
+  <text x="775" y="415" fill="#86efac" font-size="10">●</text><text x="790" y="415" fill="#cbd5e1" font-size="10">probe-only (Hub does not spawn)</text>
+  <text x="775" y="432" fill="#fbbf24" font-size="10">●</text><text x="790" y="432" fill="#cbd5e1" font-size="10">has start_cmd (auto-startable)</text>
+
+  <text x="775" y="465" fill="#fbbf24" font-weight="bold" font-size="11">required* services block</text>
+  <text x="775" y="481" fill="#fbbf24" font-size="11">PASS_AGENTIC_TRUTH if down</text>
+
+  <text x="775" y="510" fill="#e2e8f0" font-weight="bold" font-size="11">KiloCode status bar</text>
+  <text x="775" y="528" fill="#cbd5e1" font-size="10" font-family="'Cascadia Code',monospace">$(server) DaveAI: 9/14</text>
+  <text x="775" y="546" fill="#94a3b8" font-size="10">Click → quick-pick · per-svc start/stop</text>
+  <text x="775" y="563" fill="#94a3b8" font-size="10">Tooltip lists down-required IDs</text>
+
+  <!-- Arrows: triggers -> ensure_all -->
+  <line x1="310" y1="155" x2="358" y2="135" stroke="#3b82f6" stroke-width="2" marker-end="url(#arr-blue)"/>
+  <line x1="310" y1="230" x2="358" y2="155" stroke="#3b82f6" stroke-width="2" marker-end="url(#arr-blue)"/>
+  <line x1="310" y1="305" x2="358" y2="175" stroke="#3b82f6" stroke-width="2" marker-end="url(#arr-blue)"/>
+  <line x1="310" y1="380" x2="358" y2="195" stroke="#3b82f6" stroke-width="2" marker-end="url(#arr-blue)"/>
+  <line x1="310" y1="455" x2="358" y2="215" stroke="#3b82f6" stroke-width="2" marker-end="url(#arr-blue)"/>
+
+  <!-- ensure_all -> registry -->
+  <line x1="730" y1="160" x2="758" y2="160" stroke="#22c55e" stroke-width="2" marker-end="url(#arr-grn)"/>
+
+  <!-- Footer -->
+  <text x="40" y="630" fill="#e2e8f0" font-weight="bold" font-size="12">Verified by V81_service_lifecycle_truth (12/12 wiring points present):</text>
+  <text x="40" y="650" fill="#cbd5e1" font-size="11">• Router exists with ensure_all + probe_all + start_cmd handling</text>
+  <text x="40" y="666" fill="#cbd5e1" font-size="11">• Hub __init__.py imports services_router AND mounts the startup hook</text>
+  <text x="40" y="682" fill="#cbd5e1" font-size="11">• KiloCode HubServicesService.ts uses createStatusBarItem AND calls /api/services/ensure</text>
+  <text x="40" y="698" fill="#cbd5e1" font-size="11">• KiloCode extension.ts imports + instantiates + starts HubServicesService</text>
+  <text x="40" y="725" fill="#94a3b8" font-size="10">Sources: src/webui/hub/routers/services.py · src/webui/panels/services.js · kilocode-Azure2/packages/kilo-vscode/src/services/hub-services/HubServicesService.ts</text>
+</svg>

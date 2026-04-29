@@ -1,0 +1,93 @@
+[
+  {
+    "name": "CLAUDE_CODE_AGENT_HANDOFF_CURRENT_STATE.md",
+    "path": "G:\\Github\\contract-kit-v17\\handoff\\CLAUDE_CODE_AGENT_HANDOFF_CURRENT_STATE.md",
+    "size_bytes": 8335,
+    "sha256": "6F7BAD0C780A60C35A56D8FD72817D06FF39CBA3B6EF2D71BAA80FF9FE42261B",
+    "status": "PASS"
+  },
+  {
+    "name": "CLAUDE_CODE_AGENT_TASK_PACKET.json",
+    "path": "G:\\Github\\contract-kit-v17\\handoff\\CLAUDE_CODE_AGENT_TASK_PACKET.json",
+    "size_bytes": 11518,
+    "sha256": "1F826212676350AB694DDC9099ABF6E934BB2A8DD354AF168F58FFF9543F7873",
+    "status": "PASS"
+  },
+  {
+    "name": "CONFLICT_RISK_MATRIX.md",
+    "path": "G:\\Github\\contract-kit-v17\\artifacts\\repo-sync\\CONFLICT_RISK_MATRIX.md",
+    "size_bytes": 3796,
+    "sha256": "F4ECD7F844A9DDFA1C82D99412B33A2442DF5B5D1B529E7513EA0B31801E1AEC",
+    "status": "PASS"
+  },
+  {
+    "name": "CUSTOM_DAVEAI_FILES.md",
+    "path": "G:\\Github\\contract-kit-v17\\artifacts\\repo-sync\\CUSTOM_DAVEAI_FILES.md",
+    "size_bytes": 4507,
+    "sha256": "A4EA1F713CF3D35B1FF54943A99188B2A260D9CABDEC24ACFD7E15BD9D830AF4",
+    "status": "PASS"
+  },
+  {
+    "name": "DOCS_DIAGRAMS_AUDIT.md",
+    "path": "G:\\Github\\contract-kit-v17\\artifacts\\handoff-to-claude\\DOCS_DIAGRAMS_AUDIT.md",
+    "size_bytes": 4497,
+    "sha256": "E0CEAE8B7BED99D88B06BA7001F1B5B1A3F6F8EAB4DBE17F632F9BC468A18348",
+    "status": "PASS"
+  },
+  {
+    "name": "LOCAL_LOCATION_INVENTORY.csv",
+    "path": "G:\\Github\\contract-kit-v17\\artifacts\\repo-sync\\LOCAL_LOCATION_INVENTORY.csv",
+    "size_bytes": 4737,
+    "sha256": "23F5CE2062BD44E7B6FD3604E8D561B542AC2EB989C9F13ECE967E2DC37CB459",
+    "status": "PASS"
+  },
+  {
+    "name": "LOCAL_LOCATION_INVENTORY.md",
+    "path": "G:\\Github\\contract-kit-v17\\artifacts\\repo-sync\\LOCAL_LOCATION_INVENTORY.md",
+    "size_bytes": 10690,
+    "sha256": "45339C439A4EBB59388DD196A128F96238FAC8D82268F8258B74848FCB01ACB3",
+    "status": "PASS"
+  },
+  {
+    "name": "REMOTE_CROSS_REFERENCE.md",
+    "path": "G:\\Github\\contract-kit-v17\\artifacts\\repo-sync\\REMOTE_CROSS_REFERENCE.md",
+    "size_bytes": 6147,
+    "sha256": "9632EDC398B0D09C73FBDCB69145270EEE44978798569003C06D078581393E85",
+    "status": "PASS"
+  },
+  {
+    "name": "REPACK_MERGE_MANIFEST.csv",
+    "path": "G:\\Github\\contract-kit-v17\\artifacts\\repo-sync\\REPACK_MERGE_MANIFEST.csv",
+    "size_bytes": 100898,
+    "sha256": "684C1AB6EEDE45F8963EAB040B42F55EB17660D75C008DAD0102F7C6831606EB",
+    "status": "PASS"
+  },
+  {
+    "name": "REPACK_MERGE_VERDICT.md",
+    "path": "G:\\Github\\contract-kit-v17\\artifacts\\repo-sync\\REPACK_MERGE_VERDICT.md",
+    "size_bytes": 1533,
+    "sha256": "3ED1A47418E76271DADBAA92CC6134136810EE0033AC3BD3B419658CFD7CB992",
+    "status": "PASS"
+  },
+  {
+    "name": "REPO_FRESHNESS_MATRIX.csv",
+    "path": "G:\\Github\\contract-kit-v17\\artifacts\\repo-sync\\REPO_FRESHNESS_MATRIX.csv",
+    "size_bytes": 3904,
+    "sha256": "95EAA14F686CFFC0E99632E6B34DEE39F5EEAB604BB2EC3763AD7976D06AD53A",
+    "status": "PASS"
+  },
+  {
+    "name": "REPO_FRESHNESS_MATRIX.md",
+    "path": "G:\\Github\\contract-kit-v17\\artifacts\\repo-sync\\REPO_FRESHNESS_MATRIX.md",
+    "size_bytes": 8112,
+    "sha256": "123909A91C61F99EDC23D624C710DA75342688C04E282F109F91ACAF802766B5",
+    "status": "PASS"
+  },
+  {
+    "name": "STALE_CLAIMS_REPORT.csv",
+    "path": "G:\\Github\\contract-kit-v17\\artifacts\\handoff-to-claude\\STALE_CLAIMS_REPORT.csv",
+    "size_bytes": 2222,
+    "sha256": "75F125BD9FECC4B4B8C24A16290C821AFA64ACFDC235FA38AC5823759A4D53DB",
+    "status": "PASS"
+  }
+]

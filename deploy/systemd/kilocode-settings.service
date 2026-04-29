@@ -1,0 +1,44 @@
+[Unit]
+Description=KiloCode Canonical Settings Service
+Documentation=https://daveai.tech/docs
+After=network.target kilocode-runtime.service
+Requires=kilocode-runtime.service
+Wants=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/opt/kilocode
+EnvironmentFile=-/opt/kilocode/.env
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONPATH=/opt/kilocode
+Environment=AUDIT_FILE=/opt/kilocode/data/settings_audit.json
+
+ExecStartPre=/bin/sh -c 'n=0; until curl -sf http://localhost:8081/health -o /dev/null 2>/dev/null; do n=$((n+1)); [ $n -ge 30 ] && exit 1; sleep 2; done'
+ExecStart=/opt/kilocode/venv/bin/python -m uvicorn src.runtime.settings_canonical:app \
+    --host 0.0.0.0 \
+    --port 8082 \
+    --workers 1 \
+    --log-level info \
+    --access-log
+
+Restart=on-failure
+RestartSec=5s
+TimeoutStartSec=120
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=kilocode-settings
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/kilocode/data /opt/kilocode/logs
+
+[Install]
+WantedBy=multi-user.target

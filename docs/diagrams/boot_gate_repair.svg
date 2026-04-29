@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="3" dy="3" stdDeviation="4" flood-opacity="0.3"/>
+    </filter>
+    <filter id="shadowSmall" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="2" dy="2" stdDeviation="2" flood-opacity="0.25"/>
+    </filter>
+    <marker id="arrowGreen" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L0,12 L10,6 z" fill="#10b981"/>
+    </marker>
+    <marker id="arrowAmber" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L0,12 L10,6 z" fill="#f59e0b"/>
+    </marker>
+    <marker id="arrowRed" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L0,12 L10,6 z" fill="#ef4444"/>
+    </marker>
+    <marker id="arrowCyan" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L0,12 L10,6 z" fill="#22d3ee"/>
+    </marker>
+    <marker id="diamondGreen" markerWidth="15" markerHeight="15" refX="7" refY="7" orient="auto">
+      <polygon points="7,0 14,7 7,14 0,7" fill="#10b981"/>
+    </marker>
+    <marker id="diamondRed" markerWidth="15" markerHeight="15" refX="7" refY="7" orient="auto">
+      <polygon points="7,0 14,7 7,14 0,7" fill="#ef4444"/>
+    </marker>
+  </defs>
+  
+  <rect width="1200" height="800" fill="#0f172a"/>
+  <text x="600" y="40" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#ffffff" text-anchor="middle">Boot Gate &amp; Repair Flow</text>
+  
+  <!-- START Node -->
+  <g filter="url(#shadow)">
+    <ellipse cx="600" cy="80" rx="80" ry="35" fill="#1e293b" stroke="#6366f1" stroke-width="3"/>
+    <text x="600" y="85" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle">START</text>
+  </g>
+  
+  <!-- Arrow: START -> Health Matrix Check -->
+  <path d="M600 115 L600 155" stroke="#6366f1" stroke-width="3" fill="none" marker-end="url(#arrowGreen)"/>
+  
+  <!-- Health Matrix Check (Diamond) -->
+  <g filter="url(#shadowSmall)">
+    <polygon points="600,155 700,230 600,305 500,230" fill="#1e3a2f" stroke="#10b981" stroke-width="3"/>
+    <text x="600" y="220" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#10b981" text-anchor="middle">Health Matrix</text>
+    <text x="600" y="240" font-family="Arial, sans-serif" font-size="12" fill="#e2e8f0" text-anchor="middle">Check</text>
+  </g>
+  
+  <!-- PASS Branch -->
+  <g filter="url(#shadow)">
+    <rect x="750" y="205" width="180" height="50" rx="25" fill="#10b981"/>
+    <text x="840" y="237" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">PASS</text>
+  </g>
+  
+  <!-- Arrow: Health -> PASS (right) -->
+  <path d="M700 230 L750 230" stroke="#10b981" stroke-width="3" fill="none" marker-end="url(#arrowGreen)"/>
+  <text x="725" y="220" font-family="Arial, sans-serif" font-size="11" fill="#10b981">PASS</text>
+  
+  <!-- Normal Operations -->
+  <g filter="url(#shadow)">
+    <rect x="780" y="310" width="220" height="60" rx="12" fill="#0f3d2e" stroke="#10b981" stroke-width="2"/>
+    <text x="890" y="345" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#10b981" text-anchor="middle">Normal Operations</text>
+  </g>
+  
+  <!-- Arrow: PASS -> Normal Ops -->
+  <path d="M840 255 L840 310" stroke="#10b981" stroke-width="3" fill="none" marker-end="url(#arrowGreen)"/>
+  
+  <!-- Arrow: Normal Ops -> Runtime -->
+  <path d="M890 370 L890 420" stroke="#10b981" stroke-width="3" fill="none" marker-end="url(#arrowGreen)"/>
+  
+  <!-- Runtime (Success) -->
+  <g filter="url(#shadow)">
+    <rect x="780" y="420" width="220" height="60" rx="12" fill="#0d4a3d" stroke="#22d3ee" stroke-width="2"/>
+    <text x="890" y="455" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#22d3ee" text-anchor="middle">Runtime</text>
+    <text x="890" y="472" font-family="Arial, sans-serif" font-size="11" fill="#94a3b8" text-anchor="middle">(Operational Mode)</text>
+  </g>
+  
+  <!-- FAIL Branch -->
+  <g filter="url(#shadow)">
+    <rect x="270" y="205" width="180" height="50" rx="25" fill="#ef4444"/>
+    <text x="360" y="237" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">FAIL</text>
+  </g>
+  
+  <!-- Arrow: Health -> FAIL (left) -->
+  <path d="M500 230 L450 230" stroke="#ef4444" stroke-width="3" fill="none" marker-end="url(#arrowRed)"/>
+  <text x="475" y="220" font-family="Arial, sans-serif" font-size="11" fill="#ef4444">FAIL</text>
+  
+  <!-- Safemode -->
+  <g filter="url(#shadow)">
+    <rect x="270" y="310" width="180" height="60" rx="12" fill="#3d2a0a" stroke="#f59e0b" stroke-width="2"/>
+    <text x="360" y="338" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#f59e0b" text-anchor="middle">Safemode</text>
+    <text x="360" y="358" font-family="Arial, sans-serif" font-size="11" fill="#94a3b8" text-anchor="middle">(Restricted)</text>
+  </g>
+  
+  <!-- Arrow: FAIL -> Safemode -->
+  <path d="M360 255 L360 310" stroke="#f59e0b" stroke-width="3" fill="none" marker-end="url(#arrowAmber)"/>
+  
+  <!-- Arrow: Safemode -> Repair Packet -->
+  <path d="M360 370 L360 420" stroke="#f59e0b" stroke-width="3" fill="none" marker-end="url(#arrowAmber)"/>
+  
+  <!-- Repair Packet -->
+  <g filter="url(#shadow)">
+    <rect x="270" y="420" width="180" height="60" rx="12" fill="#4a1a2d" stroke="#ef4444" stroke-width="2"/>
+    <text x="360" y="455" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#ef4444" text-anchor="middle">Repair Packet</text>
+    <text x="360" y="472" font-family="Arial, sans-serif" font-size="11" fill="#94a3b8" text-anchor="middle">(Issued)</text>
+  </g>
+  
+  <!-- Arrow: Repair Packet -> Validation -->
+  <path d="M450 450 L520 450" stroke="#ef4444" stroke-width="3" fill="none" marker-end="url(#arrowRed)"/>
+  
+  <!-- Validation (Diamond) -->
+  <g filter="url(#shadowSmall)">
+    <polygon points="520,400 620,450 520,500 420,450" fill="#2d1a3a" stroke="#8b5cf6" stroke-width="3"/>
+    <text x="520" y="445" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#8b5cf6" text-anchor="middle">Validation</text>
+    <text x="520" y="463" font-family="Arial, sans-serif" font-size="11" fill="#e2e8f0" text-anchor="middle">Check</text>
+  </g>
+  
+  <!-- Repair Packet also goes to Validation -->
+  <path d="M360 480 L420 480" stroke="#ef4444" stroke-width="2" fill="none" marker-end="url(#arrowRed)"/>
+  
+  <!-- Unlock Path -->
+  <g filter="url(#shadow)">
+    <rect x="620" y="540" width="160" height="50" rx="25" fill="#22d3ee"/>
+    <text x="700" y="570" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">UNLOCK</text>
+  </g>
+  
+  <!-- Arrow: Validation -> Unlock -->
+  <path d="M580 500 L640 540" stroke="#22d3ee" stroke-width="3" fill="none" marker-end="url(#arrowCyan)"/>
+  <text x="600" y="520" font-family="Arial, sans-serif" font-size="10" fill="#22d3ee">valid</text>
+  
+  <!-- Arrow: Unlock -> Runtime -->
+  <path d="M780 565 L890 490" stroke="#22d3ee" stroke-width="3" fill="none" marker-end="url(#arrowCyan)"/>
+  <text x="835" y="535" font-family="Arial, sans-serif" font-size="10" fill="#22d3ee">restore</text>
+  
+  <!-- Block Path -->
+  <g filter="url(#shadow)">
+    <rect x="360" y="540" width="160" height="50" rx="25" fill="#ef4444"/>
+    <text x="440" y="570" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">BLOCK</text>
+  </g>
+  
+  <!-- Arrow: Validation -> Block -->
+  <path d="M520 450 L420 450 L420 540" stroke="#ef4444" stroke-width="3" fill="none" marker-end="url(#arrowRed)"/>
+  <text x="430" y="510" font-family="Arial, sans-serif" font-size="10" fill="#ef4444">invalid</text>
+  
+  <!-- Block -> Alert -->
+  <g filter="url(#shadowSmall)">
+    <rect x="360" y="620" width="160" height="50" rx="12" fill="#2d0a0a" stroke="#ef4444" stroke-width="2"/>
+    <text x="440" y="650" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ef4444" text-anchor="middle">Alert / Lockdown</text>
+  </g>
+  
+  <path d="M440 590 L440 620" stroke="#ef4444" stroke-width="3" fill="none" marker-end="url(#arrowRed)"/>
+  
+  <!-- Health Matrix Detail Box -->
+  <g filter="url(#shadowSmall)" transform="translate(50, 550)">
+    <rect x="0" y="0" width="200" height="180" rx="10" fill="#1e293b" stroke="#10b981" stroke-width="1.5"/>
+    <text x="100" y="25" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#10b981" text-anchor="middle">Health Matrix Checks</text>
+    <g font-family="Arial, sans-serif" font-size="10" fill="#e2e8f0">
+      <text x="15" y="50">Provider Connectivity</text>
+      <text x="15" y="70">API Key Validity</text>
+      <text x="15" y="90">Context Limits</text>
+      <text x="15" y="110">Rate Limits</text>
+      <text x="15" y="130">Contract Integrity</text>
+      <text x="15" y="150">Session State</text>
+    </g>
+    <circle cx="180" cy="47" r="4" fill="#10b981"/>
+    <circle cx="180" cy="67" r="4" fill="#10b981"/>
+    <circle cx="180" cy="87" r="4" fill="#10b981"/>
+    <circle cx="180" cy="107" r="4" fill="#10b981"/>
+    <circle cx="180" cy="127" r="4" fill="#10b981"/>
+    <circle cx="180" cy="147" r="4" fill="#10b981"/>
+  </g>
+  
+  <!-- Legend -->
+  <g transform="translate(950, 550)">
+    <rect x="0" y="0" width="200" height="150" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+    <text x="100" y="25" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">Legend</text>
+    <polygon points="20,45 35,55 20,65 5,55" fill="#10b981"/>
+    <text x="45" y="58" font-family="Arial, sans-serif" font-size="11" fill="#94a3b8">Decision Node</text>
+    <rect x="15" y="75" width="20" height="12" rx="6" fill="#10b981"/>
+    <text x="45" y="86" font-family="Arial, sans-serif" font-size="11" fill="#94a3b8">Success Path</text>
+    <rect x="15" y="95" width="20" height="12" rx="6" fill="#f59e0b"/>
+    <text x="45" y="106" font-family="Arial, sans-serif" font-size="11" fill="#94a3b8">Warning/Safemode</text>
+    <rect x="15" y="115" width="20" height="12" rx="6" fill="#ef4444"/>
+    <text x="45" y="126" font-family="Arial, sans-serif" font-size="11" fill="#94a3b8">Error/Block</text>
+    <rect x="15" y="135" width="20" height="12" rx="6" fill="#22d3ee"/>
+    <text x="45" y="146" font-family="Arial, sans-serif" font-size="11" fill="#94a3b8">Recovery Path</text>
+  </g>
+</svg>

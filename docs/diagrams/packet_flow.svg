@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700">
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="3" dy="3" stdDeviation="4" flood-opacity="0.3"/>
+    </filter>
+    <filter id="shadowSmall" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="2" dy="2" stdDeviation="2" flood-opacity="0.25"/>
+    </filter>
+    <marker id="arrowIndigo" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L0,12 L10,6 z" fill="#6366f1"/>
+    </marker>
+    <marker id="arrowPurple" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L0,12 L10,6 z" fill="#8b5cf6"/>
+    </marker>
+    <marker id="arrowCyan" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L0,12 L10,6 z" fill="#22d3ee"/>
+    </marker>
+    <marker id="arrowPink" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L0,12 L10,6 z" fill="#f472b6"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L0,12 L10,6 z" fill="#10b981"/>
+    </marker>
+    <linearGradient id="controlGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#6366f1;stop-opacity:0.1" />
+    </linearGradient>
+    <linearGradient id="taskGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:0.1" />
+    </linearGradient>
+    <linearGradient id="zeroclawGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:0.1" />
+    </linearGradient>
+    <linearGradient id="completionGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#22d3ee;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#22d3ee;stop-opacity:0.1" />
+    </linearGradient>
+    <linearGradient id="repairGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#f472b6;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#f472b6;stop-opacity:0.1" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="1200" height="700" fill="#0f172a"/>
+  <text x="600" y="40" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#ffffff" text-anchor="middle">Packet-Based Contract System</text>
+  
+  <!-- Control Packet -->
+  <g filter="url(#shadow)">
+    <rect x="80" y="90" width="200" height="120" rx="12" fill="url(#controlGrad)" stroke="#6366f1" stroke-width="2"/>
+    <rect x="80" y="90" width="200" height="35" rx="12" fill="#6366f1"/>
+    <rect x="80" y="110" width="200" height="15" fill="#6366f1"/>
+    <text x="180" y="113" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">Control Packet</text>
+    <g font-family="Arial, sans-serif" font-size="11" fill="#e2e8f0">
+      <text x="100" y="145">Session ID</text>
+      <text x="100" y="165">Mode Flags</text>
+      <text x="100" y="185">Routing Info</text>
+    </g>
+  </g>
+  
+  <!-- Arrow: Control -> Task -->
+  <path d="M280 150 L340 150" stroke="#6366f1" stroke-width="3" fill="none" marker-end="url(#arrowIndigo)"/>
+  <text x="310" y="140" font-family="Arial, sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">dispatch</text>
+  
+  <!-- Task Packet -->
+  <g filter="url(#shadow)">
+    <rect x="340" y="90" width="200" height="120" rx="12" fill="url(#taskGrad)" stroke="#8b5cf6" stroke-width="2"/>
+    <rect x="340" y="90" width="200" height="35" rx="12" fill="#8b5cf6"/>
+    <rect x="340" y="110" width="200" height="15" fill="#8b5cf6"/>
+    <text x="440" y="113" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">Task Packet</text>
+    <g font-family="Arial, sans-serif" font-size="11" fill="#e2e8f0">
+      <text x="360" y="145">Contract ID</text>
+      <text x="360" y="165">Payload</text>
+      <text x="360" y="185">Priority</text>
+    </g>
+  </g>
+  
+  <!-- Arrow: Task -> ZeroClaw -->
+  <path d="M540 150 L600 150" stroke="#8b5cf6" stroke-width="3" fill="none" marker-end="url(#arrowPurple)"/>
+  <text x="570" y="140" font-family="Arial, sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">execute</text>
+  
+  <!-- ZeroClaw Execute (center, larger) -->
+  <g filter="url(#shadow)">
+    <rect x="600" y="70" width="280" height="160" rx="12" fill="url(#zeroclawGrad)" stroke="#f59e0b" stroke-width="2"/>
+    <rect x="600" y="70" width="280" height="40" rx="12" fill="#f59e0b"/>
+    <rect x="600" y="95" width="280" height="15" fill="#f59e0b"/>
+    <text x="740" y="98" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle">ZeroClaw Execute</text>
+    <g font-family="Arial, sans-serif" font-size="12" fill="#e2e8f0">
+      <text x="620" y="140">Provider Selection</text>
+      <text x="620" y="165">Contract Validation</text>
+      <text x="620" y="190">Mode Enforcement</text>
+      <text x="780" y="140">Context Window</text>
+      <text x="780" y="165">Token Budget</text>
+      <text x="780" y="190">Fallback Logic</text>
+    </g>
+  </g>
+  
+  <!-- Arrow: ZeroClaw -> Completion -->
+  <path d="M880 150 L940 150" stroke="#22d3ee" stroke-width="3" fill="none" marker-end="url(#arrowCyan)"/>
+  <text x="910" y="140" font-family="Arial, sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">complete</text>
+  
+  <!-- Completion Packet -->
+  <g filter="url(#shadow)">
+    <rect x="940" y="90" width="200" height="120" rx="12" fill="url(#completionGrad)" stroke="#22d3ee" stroke-width="2"/>
+    <rect x="940" y="90" width="200" height="35" rx="12" fill="#22d3ee"/>
+    <rect x="940" y="110" width="200" height="15" fill="#22d3ee"/>
+    <text x="1040" y="113" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">Completion Packet</text>
+    <g font-family="Arial, sans-serif" font-size="11" fill="#e2e8f0">
+      <text x="960" y="145">Result</text>
+      <text x="960" y="165">Tokens Used</text>
+      <text x="960" y="185">Status</text>
+    </g>
+  </g>
+  
+  <!-- Validation Callback Arrows -->
+  <path d="M1040 210 L1040 280 L600 280 L600 230" stroke="#10b981" stroke-width="2" fill="none" marker-end="url(#arrowGreen)" stroke-dasharray="8,4"/>
+  <text x="820" y="295" font-family="Arial, sans-serif" font-size="11" fill="#10b981" text-anchor="middle">Validation Callback</text>
+  
+  <!-- Repair Packet Flow -->
+  <g filter="url(#shadow)">
+    <rect x="480" y="380" width="260" height="140" rx="12" fill="url(#repairGrad)" stroke="#f472b6" stroke-width="2"/>
+    <rect x="480" y="380" width="260" height="35" rx="12" fill="#f472b6"/>
+    <rect x="480" y="400" width="260" height="15" fill="#f472b6"/>
+    <text x="610" y="403" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">Repair Packet Flow</text>
+    <g font-family="Arial, sans-serif" font-size="11" fill="#e2e8f0">
+      <text x="500" y="440">Completion FAIL</text>
+      <text x="500" y="465">Error Classification</text>
+      <text x="500" y="490">Repair Strategy</text>
+      <text x="660" y="440">Target Contract</text>
+      <text x="660" y="465">Provider Switch</text>
+      <text x="660" y="490">Retry/Escalate</text>
+    </g>
+  </g>
+  
+  <!-- Arrows: Completion -> Repair -->
+  <path d="M940 210 L940 320 L740 320 L740 380" stroke="#f472b6" stroke-width="2" fill="none" marker-end="url(#arrowPink)" stroke-dasharray="6,3"/>
+  <text x="860" y="310" font-family="Arial, sans-serif" font-size="10" fill="#f472b6" text-anchor="middle">if fail</text>
+  
+  <!-- Arrow: Repair -> Task (retry) -->
+  <path d="M480 450 L340 450 L340 210" stroke="#f472b6" stroke-width="2" fill="none" marker-end="url(#arrowPink)" stroke-dasharray="6,3"/>
+  <text x="400" y="440" font-family="Arial, sans-serif" font-size="10" fill="#f472b6" text-anchor="middle">retry</text>
+  
+  <!-- Legend -->
+  <g transform="translate(850, 550)">
+    <rect x="0" y="0" width="280" height="130" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+    <text x="140" y="25" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">Packet Types</text>
+    <rect x="15" y="40" width="20" height="14" rx="3" fill="#6366f1"/>
+    <text x="45" y="52" font-family="Arial, sans-serif" font-size="11" fill="#94a3b8">Control Packet</text>
+    <rect x="15" y="60" width="20" height="14" rx="3" fill="#8b5cf6"/>
+    <text x="45" y="72" font-family="Arial, sans-serif" font-size="11" fill="#94a3b8">Task Packet</text>
+    <rect x="15" y="80" width="20" height="14" rx="3" fill="#f59e0b"/>
+    <text x="45" y="92" font-family="Arial, sans-serif" font-size="11" fill="#94a3b8">ZeroClaw Execute</text>
+    <rect x="15" y="100" width="20" height="14" rx="3" fill="#22d3ee"/>
+    <text x="45" y="112" font-family="Arial, sans-serif" font-size="11" fill="#94a3b8">Completion Packet</text>
+    <rect x="150" y="40" width="20" height="14" rx="3" fill="#f472b6"/>
+    <text x="180" y="52" font-family="Arial, sans-serif" font-size="11" fill="#94a3b8">Repair Packet</text>
+    <line x1="150" y1="75" x2="180" y2="75" stroke="#10b981" stroke-width="2" stroke-dasharray="4,2"/>
+    <text x="185" y="79" font-family="Arial, sans-serif" font-size="10" fill="#94a3b8">Callback</text>
+    <line x1="150" y1="95" x2="180" y2="95" stroke="#f472b6" stroke-width="2" stroke-dasharray="4,2"/>
+    <text x="185" y="99" font-family="Arial, sans-serif" font-size="10" fill="#94a3b8">Retry Flow</text>
+  </g>
+  
+  <!-- Flow direction indicator -->
+  <g transform="translate(60, 600)">
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="11" fill="#64748b">Flow Direction:</text>
+    <line x1="90" y1="-4" x2="150" y2="-4" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrowCyan)"/>
+  </g>
+</svg>

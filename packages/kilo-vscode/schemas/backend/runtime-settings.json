@@ -1,0 +1,815 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://contract-kit.dev/schema/runtime-settings-schema.json",
+  "title": "Contract Kit Runtime Settings",
+  "description": "Runtime configuration for contract-kit v17 multi-agent orchestration across providers and integrations",
+  "type": "object",
+  "required": ["providers", "integrations", "automation", "modes"],
+  "properties": {
+    "providers": {
+      "type": "object",
+      "description": "LLM provider configurations. At least one provider must be healthy for normal operation.",
+      "additionalProperties": false,
+      "properties": {
+        "minimax": {
+          "type": "object",
+          "description": "MiniMax LLM provider via MiniMax API",
+          "required": ["api_key", "base_url", "models"],
+          "properties": {
+            "api_key": {
+              "type": "string",
+              "description": "MiniMax API key",
+              "sensitive": true
+            },
+            "base_url": {
+              "type": "string",
+              "format": "uri",
+              "default": "https://api.minimax.chat/v1"
+            },
+            "models": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["model_id", "context_window", "supports_streaming"],
+                "properties": {
+                  "model_id": {
+                    "type": "string",
+                    "examples": ["MiniMax-M2.8-8B", "MiniMax-M2-8B-Fast"]
+                  },
+                  "context_window": {
+                    "type": "integer",
+                    "minimum": 1024
+                  },
+                  "supports_streaming": {
+                    "type": "boolean"
+                  },
+                  "max_output_tokens": {
+                    "type": "integer"
+                  },
+                  "default_temperature": {
+                    "type": "number",
+                    "minimum": 0.0,
+                    "maximum": 2.0,
+                    "default": 0.7
+                  },
+                  "route_preference": {
+                    "type": "string",
+                    "enum": ["preferred", "fallback", "experimental"],
+                    "default": "preferred"
+                  }
+                }
+              }
+            },
+            "health": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": true
+                },
+                "health_check_interval_seconds": {
+                  "type": "integer",
+                  "minimum": 10,
+                  "maximum": 300,
+                  "default": 60
+                },
+                "unhealthy_threshold": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10,
+                  "default": 3
+                },
+                "timeout_seconds": {
+                  "type": "integer",
+                  "minimum": 5,
+                  "maximum": 120,
+                  "default": 30
+                }
+              },
+              "default": {
+                "enabled": true,
+                "health_check_interval_seconds": 60,
+                "unhealthy_threshold": 3,
+                "timeout_seconds": 30
+              }
+            },
+            "rate_limit": {
+              "type": "object",
+              "properties": {
+                "requests_per_minute": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "tokens_per_minute": {
+                  "type": "integer",
+                  "minimum": 1024
+                },
+                "burst_size": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          }
+        },
+        "siliconflow": {
+          "type": "object",
+          "description": "SiliconFlow LLM provider via SiliconFlow API",
+          "required": ["api_key", "base_url", "models"],
+          "properties": {
+            "api_key": {
+              "type": "string",
+              "sensitive": true
+            },
+            "base_url": {
+              "type": "string",
+              "format": "uri",
+              "default": "https://api.siliconflow.cn/v1"
+            },
+            "models": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["model_id", "context_window", "supports_streaming"],
+                "properties": {
+                  "model_id": {
+                    "type": "string"
+                  },
+                  "context_window": {
+                    "type": "integer",
+                    "minimum": 1024
+                  },
+                  "supports_streaming": {
+                    "type": "boolean"
+                  },
+                  "max_output_tokens": {
+                    "type": "integer"
+                  },
+                  "default_temperature": {
+                    "type": "number",
+                    "default": 0.7
+                  },
+                  "route_preference": {
+                    "type": "string",
+                    "enum": ["preferred", "fallback", "experimental"],
+                    "default": "fallback"
+                  }
+                }
+              }
+            },
+            "health": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": true
+                },
+                "health_check_interval_seconds": {
+                  "type": "integer",
+                  "minimum": 10,
+                  "maximum": 300,
+                  "default": 60
+                },
+                "unhealthy_threshold": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10,
+                  "default": 3
+                },
+                "timeout_seconds": {
+                  "type": "integer",
+                  "minimum": 5,
+                  "maximum": 120,
+                  "default": 30
+                }
+              },
+              "default": {
+                "enabled": true,
+                "health_check_interval_seconds": 60,
+                "unhealthy_threshold": 3,
+                "timeout_seconds": 30
+              }
+            },
+            "rate_limit": {
+              "type": "object",
+              "properties": {
+                "requests_per_minute": {
+                  "type": "integer"
+                },
+                "tokens_per_minute": {
+                  "type": "integer"
+                },
+                "burst_size": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "lmstudio": {
+          "type": "object",
+          "description": "LM Studio local LLM provider",
+          "required": ["base_url", "models"],
+          "properties": {
+            "api_key": {
+              "type": "string",
+              "sensitive": true,
+              "default": "lm-studio"
+            },
+            "base_url": {
+              "type": "string",
+              "format": "uri",
+              "description": "LM Studio local server URL",
+              "examples": ["http://localhost:1234/v1"]
+            },
+            "models": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["model_id", "context_window", "supports_streaming"],
+                "properties": {
+                  "model_id": {
+                    "type": "string"
+                  },
+                  "context_window": {
+                    "type": "integer"
+                  },
+                  "supports_streaming": {
+                    "type": "boolean"
+                  },
+                  "max_output_tokens": {
+                    "type": "integer"
+                  },
+                  "default_temperature": {
+                    "type": "number",
+                    "default": 0.7
+                  },
+                  "route_preference": {
+                    "type": "string",
+                    "enum": ["preferred", "fallback", "experimental"],
+                    "default": "experimental"
+                  }
+                }
+              }
+            },
+            "health": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": true
+                },
+                "health_check_interval_seconds": {
+                  "type": "integer",
+                  "minimum": 10,
+                  "maximum": 300,
+                  "default": 60
+                },
+                "unhealthy_threshold": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10,
+                  "default": 3
+                },
+                "timeout_seconds": {
+                  "type": "integer",
+                  "minimum": 5,
+                  "maximum": 120,
+                  "default": 30
+                }
+              },
+              "default": {
+                "enabled": true,
+                "health_check_interval_seconds": 60,
+                "unhealthy_threshold": 3,
+                "timeout_seconds": 30
+              }
+            },
+            "rate_limit": {
+              "type": "object",
+              "properties": {
+                "requests_per_minute": {
+                  "type": "integer"
+                },
+                "tokens_per_minute": {
+                  "type": "integer"
+                },
+                "burst_size": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "ollama": {
+          "type": "object",
+          "description": "Ollama local LLM provider",
+          "required": ["base_url", "models"],
+          "properties": {
+            "api_key": {
+              "type": "string",
+              "sensitive": true,
+              "default": "ollama"
+            },
+            "base_url": {
+              "type": "string",
+              "format": "uri",
+              "description": "Ollama server URL",
+              "examples": ["http://localhost:11434/v1"]
+            },
+            "models": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["model_id", "context_window", "supports_streaming"],
+                "properties": {
+                  "model_id": {
+                    "type": "string"
+                  },
+                  "context_window": {
+                    "type": "integer"
+                  },
+                  "supports_streaming": {
+                    "type": "boolean"
+                  },
+                  "max_output_tokens": {
+                    "type": "integer"
+                  },
+                  "default_temperature": {
+                    "type": "number",
+                    "default": 0.7
+                  },
+                  "route_preference": {
+                    "type": "string",
+                    "enum": ["preferred", "fallback", "experimental"],
+                    "default": "experimental"
+                  }
+                }
+              }
+            },
+            "health": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": true
+                },
+                "health_check_interval_seconds": {
+                  "type": "integer",
+                  "minimum": 10,
+                  "maximum": 300,
+                  "default": 60
+                },
+                "unhealthy_threshold": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10,
+                  "default": 3
+                },
+                "timeout_seconds": {
+                  "type": "integer",
+                  "minimum": 5,
+                  "maximum": 120,
+                  "default": 30
+                }
+              },
+              "default": {
+                "enabled": true,
+                "health_check_interval_seconds": 60,
+                "unhealthy_threshold": 3,
+                "timeout_seconds": 30
+              }
+            },
+            "rate_limit": {
+              "type": "object",
+              "properties": {
+                "requests_per_minute": {
+                  "type": "integer"
+                },
+                "tokens_per_minute": {
+                  "type": "integer"
+                },
+                "burst_size": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "integrations": {
+      "type": "object",
+      "description": "External system integrations",
+      "additionalProperties": false,
+      "properties": {
+        "webui": {
+          "type": "object",
+          "description": "WebUI interface integration for human-in-the-loop interactions",
+          "required": ["enabled", "endpoint"],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "endpoint": {
+              "type": "string",
+              "format": "uri",
+              "description": "WebUI server endpoint"
+            },
+            "auth": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["bearer", "basic", "apikey", "none"],
+                  "default": "bearer"
+                },
+                "token": {
+                  "type": "string",
+                  "sensitive": true
+                },
+                "username": {
+                  "type": "string"
+                },
+                "password": {
+                  "type": "string",
+                  "sensitive": true
+                },
+                "api_key_header": {
+                  "type": "string",
+                  "default": "X-API-Key"
+                }
+              }
+            },
+            "capabilities": {
+              "type": "object",
+              "properties": {
+                "approve_destructive": {
+                  "type": "boolean",
+                  "default": true
+                },
+                "allow_interrupt": {
+                  "type": "boolean",
+                  "default": true
+                },
+                "show_token_usage": {
+                  "type": "boolean",
+                  "default": true
+                }
+              }
+            }
+          }
+        },
+        "kilocode": {
+          "type": "object",
+          "description": "KiloCode agentic coding environment",
+          "required": ["enabled", "endpoint"],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "endpoint": {
+              "type": "string",
+              "format": "uri"
+            },
+            "auth": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["bearer", "basic", "apikey", "none"],
+                  "default": "bearer"
+                },
+                "token": {
+                  "type": "string",
+                  "sensitive": true
+                }
+              }
+            },
+            "capabilities": {
+              "type": "object",
+              "properties": {
+                "file_operations": {
+                  "type": "boolean",
+                  "default": true
+                },
+                "terminal_operations": {
+                  "type": "boolean",
+                  "default": true
+                },
+                "browser_automation": {
+                  "type": "boolean",
+                  "default": true
+                }
+              }
+            }
+          }
+        },
+        "hermes": {
+          "type": "object",
+          "description": "Hermes multi-agent coordination layer",
+          "required": ["enabled", "endpoint"],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "endpoint": {
+              "type": "string",
+              "format": "uri"
+            },
+            "auth": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["bearer", "basic", "apikey", "none"],
+                  "default": "bearer"
+                },
+                "token": {
+                  "type": "string",
+                  "sensitive": true
+                }
+              }
+            },
+            "capabilities": {
+              "type": "object",
+              "properties": {
+                "delegate_tasks": {
+                  "type": "boolean",
+                  "default": true
+                },
+                "receive_tasks": {
+                  "type": "boolean",
+                  "default": true
+                },
+                "share_context": {
+                  "type": "boolean",
+                  "default": true
+                }
+              }
+            }
+          }
+        },
+        "zeroclaw": {
+          "type": "object",
+          "description": "ZeroClaw deployment and infrastructure automation",
+          "required": ["enabled", "endpoint"],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "endpoint": {
+              "type": "string",
+              "format": "uri"
+            },
+            "auth": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["bearer", "basic", "apikey", "none"],
+                  "default": "bearer"
+                },
+                "token": {
+                  "type": "string",
+                  "sensitive": true
+                }
+              }
+            },
+            "capabilities": {
+              "type": "object",
+              "properties": {
+                "deploy_services": {
+                  "type": "boolean",
+                  "default": true
+                },
+                "manage_infra": {
+                  "type": "boolean",
+                  "default": true
+                },
+                "monitor_resources": {
+                  "type": "boolean",
+                  "default": true
+                }
+              }
+            }
+          }
+        },
+        "playwright": {
+          "type": "object",
+          "description": "Playwright browser automation for E2E testing and web interactions",
+          "required": ["enabled"],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "endpoint": {
+              "type": "string",
+              "format": "uri",
+              "description": "Playwright service endpoint (e.g., browserbase or local)"
+            },
+            "auth": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["bearer", "basic", "apikey", "none"],
+                  "default": "bearer"
+                },
+                "token": {
+                  "type": "string",
+                  "sensitive": true
+                }
+              }
+            },
+            "capabilities": {
+              "type": "object",
+              "properties": {
+                "browser_profiles": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": ["chromium", "firefox", "webkit", "all"]
+                  },
+                  "default": ["chromium"]
+                },
+                "headless_by_default": {
+                  "type": "boolean",
+                  "default": true
+                },
+                "screenshot_on_failure": {
+                  "type": "boolean",
+                  "default": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "automation": {
+      "type": "object",
+      "required": ["max_concurrent_tasks", "default_timeout", "retry_attempts"],
+      "properties": {
+        "max_concurrent_tasks": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 256,
+          "default": 8,
+          "description": "Maximum number of tasks that can run concurrently across all lanes"
+        },
+        "default_timeout": {
+          "type": "object",
+          "properties": {
+            "seconds": {
+              "type": "integer",
+              "minimum": 30,
+              "maximum": 7200,
+              "default": 600
+            },
+            "description": "Default timeout for a single task in seconds"
+          },
+          "default": {
+            "seconds": 600
+          }
+        },
+        "retry_attempts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "default": 3,
+          "description": "Number of retry attempts for failed tasks"
+        },
+        "retry_delay_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 300,
+          "default": 30
+        },
+        "circuit_breaker": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "failure_threshold": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            },
+            "reset_timeout_seconds": {
+              "type": "integer",
+              "minimum": 10,
+              "maximum": 600,
+              "default": 60
+            }
+          },
+          "default": {
+            "enabled": true,
+            "failure_threshold": 10,
+            "reset_timeout_seconds": 60
+          }
+        },
+        "task_queue": {
+          "type": "object",
+          "properties": {
+            "backend": {
+              "type": "string",
+              "enum": ["nats", "redis", "memory"],
+              "default": "nats"
+            },
+            "priority_levels": {
+              "type": "integer",
+              "minimum": 3,
+              "maximum": 10,
+              "default": 5
+            },
+            "durable": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "default": {
+            "backend": "nats",
+            "priority_levels": 5,
+            "durable": true
+          }
+        }
+      }
+    },
+    "modes": {
+      "type": "object",
+      "required": ["allowed_modes", "default_mode", "enforcement_level"],
+      "properties": {
+        "allowed_modes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["autonomous", "supervised", "audit", "diagnostic", "frozen"]
+          },
+          "minItems": 1,
+          "description": "Modes the system is permitted to operate in"
+        },
+        "default_mode": {
+          "type": "string",
+          "enum": ["autonomous", "supervised", "audit", "diagnostic", "frozen"],
+          "default": "supervised"
+        },
+        "enforcement_level": {
+          "type": "string",
+          "enum": ["permissive", "boundary_enforced", "fully_enforced", "paranoid"],
+          "default": "boundary_enforced",
+          "description": "Controls how strictly mode restrictions are applied",
+          "examples": [
+            "permissive: guidance only, no hard blocks",
+            "boundary_enforced: actions blocked at defined boundaries",
+            "fully_enforced: every action verified against mode policy",
+            "paranoid: every action verified with cryptographic attestation"
+          ]
+        },
+        "mode_transition_policy": {
+          "type": "object",
+          "properties": {
+            "require_approval_for_downgrade": {
+              "type": "boolean",
+              "default": true
+            },
+            "require_approval_for_upgrade": {
+              "type": "boolean",
+              "default": false
+            },
+            "auto_upgrade_on_idle": {
+              "type": "boolean",
+              "default": false
+            },
+            "auto_downgrade_on_error": {
+              "type": "boolean",
+              "default": true
+            },
+            "approver_roles": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": ["admin", "supervisor"]
+            }
+          },
+          "default": {
+            "require_approval_for_downgrade": true,
+            "require_approval_for_upgrade": false,
+            "auto_upgrade_on_idle": false,
+            "auto_downgrade_on_error": true,
+            "approver_roles": ["admin", "supervisor"]
+          }
+        }
+      }
+    }
+  }
+}

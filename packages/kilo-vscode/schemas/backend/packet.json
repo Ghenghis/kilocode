@@ -1,0 +1,790 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://contract-kit.dev/schema/packet-schema.json",
+  "title": "Contract Kit Packet Schemas",
+  "description": "Unified packet schemas for inter-repository communication in contract-kit deployments",
+  "definitions": {
+    "ControlPacket": {
+      "type": "object",
+      "description": "Control packets govern operational state, routing decisions, and cross-repository coordination",
+      "required": ["source_identity", "action", "timestamp", "correlation_id"],
+      "properties": {
+        "source_identity": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]+\\.[a-zA-Z0-9_-]+$",
+          "description": "Origin identifier in namespace.entity format (e.g., webui.session, kilocode.agent)",
+          "examples": ["webui.session-abc123", "hermes.agent-node-1"]
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "bootstrap",
+            "shutdown",
+            "heartbeat",
+            "route",
+            "delegate",
+            "escalate",
+            "resolve",
+            "abort",
+            "rebalance",
+            "sync"
+          ],
+          "description": "Control plane operation being requested or reported"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 timestamp of packet generation, in UTC"
+        },
+        "correlation_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+          "description": "UUID v4 for tracing and deduplication across services"
+        },
+        "target_identity": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]+\\.[a-zA-Z0-9_-]+$",
+          "description": "Optional destination specifier; omit to broadcast"
+        },
+        "payload": {
+          "type": "object",
+          "description": "Action-specific data blob",
+          "properties": {
+            "reason": {
+              "type": "string",
+              "description": "Human-readable justification for the action"
+            },
+            "metadata": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "ttl_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 300,
+          "default": 30,
+          "description": "Time-to-live before packet is considered stale"
+        },
+        "retry_policy": {
+          "type": "object",
+          "properties": {
+            "max_attempts": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5,
+              "default": 3
+            },
+            "backoff_multiplier": {
+              "type": "number",
+              "minimum": 1.0,
+              "maximum": 3.0,
+              "default": 2.0
+            }
+          },
+          "default": {
+            "max_attempts": 3,
+            "backoff_multiplier": 2.0
+          }
+        }
+      }
+    },
+    "TaskPacket": {
+      "type": "object",
+      "description": "Task packets represent unit-of-work assignments flowing through the contract-kit execution engine",
+      "required": [
+        "task_id",
+        "project_id",
+        "phase",
+        "objective",
+        "owner_role",
+        "provider_policy",
+        "scope_boundaries",
+        "acceptance_criteria"
+      ],
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "pattern": "^task-[a-f0-9]{8}$",
+          "description": "Unique task identifier matching pattern task-<8hex>"
+        },
+        "project_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]+\\.[a-zA-Z0-9_-]+$",
+          "description": "Project namespace in owner.repo format"
+        },
+        "phase": {
+          "type": "string",
+          "enum": [
+            "discover",
+            "analyze",
+            "design",
+            "implement",
+            "test",
+            "review",
+            "deploy",
+            "monitor",
+            "close"
+          ],
+          "description": "Current execution phase"
+        },
+        "objective": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 2048,
+          "description": "Plain-language description of the task goal"
+        },
+        "owner_role": {
+          "type": "string",
+          "enum": [
+            "architect",
+            "developer",
+            "tester",
+            "reviewer",
+            "deployer",
+            "monitor",
+            "orchestrator"
+          ],
+          "description": "Role that owns and is accountable for this task"
+        },
+        "provider_policy": {
+          "type": "object",
+          "required": ["provider", "model_preference", "fallback_enabled"],
+          "properties": {
+            "provider": {
+              "type": "string",
+              "enum": ["minimax", "siliconflow", "lmstudio", "ollama", "any"],
+              "description": "Preferred LLM provider; 'any' allows any available provider"
+            },
+            "model_preference": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Ordered list of acceptable model identifiers",
+              "examples": [["MiniMax-M2.8-8B", "Qwen2.5-7B-Instruct"]]
+            },
+            "fallback_enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "max_context_tokens": {
+              "type": "integer",
+              "minimum": 1024,
+              "maximum": 1048576,
+              "description": "Maximum context window to use"
+            },
+            "temperature": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 2.0,
+              "default": 0.7
+            }
+          }
+        },
+        "scope_boundaries": {
+          "type": "object",
+          "required": ["allowed_dirs", "denied_patterns"],
+          "properties": {
+            "allowed_dirs": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^(\\/|\\\\|[a-zA-Z]:\\\\|\\~\\/)"
+              },
+              "description": "Absolute paths permitted for file operations",
+              "examples": [["~/projects/contract-kit", "/opt/workspace"]]
+            },
+            "denied_patterns": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Glob patterns for prohibited paths",
+              "examples": [["**/.env", "**/secrets/**", "**/node_modules/.cache/**"]]
+            },
+            "max_file_size_kb": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 10240,
+              "description": "Maximum file size in KB for read/write operations"
+            },
+            "read_only_paths": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Paths that may only be read, never written"
+            }
+          }
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["criterion_id", "description", "verification_method"],
+            "properties": {
+              "criterion_id": {
+                "type": "string",
+                "pattern": "^AC-[0-9]{3}$",
+                "description": "Unique identifier in format AC-###"
+              },
+              "description": {
+                "type": "string",
+                "minLength": 5,
+                "maxLength": 500
+              },
+              "verification_method": {
+                "type": "string",
+                "enum": ["automated_test", "manual_review", "code_inspection", "runtime_check", "output_comparison"]
+              },
+              "required": {
+                "type": "boolean",
+                "default": true
+              },
+              "weight": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 1.0,
+                "default": 1.0
+              }
+            }
+          }
+        },
+        "evidence_requirements": {
+          "type": "object",
+          "properties": {
+            "trace_required": {
+              "type": "boolean",
+              "default": true
+            },
+            "screenshots_required": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 50,
+              "default": 0
+            },
+            "log_retention_hours": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 8760,
+              "default": 168
+            },
+            "audit_trail_required": {
+              "type": "boolean",
+              "default": true
+            },
+            "metrics_required": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["latency", "token_usage", "error_rate", "coverage", "cyclomatic_complexity"]
+              }
+            }
+          },
+          "default": {
+            "trace_required": true,
+            "screenshots_required": 0,
+            "log_retention_hours": 168,
+            "audit_trail_required": true,
+            "metrics_required": ["latency", "error_rate"]
+          }
+        },
+        "risk_notes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["risk_id", "description", "severity"],
+            "properties": {
+              "risk_id": {
+                "type": "string",
+                "pattern": "^RSK-[0-9]{3}$"
+              },
+              "description": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "severity": {
+                "type": "string",
+                "enum": ["low", "medium", "high", "critical"]
+              },
+              "mitigation": {
+                "type": "string",
+                "maxLength": 500
+              }
+            }
+          }
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["dependency_task_id", "dependency_type"],
+            "properties": {
+              "dependency_task_id": {
+                "type": "string",
+                "pattern": "^task-[a-f0-9]{8}$"
+              },
+              "dependency_type": {
+                "type": "string",
+                "enum": ["blocks", "depends_on", "informational"]
+              },
+              "required_for": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Specific phase(s) that require this dependency"
+              }
+            }
+          }
+        },
+        "file_targets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path", "operation"],
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "Target file path relative to project root"
+              },
+              "operation": {
+                "type": "string",
+                "enum": ["create", "read", "update", "delete", "replace", "patch"]
+              },
+              "expected_hash": {
+                "type": "string",
+                "description": "SHA-256 hash of expected file state after operation"
+              },
+              "line_range": {
+                "type": "object",
+                "properties": {
+                  "start": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "end": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "default": 3
+        },
+        "deadline": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 deadline; absence implies no hard deadline"
+        }
+      }
+    },
+    "CompletionPacket": {
+      "type": "object",
+      "description": "Completion packets report the outcome of a TaskPacket and carry evidence for acceptance review",
+      "required": [
+        "task_id",
+        "status",
+        "changed_files",
+        "commands_run",
+        "tests_run",
+        "artifacts",
+        "unresolved_issues",
+        "acceptance_results",
+        "evidence_bundle"
+      ],
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "pattern": "^task-[a-f0-9]{8}$"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["close", "reopen", "blocked"],
+          "description": "close=task completed, reopen=incomplete with retry, blocked=external dependency prevents completion"
+        },
+        "changed_files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path", "change_type"],
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "change_type": {
+                "type": "string",
+                "enum": ["created", "modified", "deleted", "moved"]
+              },
+              "size_bytes": {
+                "type": "integer"
+              },
+              "hash_sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "diff_summary": {
+                "type": "string",
+                "maxLength": 500
+              }
+            }
+          }
+        },
+        "commands_run": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["command", "exit_code"],
+            "properties": {
+              "command": {
+                "type": "string",
+                "description": "Full command string executed"
+              },
+              "cwd": {
+                "type": "string"
+              },
+              "exit_code": {
+                "type": "integer"
+              },
+              "duration_ms": {
+                "type": "integer"
+              },
+              "stdout_snippet": {
+                "type": "string",
+                "maxLength": 1024
+              },
+              "stderr_snippet": {
+                "type": "string",
+                "maxLength": 1024
+              }
+            }
+          }
+        },
+        "tests_run": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["test_suite", "total", "passed"],
+            "properties": {
+              "test_suite": {
+                "type": "string"
+              },
+              "total": {
+                "type": "integer"
+              },
+              "passed": {
+                "type": "integer"
+              },
+              "failed": {
+                "type": "integer"
+              },
+              "skipped": {
+                "type": "integer"
+              },
+              "duration_ms": {
+                "type": "integer"
+              },
+              "coverage_percent": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              }
+            }
+          }
+        },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["artifact_id", "artifact_type", "path"],
+            "properties": {
+              "artifact_id": {
+                "type": "string",
+                "pattern": "^ART-[a-f0-9]{8}$"
+              },
+              "artifact_type": {
+                "type": "string",
+                "enum": ["log", "report", "chart", "dump", "archive", "screenshot", "trace", "other"]
+              },
+              "path": {
+                "type": "string",
+                "description": "Absolute path or URI to artifact"
+              },
+              "size_bytes": {
+                "type": "integer"
+              },
+              "content_type": {
+                "type": "string"
+              },
+              "retention_days": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 365,
+                "default": 30
+              }
+            }
+          }
+        },
+        "unresolved_issues": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["issue_id", "description", "severity"],
+            "properties": {
+              "issue_id": {
+                "type": "string",
+                "pattern": "^ISS-[a-f0-9]{6}$"
+              },
+              "description": {
+                "type": "string"
+              },
+              "severity": {
+                "type": "string",
+                "enum": ["low", "medium", "high", "critical"]
+              },
+              "assigned_to": {
+                "type": "string"
+              },
+              "blocking": {
+                "type": "boolean",
+                "default": false
+              }
+            }
+          }
+        },
+        "acceptance_results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["criterion_id", "result", "verification_details"],
+            "properties": {
+              "criterion_id": {
+                "type": "string",
+                "pattern": "^AC-[0-9]{3}$"
+              },
+              "result": {
+                "type": "string",
+                "enum": ["passed", "failed", "skipped", "partial"]
+              },
+              "verification_details": {
+                "type": "object",
+                "properties": {
+                  "method_used": {
+                    "type": "string"
+                  },
+                  "evidence_ref": {
+                    "type": "string"
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
+                  "measured_value": {
+                    "type": "string"
+                  }
+                }
+              },
+              "passed_weight": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              }
+            }
+          }
+        },
+        "evidence_bundle": {
+          "type": "object",
+          "required": ["bundle_id", "trace_ref", "timestamp"],
+          "properties": {
+            "bundle_id": {
+              "type": "string",
+              "pattern": "^EVB-[a-f0-9]{8}$"
+            },
+            "trace_ref": {
+              "type": "string",
+              "description": "Reference to the execution trace"
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "screenshots": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "log_refs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "metrics_snapshot": {
+              "type": "object",
+              "properties": {
+                "total_tokens": {
+                  "type": "integer"
+                },
+                "duration_ms": {
+                  "type": "integer"
+                },
+                "api_calls": {
+                  "type": "integer"
+                },
+                "error_count": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "RepairPacket": {
+      "type": "object",
+      "description": "Repair packets are emitted when a task encounters an error condition requiring remediation",
+      "required": [
+        "repair_id",
+        "original_task_id",
+        "error_context",
+        "repair_actions",
+        "validation_required",
+        "status"
+      ],
+      "properties": {
+        "repair_id": {
+          "type": "string",
+          "pattern": "^repair-[a-f0-9]{8}$"
+        },
+        "original_task_id": {
+          "type": "string",
+          "pattern": "^task-[a-f0-9]{8}$"
+        },
+        "error_context": {
+          "type": "object",
+          "required": ["error_code", "error_message", "failing_component"],
+          "properties": {
+            "error_code": {
+              "type": "string",
+              "pattern": "^[A-Z0-9_]+$"
+            },
+            "error_message": {
+              "type": "string",
+              "maxLength": 1000
+            },
+            "failing_component": {
+              "type": "string",
+              "examples": ["llm_provider", "file_system", "network", "test_runner", "container"]
+            },
+            "stack_trace": {
+              "type": "string",
+              "maxLength": 2000
+            },
+            "previous_repair_attempts": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          }
+        },
+        "repair_actions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["action_id", "action_type", "description"],
+            "properties": {
+              "action_id": {
+                "type": "string",
+                "pattern": "^RAC-[0-9]{3}$"
+              },
+              "action_type": {
+                "type": "string",
+                "enum": [
+                  "retry",
+                  "fallback_provider",
+                  "trim_context",
+                  "simplify_prompt",
+                  "increase_timeout",
+                  "file_patch",
+                  "env_adjust",
+                  "escalate_human"
+                ]
+              },
+              "description": {
+                "type": "string"
+              },
+              "parameters": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "rollback_plan": {
+                "type": "string",
+                "maxLength": 500
+              }
+            }
+          }
+        },
+        "validation_required": {
+          "type": "boolean",
+          "default": true
+        },
+        "validation_plan": {
+          "type": "object",
+          "properties": {
+            "test_before_unblock": {
+              "type": "boolean",
+              "default": true
+            },
+            "required_test_passes": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "revert_on_failure": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "default": {
+            "test_before_unblock": true,
+            "required_test_passes": 1,
+            "revert_on_failure": true
+          }
+        },
+        "status": {
+          "type": "string",
+          "enum": ["proposed", "approved", "in_progress", "completed", "failed", "cancelled"],
+          "description": "Lifecycle state of this repair"
+        },
+        "repair_outcome": {
+          "type": "object",
+          "properties": {
+            "outcome": {
+              "type": "string",
+              "enum": ["success", "failure", "partial", "rolled_back"]
+            },
+            "duration_ms": {
+              "type": "integer"
+            },
+            "final_error_code": {
+              "type": "string"
+            },
+            "post_repair_notes": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

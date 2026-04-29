@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="600" viewBox="0 0 1000 600">
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="3" dy="3" stdDeviation="4" flood-opacity="0.3"/>
+    </filter>
+    <filter id="shadowSmall" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="2" dy="2" stdDeviation="2" flood-opacity="0.25"/>
+    </filter>
+    <marker id="arrowCyan" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L0,12 L10,6 z" fill="#22d3ee"/>
+    </marker>
+    <marker id="arrowIndigo" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L0,12 L10,6 z" fill="#6366f1"/>
+    </marker>
+    <marker id="arrowPurple" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L0,12 L10,6 z" fill="#8b5cf6"/>
+    </marker>
+    <marker id="arrowGray" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L0,12 L10,6 z" fill="#64748b"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L0,12 L10,6 z" fill="#10b981"/>
+    </marker>
+    <marker id="arrowRed" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L0,12 L10,6 z" fill="#ef4444"/>
+    </marker>
+  </defs>
+  
+  <rect width="1000" height="600" fill="#0f172a"/>
+  <text x="500" y="40" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#ffffff" text-anchor="middle">Provider Routing with Circuit Breaker</text>
+  
+  <!-- Provider Hierarchy (Left Side) -->
+  <g filter="url(#shadow)">
+    <!-- MiniMax (Primary) -->
+    <rect x="50" y="100" width="180" height="80" rx="12" fill="#0d3d4d" stroke="#22d3ee" stroke-width="3"/>
+    <rect x="50" y="100" width="180" height="30" rx="12" fill="#22d3ee"/>
+    <rect x="50" y="115" width="180" height="15" fill="#22d3ee"/>
+    <text x="140" y="120" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">MiniMax</text>
+    <text x="140" y="155" font-family="Arial, sans-serif" font-size="12" fill="#ffffff" text-anchor="middle">Primary</text>
+    <text x="140" y="172" font-family="Arial, sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">(Highest Priority)</text>
+  </g>
+  
+  <!-- Arrow: MiniMax -> SiliconFlow -->
+  <path d="M230 140 L280 140" stroke="#22d3ee" stroke-width="2" fill="none" marker-end="url(#arrowCyan)"/>
+  <text x="255" y="130" font-family="Arial, sans-serif" font-size="9" fill="#64748b">fallback</text>
+  
+  <!-- SiliconFlow -->
+  <g filter="url(#shadowSmall)">
+    <rect x="280" y="100" width="160" height="80" rx="12" fill="#1e1b4b" stroke="#6366f1" stroke-width="2"/>
+    <rect x="280" y="100" width="160" height="30" rx="12" fill="#6366f1"/>
+    <rect x="280" y="115" width="160" height="15" fill="#6366f1"/>
+    <text x="360" y="120" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">SiliconFlow</text>
+    <text x="360" y="155" font-family="Arial, sans-serif" font-size="11" fill="#94a3b8" text-anchor="middle">Secondary</text>
+  </g>
+  
+  <!-- Arrow: SiliconFlow -> LM Studio -->
+  <path d="M440 140 L490 140" stroke="#6366f1" stroke-width="2" fill="none" marker-end="url(#arrowIndigo)"/>
+  <text x="465" y="130" font-family="Arial, sans-serif" font-size="9" fill="#64748b">fallback</text>
+  
+  <!-- LM Studio -->
+  <g filter="url(#shadowSmall)">
+    <rect x="490" y="100" width="160" height="80" rx="12" fill="#2d1f5e" stroke="#8b5cf6" stroke-width="2"/>
+    <rect x="490" y="100" width="160" height="30" rx="12" fill="#8b5cf6"/>
+    <rect x="490" y="115" width="160" height="15" fill="#8b5cf6"/>
+    <text x="570" y="120" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">LM Studio</text>
+    <text x="570" y="155" font-family="Arial, sans-serif" font-size="11" fill="#94a3b8" text-anchor="middle">Tertiary</text>
+  </g>
+  
+  <!-- Arrow: LM Studio -> Ollama -->
+  <path d="M650 140 L700 140" stroke="#8b5cf6" stroke-width="2" fill="none" marker-end="url(#arrowPurple)"/>
+  <text x="675" y="130" font-family="Arial, sans-serif" font-size="9" fill="#64748b">fallback</text>
+  
+  <!-- Ollama (Fallback) -->
+  <g filter="url(#shadowSmall)">
+    <rect x="700" y="100" width="160" height="80" rx="12" fill="#1e293b" stroke="#64748b" stroke-width="2"/>
+    <rect x="700" y="100" width="160" height="30" rx="12" fill="#64748b"/>
+    <rect x="700" y="115" width="160" height="15" fill="#64748b"/>
+    <text x="780" y="120" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">Ollama</text>
+    <text x="780" y="155" font-family="Arial, sans-serif" font-size="11" fill="#94a3b8" text-anchor="middle">Final Fallback</text>
+  </g>
+  
+  <!-- Circuit Breaker Section (Right Side) -->
+  <g transform="translate(250, 250)">
+    <rect x="0" y="0" width="480" height="300" rx="12" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+    <text x="240" y="30" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle">Circuit Breaker Pattern</text>
+    
+    <!-- CLOSED State -->
+    <g filter="url(#shadowSmall)" transform="translate(30, 60)">
+      <rect x="0" y="0" width="130" height="90" rx="10" fill="#0f3d2e" stroke="#10b981" stroke-width="3"/>
+      <text x="65" y="30" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#10b981" text-anchor="middle">CLOSED</text>
+      <text x="65" y="55" font-family="Arial, sans-serif" font-size="10" fill="#e2e8f0" text-anchor="middle">Normal operation</text>
+      <text x="65" y="72" font-family="Arial, sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">Requests flow</text>
+      <circle cx="65" cy="85" r="4" fill="#10b981"/>
+    </g>
+    
+    <!-- Arrow: CLOSED -> OPEN -->
+    <path d="M160 105 L195 105" stroke="#f59e0b" stroke-width="2" fill="none" marker-end="url(#arrowAmber)"/>
+    <text x="178" y="95" font-family="Arial, sans-serif" font-size="9" fill="#f59e0b">failure</text>
+    
+    <!-- OPEN State -->
+    <g filter="url(#shadowSmall)" transform="translate(195, 60)">
+      <rect x="0" y="0" width="130" height="90" rx="10" fill="#3d2a0a" stroke="#f59e0b" stroke-width="3"/>
+      <text x="65" y="30" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#f59e0b" text-anchor="middle">OPEN</text>
+      <text x="65" y="55" font-family="Arial, sans-serif" font-size="10" fill="#e2e8f0" text-anchor="middle">Requests blocked</text>
+      <text x="65" y="72" font-family="Arial, sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">Fast fail</text>
+      <circle cx="65" cy="85" r="4" fill="#f59e0b"/>
+    </g>
+    
+    <!-- Arrow: OPEN -> HALF_OPEN -->
+    <path d="M325 105 L360 105" stroke="#8b5cf6" stroke-width="2" fill="none" marker-end="url(#arrowPurple)"/>
+    <text x="343" y="95" font-family="Arial, sans-serif" font-size="9" fill="#8b5cf6">timeout</text>
+    
+    <!-- HALF_OPEN State -->
+    <g filter="url(#shadowSmall)" transform="translate(360, 60)">
+      <rect x="0" y="0" width="130" height="90" rx="10" fill="#2d1f5e" stroke="#8b5cf6" stroke-width="3"/>
+      <text x="65" y="30" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#8b5cf6" text-anchor="middle">HALF-OPEN</text>
+      <text x="65" y="55" font-family="Arial, sans-serif" font-size="10" fill="#e2e8f0" text-anchor="middle">Test requests</text>
+      <text x="65" y="72" font-family="Arial, sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">Limited flow</text>
+      <circle cx="65" cy="85" r="4" fill="#8b5cf6"/>
+    </g>
+    
+    <!-- Arrows for CLOSED and HALF_OPEN loops -->
+    <path d="M160 150 L160 180 L65 180 L65 150" stroke="#10b981" stroke-width="1.5" fill="none" stroke-dasharray="4,2"/>
+    <text x="112" y="195" font-family="Arial, sans-serif" font-size="9" fill="#10b981">success</text>
+    
+    <path d="M425 150 L425 180 L490 180 L490 150" stroke="#ef4444" stroke-width="1.5" fill="none" stroke-dasharray="4,2"/>
+    <text x="457" y="195" font-family="Arial, sans-serif" font-size="9" fill="#ef4444">fail</text>
+    
+    <!-- Health Monitoring -->
+    <g transform="translate(30, 180)">
+      <rect x="0" y="0" width="420" height="100" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+      <text x="210" y="25" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">Health Monitoring</text>
+      
+      <g font-family="Arial, sans-serif" font-size="10" fill="#e2e8f0">
+        <text x="20" y="50">Success Rate: <tspan fill="#10b981">98.5%</tspan></text>
+        <text x="20" y="70">Latency: <tspan fill="#22d3ee">145ms avg</tspan></text>
+        <text x="20" y="90">Error Rate: <tspan fill="#ef4444">0.3%</tspan></text>
+        
+        <text x="180" y="50">Failures: <tspan fill="#f59e0b">3</tspan> / <tspan fill="#64748b">threshold: 5</tspan></text>
+        <text x="180" y="70">Timeouts: <tspan fill="#f59e0b">1</tspan></text>
+        <text x="180" y="90">Circuit State: <tspan fill="#10b981">CLOSED</tspan></text>
+        
+        <text x="340" y="50">Last Check: <tspan fill="#22d3ee">2s ago</tspan></text>
+        <text x="340" y="70">Next Check: <tspan fill="#64748b">in 8s</tspan></text>
+        <text x="340" y="90">Recovery Timeout: <tspan fill="#8b5cf6">30s</tspan></text>
+      </g>
+    </g>
+  </g>
+  
+  <!-- Health Check Arrows (to providers) -->
+  <path d="M140 180 L140 220 L50 220 L50 180" stroke="#10b981" stroke-width="1.5" fill="none" stroke-dasharray="4,2" marker-end="url(#arrowGreen)"/>
+  <text x="95" y="235" font-family="Arial, sans-serif" font-size="9" fill="#10b981">health check</text>
+  
+  <path d="M360 180 L360 220 L780 220 L780 180" stroke="#10b981" stroke-width="1.5" fill="none" stroke-dasharray="4,2" marker-end="url(#arrowGreen)"/>
+  <text x="570" y="235" font-family="Arial, sans-serif" font-size="9" fill="#10b981">health check</text>
+  
+  <!-- Legend -->
+  <g transform="translate(50, 530)">
+    <rect x="0" y="0" width="500" height="60" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+    <text x="250" y="18" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">Provider Priority &amp; Fallback Chain</text>
+    <rect x="20" y="30" width="15" height="15" rx="3" fill="#22d3ee"/>
+    <text x="42" y="42" font-family="Arial, sans-serif" font-size="10" fill="#94a3b8">Primary</text>
+    <rect x="100" y="30" width="15" height="15" rx="3" fill="#6366f1"/>
+    <text x="122" y="42" font-family="Arial, sans-serif" font-size="10" fill="#94a3b8">Secondary</text>
+    <rect x="200" y="30" width="15" height="15" rx="3" fill="#8b5cf6"/>
+    <text x="222" y="42" font-family="Arial, sans-serif" font-size="10" fill="#94a3b8">Tertiary</text>
+    <rect x="290" y="30" width="15" height="15" rx="3" fill="#64748b"/>
+    <text x="312" y="42" font-family="Arial, sans-serif" font-size="10" fill="#94a3b8">Fallback</text>
+    <line x1="380" y1="37" x2="410" y2="37" stroke="#10b981" stroke-width="2" stroke-dasharray="3,2"/>
+    <text x="418" y="42" font-family="Arial, sans-serif" font-size="10" fill="#94a3b8">Health</text>
+  </g>
+</svg>

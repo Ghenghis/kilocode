@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://daveai.tech/schemas/skill.manifest.json",
+  "title": "DaveAI Skill Manifest",
+  "description": "Schema enforced by Hub /api/skills/install. Skills failing validation receive verdict=FAIL and never run.",
+  "type": "object",
+  "required": ["id", "name", "version", "description", "permissions", "executor", "entrypoint"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]{1,63}$",
+      "description": "Stable identifier used in API paths and filenames."
+    },
+    "name": {"type": "string", "minLength": 1, "maxLength": 80},
+    "version": {"type": "string", "minLength": 1, "maxLength": 32},
+    "description": {"type": "string", "minLength": 1, "maxLength": 800},
+    "permissions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["fs_read", "fs_write", "fs_delete", "shell", "git_push", "network_get", "network_post", "browser", "memory_read", "memory_write"]
+      },
+      "uniqueItems": true
+    },
+    "executor": {
+      "type": "string",
+      "enum": ["python", "shell", "node", "zeroclaw", "browser"],
+      "description": "Runtime that executes this skill. zeroclaw = safe-exec required for shell/file/network skills."
+    },
+    "entrypoint": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Module:function for python/node, or path to script for shell."
+    },
+    "category": {"type": "string"},
+    "source": {"type": "string"},
+    "quarantine": {"type": "boolean"},
+    "args_schema": {"type": "object", "description": "Optional JSON-Schema for runtime args."},
+    "expected_evidence": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Files or signals the skill must produce as proof of execution."
+    }
+  }
+}

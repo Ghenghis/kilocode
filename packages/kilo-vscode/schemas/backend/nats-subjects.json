@@ -1,0 +1,794 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://contract-kit.dev/schema/nats-subjects.json",
+  "title": "Contract Kit NATS JetStream Subject Topology",
+  "description": "NATS JetStream subject namespace for inter-component messaging in contract-kit v17 multi-agent orchestration",
+  "type": "object",
+  "required": ["subjects", "stream_config", "consumer_groups"],
+  "properties": {
+    "subjects": {
+      "type": "object",
+      "description": "All NATS subjects used by the contract-kit system. Subjects follow hierarchical naming: <domain>.<component>.<channel>.<subchannel>",
+      "additionalProperties": false,
+      "properties": {
+        "daveai": {
+          "type": "object",
+          "description": "Root namespace for all daveai/contract-kit messages",
+          "additionalProperties": false,
+          "properties": {
+            "control": {
+              "type": "object",
+              "description": "Control plane messages for orchestration, health, and coordination",
+              "additionalProperties": true,
+              "properties": {
+                "subjects": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "bootstrap": {
+                      "type": "string",
+                      "const": "daveai.control.bootstrap",
+                      "description": "Initial system bootstrap and capability advertisement"
+                    },
+                    "heartbeat": {
+                      "type": "string",
+                      "const": "daveai.control.heartbeat",
+                      "description": "Periodic health heartbeats from all active agents"
+                    },
+                    "shutdown": {
+                      "type": "string",
+                      "const": "daveai.control.shutdown",
+                      "description": "Graceful shutdown orchestration"
+                    },
+                    "route": {
+                      "type": "string",
+                      "const": "daveai.control.route",
+                      "description": "Task routing decisions and load balancing"
+                    },
+                    "delegate": {
+                      "type": "string",
+                      "const": "daveai.control.delegate",
+                      "description": "Cross-agent delegation requests"
+                    },
+                    "escalate": {
+                      "type": "string",
+                      "const": "daveai.control.escalate",
+                      "description": "Escalation from lower to higher authority"
+                    },
+                    "resolve": {
+                      "type": "string",
+                      "const": "daveai.control.resolve",
+                      "description": "Resolution of escalated or blocked tasks"
+                    },
+                    "abort": {
+                      "type": "string",
+                      "const": "daveai.control.abort",
+                      "description": "Emergency abort of running task"
+                    },
+                    "rebalance": {
+                      "type": "string",
+                      "const": "daveai.control.rebalance",
+                      "description": "Load rebalancing across agent pool"
+                    },
+                    "sync": {
+                      "type": "string",
+                      "const": "daveai.control.sync",
+                      "description": "State synchronization between agents"
+                    }
+                  }
+                },
+                "wildcard": {
+                  "type": "string",
+                  "const": "daveai.control.>",
+                  "description": "Wildcard subject for control plane subscriptions"
+                }
+              }
+            },
+            "tasks": {
+              "type": "object",
+              "description": "Task packets representing unit-of-work assignments",
+              "additionalProperties": true,
+              "properties": {
+                "subjects": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "incoming": {
+                      "type": "string",
+                      "const": "daveai.tasks.incoming",
+                      "description": "New tasks entering the system"
+                    },
+                    "pending": {
+                      "type": "string",
+                      "const": "daveai.tasks.pending",
+                      "description": "Tasks queued but not yet started"
+                    },
+                    "running": {
+                      "type": "string",
+                      "const": "daveai.tasks.running",
+                      "description": "Tasks actively being executed"
+                    },
+                    "blocked": {
+                      "type": "string",
+                      "const": "daveai.tasks.blocked",
+                      "description": "Tasks blocked on dependencies or external factors"
+                    },
+                    "retry": {
+                      "type": "string",
+                      "const": "daveai.tasks.retry",
+                      "description": "Tasks scheduled for retry after failure"
+                    }
+                  }
+                },
+                "wildcard": {
+                  "type": "string",
+                  "const": "daveai.tasks.>",
+                  "description": "Wildcard subject for all task-related subscriptions"
+                }
+              }
+            },
+            "completions": {
+              "type": "object",
+              "description": "Completion packets reporting task outcomes and evidence",
+              "additionalProperties": true,
+              "properties": {
+                "subjects": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "close": {
+                      "type": "string",
+                      "const": "daveai.completions.close",
+                      "description": "Successfully completed tasks"
+                    },
+                    "reopen": {
+                      "type": "string",
+                      "const": "daveai.completions.reopen",
+                      "description": "Tasks reopened due to incomplete work"
+                    },
+                    "blocked": {
+                      "type": "string",
+                      "const": "daveai.completions.blocked",
+                      "description": "Tasks blocked with resolution info"
+                    },
+                    "review": {
+                      "type": "string",
+                      "const": "daveai.completions.review",
+                      "description": "Tasks pending acceptance review"
+                    }
+                  }
+                },
+                "wildcard": {
+                  "type": "string",
+                  "const": "daveai.completions.>",
+                  "description": "Wildcard subject for all completion-related subscriptions"
+                }
+              }
+            },
+            "repairs": {
+              "type": "object",
+              "description": "Repair packets for error recovery and remediation",
+              "additionalProperties": true,
+              "properties": {
+                "subjects": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "proposed": {
+                      "type": "string",
+                      "const": "daveai.repairs.proposed",
+                      "description": "Repair plans proposed by agents"
+                    },
+                    "approved": {
+                      "type": "string",
+                      "const": "daveai.repairs.approved",
+                      "description": "Approved repair plans"
+                    },
+                    "in_progress": {
+                      "type": "string",
+                      "const": "daveai.repairs.in_progress",
+                      "description": "Repairs currently being executed"
+                    },
+                    "completed": {
+                      "type": "string",
+                      "const": "daveai.repairs.completed",
+                      "description": "Successfully completed repairs"
+                    },
+                    "failed": {
+                      "type": "string",
+                      "const": "daveai.repairs.failed",
+                      "description": "Failed repair attempts"
+                    }
+                  }
+                },
+                "wildcard": {
+                  "type": "string",
+                  "const": "daveai.repairs.>",
+                  "description": "Wildcard subject for all repair-related subscriptions"
+                }
+              }
+            },
+            "incidents": {
+              "type": "object",
+              "description": "Incident reports for system-level issues and alerts",
+              "additionalProperties": true,
+              "properties": {
+                "subjects": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "alert": {
+                      "type": "string",
+                      "const": "daveai.incidents.alert",
+                      "description": "Immediate attention required alerts"
+                    },
+                    "incident": {
+                      "type": "string",
+                      "const": "daveai.incidents.incident",
+                      "description": "Logged incidents requiring investigation"
+                    },
+                    "postmortem": {
+                      "type": "string",
+                      "const": "daveai.incidents.postmortem",
+                      "description": "Post-mortem analysis results"
+                    },
+                    "resolution": {
+                      "type": "string",
+                      "const": "daveai.incidents.resolution",
+                      "description": "Incident resolution confirmations"
+                    }
+                  }
+                },
+                "wildcard": {
+                  "type": "string",
+                  "const": "daveai.incidents.>",
+                  "description": "Wildcard subject for all incident-related subscriptions"
+                }
+              }
+            },
+            "evidence": {
+              "type": "object",
+              "description": "Evidence bundle storage and retrieval for audit and compliance",
+              "additionalProperties": true,
+              "properties": {
+                "subjects": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "bundle": {
+                      "type": "string",
+                      "const": "daveai.evidence.bundle",
+                      "description": "Evidence bundle ingestion"
+                    },
+                    "trace": {
+                      "type": "string",
+                      "const": "daveai.evidence.trace",
+                      "description": "Execution trace data"
+                    },
+                    "audit": {
+                      "type": "string",
+                      "const": "daveai.evidence.audit",
+                      "description": "Audit log entries"
+                    },
+                    "retrieve": {
+                      "type": "string",
+                      "const": "daveai.evidence.retrieve",
+                      "description": "Evidence retrieval requests"
+                    },
+                    "expire": {
+                      "type": "string",
+                      "const": "daveai.evidence.expire",
+                      "description": "Evidence retention expiry notifications"
+                    }
+                  }
+                },
+                "wildcard": {
+                  "type": "string",
+                  "const": "daveai.evidence.>",
+                  "description": "Wildcard subject for all evidence-related subscriptions"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "stream_config": {
+      "type": "object",
+      "description": "JetStream stream configurations for each subject domain",
+      "additionalProperties": false,
+      "properties": {
+        "control_stream": {
+          "type": "object",
+          "required": ["name", "subjects", "retention"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "const": "CONTRACTCTL"
+            },
+            "subjects": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "contains": {
+                "type": "string",
+                "const": "daveai.control.>"
+              }
+            },
+            "retention": {
+              "type": "string",
+              "const": "limits"
+            },
+            "max_bytes": {
+              "type": "integer",
+              "default": 1073741824,
+              "description": "1GB default"
+            },
+            "max_age_seconds": {
+              "type": "integer",
+              "default": 86400,
+              "description": "24 hours"
+            },
+            "replicas": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5,
+              "default": 1
+            },
+            "storage": {
+              "type": "string",
+              "enum": ["file", "memory"],
+              "default": "file"
+            }
+          }
+        },
+        "tasks_stream": {
+          "type": "object",
+          "required": ["name", "subjects", "retention"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "const": "CONTRACTTASKS"
+            },
+            "subjects": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "contains": {
+                "type": "string",
+                "const": "daveai.tasks.>"
+              }
+            },
+            "retention": {
+              "type": "string",
+              "const": "limits"
+            },
+            "max_bytes": {
+              "type": "integer",
+              "default": 5368709120,
+              "description": "5GB for task backlog"
+            },
+            "max_age_seconds": {
+              "type": "integer",
+              "default": 604800,
+              "description": "7 days"
+            },
+            "replicas": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5,
+              "default": 1
+            },
+            "storage": {
+              "type": "string",
+              "enum": ["file", "memory"],
+              "default": "file"
+            }
+          }
+        },
+        "completions_stream": {
+          "type": "object",
+          "required": ["name", "subjects", "retention"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "const": "CONTRACTCMPL"
+            },
+            "subjects": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "contains": {
+                "type": "string",
+                "const": "daveai.completions.>"
+              }
+            },
+            "retention": {
+              "type": "string",
+              "const": "limits"
+            },
+            "max_bytes": {
+              "type": "integer",
+              "default": 5368709120
+            },
+            "max_age_seconds": {
+              "type": "integer",
+              "default": 2592000,
+              "description": "30 days"
+            },
+            "replicas": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5,
+              "default": 1
+            },
+            "storage": {
+              "type": "string",
+              "enum": ["file", "memory"],
+              "default": "file"
+            }
+          }
+        },
+        "repairs_stream": {
+          "type": "object",
+          "required": ["name", "subjects", "retention"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "const": "CONTRACTREPAIR"
+            },
+            "subjects": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "contains": {
+                "type": "string",
+                "const": "daveai.repairs.>"
+              }
+            },
+            "retention": {
+              "type": "string",
+              "const": "limits"
+            },
+            "max_bytes": {
+              "type": "integer",
+              "default": 1073741824
+            },
+            "max_age_seconds": {
+              "type": "integer",
+              "default": 604800
+            },
+            "replicas": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5,
+              "default": 1
+            },
+            "storage": {
+              "type": "string",
+              "enum": ["file", "memory"],
+              "default": "file"
+            }
+          }
+        },
+        "incidents_stream": {
+          "type": "object",
+          "required": ["name", "subjects", "retention"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "const": "CONTRACTINC"
+            },
+            "subjects": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "contains": {
+                "type": "string",
+                "const": "daveai.incidents.>"
+              }
+            },
+            "retention": {
+              "type": "string",
+              "const": "limits"
+            },
+            "max_bytes": {
+              "type": "integer",
+              "default": 5368709120
+            },
+            "max_age_seconds": {
+              "type": "integer",
+              "default": 7776000,
+              "description": "90 days for compliance"
+            },
+            "replicas": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5,
+              "default": 1
+            },
+            "storage": {
+              "type": "string",
+              "enum": ["file", "memory"],
+              "default": "file"
+            }
+          }
+        },
+        "evidence_stream": {
+          "type": "object",
+          "required": ["name", "subjects", "retention"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "const": "CONTRACTEVD"
+            },
+            "subjects": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "contains": {
+                "type": "string",
+                "const": "daveai.evidence.>"
+              }
+            },
+            "retention": {
+              "type": "string",
+              "const": "limits"
+            },
+            "max_bytes": {
+              "type": "integer",
+              "default": 107374182400,
+              "description": "100GB for evidence storage"
+            },
+            "max_age_seconds": {
+              "type": "integer",
+              "default": 31536000,
+              "description": "1 year"
+            },
+            "replicas": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5,
+              "default": 1
+            },
+            "storage": {
+              "type": "string",
+              "enum": ["file", "memory"],
+              "default": "file"
+            }
+          }
+        }
+      }
+    },
+    "consumer_groups": {
+      "type": "object",
+      "description": "Consumer group definitions for each stream, defining who consumes what",
+      "additionalProperties": false,
+      "properties": {
+        "CONTRACTCTL": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["consumer_name", "durable", "filter_subject", "delivery_policy"],
+            "properties": {
+              "consumer_name": {
+                "type": "string",
+                "examples": ["orchestrator", "health_monitor", "route_manager"]
+              },
+              "durable": {
+                "type": "boolean",
+                "default": true
+              },
+              "filter_subject": {
+                "type": "string",
+                "description": "Specific subject within the stream to consume"
+              },
+              "delivery_policy": {
+                "type": "string",
+                "enum": ["all", "last", "new", "by_start_sequence", "by_start_time"],
+                "default": "all"
+              },
+              "max_ack_pending": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 100
+              },
+              "ack_wait_seconds": {
+                "type": "integer",
+                "minimum": 5,
+                "default": 30
+              }
+            }
+          }
+        },
+        "CONTRACTTASKS": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["consumer_name", "durable", "filter_subject", "delivery_policy"],
+            "properties": {
+              "consumer_name": {
+                "type": "string",
+                "examples": ["webui_lane", "kilocode_lane", "hermes_lane", "zeroclaw_lane", "executor_pool"]
+              },
+              "durable": {
+                "type": "boolean",
+                "default": true
+              },
+              "filter_subject": {
+                "type": "string"
+              },
+              "delivery_policy": {
+                "type": "string",
+                "enum": ["all", "last", "new", "by_start_sequence", "by_start_time"],
+                "default": "new"
+              },
+              "max_ack_pending": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 1
+              },
+              "ack_wait_seconds": {
+                "type": "integer",
+                "minimum": 5,
+                "default": 300
+              },
+              "rate_limit_burst": {
+                "type": "integer"
+              },
+              "rate_limit_rate": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "CONTRACTCMPL": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["consumer_name", "durable", "filter_subject", "delivery_policy"],
+            "properties": {
+              "consumer_name": {
+                "type": "string",
+                "examples": ["acceptance_engine", "audit_logger", "metrics_collector"]
+              },
+              "durable": {
+                "type": "boolean",
+                "default": true
+              },
+              "filter_subject": {
+                "type": "string"
+              },
+              "delivery_policy": {
+                "type": "string",
+                "enum": ["all", "last", "new", "by_start_sequence", "by_start_time"],
+                "default": "all"
+              },
+              "max_ack_pending": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 100
+              },
+              "ack_wait_seconds": {
+                "type": "integer",
+                "minimum": 5,
+                "default": 60
+              }
+            }
+          }
+        },
+        "CONTRACTREPAIR": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["consumer_name", "durable", "filter_subject", "delivery_policy"],
+            "properties": {
+              "consumer_name": {
+                "type": "string",
+                "examples": ["repair_broker", "validation_engine"]
+              },
+              "durable": {
+                "type": "boolean",
+                "default": true
+              },
+              "filter_subject": {
+                "type": "string"
+              },
+              "delivery_policy": {
+                "type": "string",
+                "enum": ["all", "last", "new", "by_start_sequence", "by_start_time"],
+                "default": "new"
+              },
+              "max_ack_pending": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 10
+              },
+              "ack_wait_seconds": {
+                "type": "integer",
+                "minimum": 5,
+                "default": 120
+              }
+            }
+          }
+        },
+        "CONTRACTINC": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["consumer_name", "durable", "filter_subject", "delivery_policy"],
+            "properties": {
+              "consumer_name": {
+                "type": "string",
+                "examples": ["incident_manager", "pagerduty_bridge", "slack_notifier"]
+              },
+              "durable": {
+                "type": "boolean",
+                "default": true
+              },
+              "filter_subject": {
+                "type": "string"
+              },
+              "delivery_policy": {
+                "type": "string",
+                "enum": ["all", "last", "new", "by_start_sequence", "by_start_time"],
+                "default": "new"
+              },
+              "max_ack_pending": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 50
+              },
+              "ack_wait_seconds": {
+                "type": "integer",
+                "minimum": 5,
+                "default": 60
+              }
+            }
+          }
+        },
+        "CONTRACTEVD": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["consumer_name", "durable", "filter_subject", "delivery_policy"],
+            "properties": {
+              "consumer_name": {
+                "type": "string",
+                "examples": ["evidence_store", "compliance_archiver", "audit_trail"]
+              },
+              "durable": {
+                "type": "boolean",
+                "default": true
+              },
+              "filter_subject": {
+                "type": "string"
+              },
+              "delivery_policy": {
+                "type": "string",
+                "enum": ["all", "last", "new", "by_start_sequence", "by_start_time"],
+                "default": "all"
+              },
+              "max_ack_pending": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 100
+              },
+              "ack_wait_seconds": {
+                "type": "integer",
+                "minimum": 5,
+                "default": 60
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

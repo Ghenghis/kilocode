@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 680" font-family="'Segoe UI',Arial,sans-serif" font-size="11">
+  <rect width="1080" height="680" fill="#0f172a"/>
+  <text x="540" y="32" text-anchor="middle" font-size="16" font-weight="bold" fill="#f8fafc">WebUI Hub — Panel Architecture (hub.html + dashboard.py)</text>
+  <text x="540" y="50" text-anchor="middle" font-size="10" fill="#94a3b8">All panels, their API endpoints, and data sources</text>
+
+  <!-- Sidebar -->
+  <rect x="20" y="65" width="150" height="590" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+  <text x="95" y="85" text-anchor="middle" fill="#60a5fa" font-weight="bold" font-size="11">Sidebar Nav</text>
+  <!-- Nav items -->
+  <rect x="28" y="93" width="134" height="20" rx="3" fill="#1e3a5f"/>
+  <text x="36" y="107" fill="#60a5fa" font-size="10">📊 Overview</text>
+  <rect x="28" y="117" width="134" height="20" rx="3" fill="#1e293b"/>
+  <text x="36" y="131" fill="#94a3b8" font-size="10">🚦 Boot Gate</text>
+  <rect x="28" y="141" width="134" height="20" rx="3" fill="#1e293b"/>
+  <text x="36" y="155" fill="#94a3b8" font-size="10">🖥️ LM Studio</text>
+  <rect x="28" y="165" width="134" height="20" rx="3" fill="#1e293b"/>
+  <text x="36" y="179" fill="#94a3b8" font-size="10">🦙 Ollama</text>
+  <rect x="28" y="189" width="134" height="20" rx="3" fill="#1e293b"/>
+  <text x="36" y="203" fill="#94a3b8" font-size="10">⚡ Providers</text>
+  <rect x="28" y="213" width="134" height="20" rx="3" fill="#1e293b"/>
+  <text x="36" y="227" fill="#94a3b8" font-size="10">🤖 Hermes</text>
+  <rect x="28" y="237" width="134" height="20" rx="3" fill="#1e293b"/>
+  <text x="36" y="251" fill="#94a3b8" font-size="10">🦅 ZeroClaw</text>
+  <rect x="28" y="261" width="134" height="20" rx="3" fill="#1e293b"/>
+  <text x="36" y="275" fill="#94a3b8" font-size="10">📡 Dispatch</text>
+  <rect x="28" y="285" width="134" height="20" rx="3" fill="#1e293b"/>
+  <text x="36" y="299" fill="#94a3b8" font-size="10">⚙️ Settings</text>
+  <rect x="28" y="309" width="134" height="20" rx="3" fill="#1e293b"/>
+  <text x="36" y="323" fill="#94a3b8" font-size="10">🔌 Ports</text>
+  <rect x="28" y="333" width="134" height="20" rx="3" fill="#1e293b"/>
+  <text x="36" y="347" fill="#94a3b8" font-size="10">📦 Queue</text>
+  <rect x="28" y="357" width="134" height="20" rx="3" fill="#1e293b"/>
+  <text x="36" y="371" fill="#94a3b8" font-size="10">🔎 Evidence</text>
+  <rect x="28" y="381" width="134" height="20" rx="3" fill="#1e293b"/>
+  <text x="36" y="395" fill="#94a3b8" font-size="10">🔧 Repairs</text>
+  <rect x="28" y="405" width="134" height="20" rx="3" fill="#1e293b"/>
+  <text x="36" y="419" fill="#94a3b8" font-size="10">📡 Activity Log</text>
+  <rect x="28" y="429" width="134" height="20" rx="3" fill="#1e293b"/>
+  <text x="36" y="443" fill="#94a3b8" font-size="10">📋 Audit Trail</text>
+  <rect x="28" y="453" width="134" height="20" rx="3" fill="#1e293b"/>
+  <text x="36" y="467" fill="#94a3b8" font-size="10">❓ Questions</text>
+  <rect x="28" y="477" width="134" height="20" rx="3" fill="#1e293b"/>
+  <text x="36" y="491" fill="#94a3b8" font-size="10">🔷 KiloCode VSIX</text>
+  <rect x="28" y="501" width="134" height="20" rx="3" fill="#1e293b"/>
+  <text x="36" y="515" fill="#94a3b8" font-size="10">🧠 KOM</text>
+  <rect x="28" y="525" width="134" height="20" rx="3" fill="#1e293b"/>
+  <text x="36" y="539" fill="#94a3b8" font-size="10">🛠️ Maintenance</text>
+
+  <!-- Panel cards -->
+  <!-- Row 1 -->
+  <rect x="185" y="65" width="200" height="110" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="285" y="84" text-anchor="middle" fill="#60a5fa" font-weight="bold">Overview</text>
+  <text x="285" y="100" text-anchor="middle" fill="#93c5fd" font-size="9">Health matrix, service dots</text>
+  <text x="285" y="114" text-anchor="middle" fill="#93c5fd" font-size="9">KOM status, provider badges</text>
+  <text x="285" y="130" text-anchor="middle" fill="#64748b" font-size="9">API: /api/healthall</text>
+  <text x="285" y="144" text-anchor="middle" fill="#64748b" font-size="9">/api/kom/status</text>
+  <text x="285" y="158" text-anchor="middle" fill="#64748b" font-size="9">30s auto-refresh</text>
+
+  <rect x="398" y="65" width="200" height="110" rx="6" fill="#1f2d1e" stroke="#22c55e" stroke-width="1.5"/>
+  <text x="498" y="84" text-anchor="middle" fill="#4ade80" font-weight="bold">Boot Gate</text>
+  <text x="498" y="100" text-anchor="middle" fill="#86efac" font-size="9">Safemode toggle, boot status</text>
+  <text x="498" y="114" text-anchor="middle" fill="#86efac" font-size="9">Health checklist per service</text>
+  <text x="498" y="130" text-anchor="middle" fill="#64748b" font-size="9">API: /settings/boot-gate</text>
+  <text x="498" y="144" text-anchor="middle" fill="#64748b" font-size="9">/settings/safemode</text>
+
+  <rect x="612" y="65" width="200" height="110" rx="6" fill="#2d1b1b" stroke="#f97316" stroke-width="1.5"/>
+  <text x="712" y="84" text-anchor="middle" fill="#fb923c" font-weight="bold">Providers</text>
+  <text x="712" y="100" text-anchor="middle" fill="#fdba74" font-size="9">Live probe: latency, circuit</text>
+  <text x="712" y="114" text-anchor="middle" fill="#fdba74" font-size="9">Per-provider reset/failover</text>
+  <text x="712" y="130" text-anchor="middle" fill="#64748b" font-size="9">API: /api/providers/status</text>
+  <text x="712" y="144" text-anchor="middle" fill="#64748b" font-size="9">/api/providers/{id}/reset</text>
+  <text x="712" y="158" text-anchor="middle" fill="#64748b" font-size="9">/api/providers/{id}/failover</text>
+
+  <rect x="826" y="65" width="220" height="110" rx="6" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/>
+  <text x="936" y="84" text-anchor="middle" fill="#f8fafc" font-weight="bold">Queue / Pipeline</text>
+  <text x="936" y="100" text-anchor="middle" fill="#94a3b8" font-size="9">Hermes/ZeroClaw queues</text>
+  <text x="936" y="114" text-anchor="middle" fill="#94a3b8" font-size="9">KOM session counter</text>
+  <text x="936" y="130" text-anchor="middle" fill="#64748b" font-size="9">API: /api/pipeline/status</text>
+  <text x="936" y="144" text-anchor="middle" fill="#64748b" font-size="9">/api/pipeline/events</text>
+
+  <!-- Row 2 -->
+  <rect x="185" y="195" width="200" height="110" rx="6" fill="#1c1c2d" stroke="#818cf8" stroke-width="1.5"/>
+  <text x="285" y="214" text-anchor="middle" fill="#a5b4fc" font-weight="bold">Hermes</text>
+  <text x="285" y="230" text-anchor="middle" fill="#c7d2fe" font-size="9">5 bot health, tasks, fanout</text>
+  <text x="285" y="244" text-anchor="middle" fill="#c7d2fe" font-size="9">Discord guild status</text>
+  <text x="285" y="260" text-anchor="middle" fill="#64748b" font-size="9">API: /api/hermes/health</text>
+  <text x="285" y="274" text-anchor="middle" fill="#64748b" font-size="9">/api/hermes/tasks</text>
+
+  <rect x="398" y="195" width="200" height="110" rx="6" fill="#1c1c2d" stroke="#f472b6" stroke-width="1.5"/>
+  <text x="498" y="214" text-anchor="middle" fill="#f9a8d4" font-weight="bold">ZeroClaw</text>
+  <text x="498" y="230" text-anchor="middle" fill="#fbcfe8" font-size="9">Adapter status, git/shell/fs</text>
+  <text x="498" y="244" text-anchor="middle" fill="#fbcfe8" font-size="9">Research adapter live test</text>
+  <text x="498" y="260" text-anchor="middle" fill="#64748b" font-size="9">API: /api/zeroclaw/status</text>
+
+  <rect x="612" y="195" width="200" height="110" rx="6" fill="#1a1520" stroke="#c084fc" stroke-width="1.5"/>
+  <text x="712" y="214" text-anchor="middle" fill="#c084fc" font-weight="bold">KOM (Orchestrator Mode)</text>
+  <text x="712" y="230" text-anchor="middle" fill="#d8b4fe" font-size="9">Session list, subtask status</text>
+  <text x="712" y="244" text-anchor="middle" fill="#d8b4fe" font-size="9">Toggle KOM on/off</text>
+  <text x="712" y="260" text-anchor="middle" fill="#64748b" font-size="9">API: /api/kom/status</text>
+  <text x="712" y="274" text-anchor="middle" fill="#64748b" font-size="9">/api/kom/sessions</text>
+  <text x="712" y="288" text-anchor="middle" fill="#64748b" font-size="9">/api/kom/toggle</text>
+
+  <rect x="826" y="195" width="220" height="110" rx="6" fill="#1e1a10" stroke="#facc15" stroke-width="1.5"/>
+  <text x="936" y="214" text-anchor="middle" fill="#facc15" font-weight="bold">KiloCode VSIX</text>
+  <text x="936" y="230" text-anchor="middle" fill="#fde68a" font-size="9">Sync status, command registry</text>
+  <text x="936" y="244" text-anchor="middle" fill="#fde68a" font-size="9">Integration checklist, drift</text>
+  <text x="936" y="260" text-anchor="middle" fill="#64748b" font-size="9">API: /runtime/kilocode/status</text>
+  <text x="936" y="274" text-anchor="middle" fill="#64748b" font-size="9">/runtime/kilocode/cmd</text>
+
+  <!-- Row 3 -->
+  <rect x="185" y="325" width="200" height="110" rx="6" fill="#1a1620" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="285" y="344" text-anchor="middle" fill="#c4b5fd" font-weight="bold">Evidence</text>
+  <text x="285" y="360" text-anchor="middle" fill="#ddd6fe" font-size="9">Audit ledger, filter by type</text>
+  <text x="285" y="374" text-anchor="middle" fill="#ddd6fe" font-size="9">Export, detail modal, badges</text>
+  <text x="285" y="390" text-anchor="middle" fill="#64748b" font-size="9">API: /settings/audit</text>
+  <text x="285" y="404" text-anchor="middle" fill="#64748b" font-size="9">live filter + count</text>
+
+  <rect x="398" y="325" width="200" height="110" rx="6" fill="#1f2820" stroke="#4ade80" stroke-width="1.5"/>
+  <text x="498" y="344" text-anchor="middle" fill="#4ade80" font-weight="bold">Repairs</text>
+  <text x="498" y="360" text-anchor="middle" fill="#86efac" font-size="9">Timeline with icons, status</text>
+  <text x="498" y="374" text-anchor="middle" fill="#86efac" font-size="9">Trigger repair, push log</text>
+  <text x="498" y="390" text-anchor="middle" fill="#64748b" font-size="9">API: /settings/repair</text>
+  <text x="498" y="404" text-anchor="middle" fill="#64748b" font-size="9">/api/agents/activity</text>
+
+  <rect x="612" y="325" width="200" height="110" rx="6" fill="#1e2830" stroke="#38bdf8" stroke-width="1.5"/>
+  <text x="712" y="344" text-anchor="middle" fill="#38bdf8" font-weight="bold">Activity Log</text>
+  <text x="712" y="360" text-anchor="middle" fill="#7dd3fc" font-size="9">Live tail, filter agent/type</text>
+  <text x="712" y="374" text-anchor="middle" fill="#7dd3fc" font-size="9">10s auto-refresh, push entry</text>
+  <text x="712" y="390" text-anchor="middle" fill="#64748b" font-size="9">API: /api/agents/activity</text>
+  <text x="712" y="404" text-anchor="middle" fill="#64748b" font-size="9">POST push entry</text>
+
+  <rect x="826" y="325" width="220" height="110" rx="6" fill="#201e10" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="936" y="344" text-anchor="middle" fill="#fbbf24" font-weight="bold">Settings</text>
+  <text x="936" y="360" text-anchor="middle" fill="#fde68a" font-size="9">Autofill, question flow</text>
+  <text x="936" y="374" text-anchor="middle" fill="#fde68a" font-size="9">Profiles, import/export</text>
+  <text x="936" y="390" text-anchor="middle" fill="#64748b" font-size="9">API: /settings/auto-fill</text>
+  <text x="936" y="404" text-anchor="middle" fill="#64748b" font-size="9">/settings/questions</text>
+
+  <!-- Row 4: backend box -->
+  <rect x="185" y="455" width="860" height="80" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+  <text x="615" y="474" text-anchor="middle" fill="#94a3b8" font-weight="bold" font-size="12">dashboard.py — Backend FastAPI (port :8095)</text>
+  <text x="615" y="492" text-anchor="middle" fill="#64748b" font-size="10">Proxies → :8081 Runtime · :8082 Settings · :8091 Hermes</text>
+  <text x="615" y="508" text-anchor="middle" fill="#64748b" font-size="10">In-process state: _PIPELINE_EVENTS · _ACTIVITY_LOG · _PROVIDER_CIRCUIT · _KOM_SESSIONS · _KILOCODE_AGENTS</text>
+
+  <!-- Row 5: healthall -->
+  <rect x="185" y="550" width="860" height="50" rx="6" fill="#172030" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="615" y="573" text-anchor="middle" fill="#60a5fa" font-size="11">/api/healthall — aggregates Runtime + Settings + Hermes + LMStudio + Ollama + LiteLLM + Discord health in one call</text>
+  <text x="615" y="590" text-anchor="middle" fill="#64748b" font-size="10">Used by: Overview panel, Boot Gate, Header dots, 30s sweepHealth() interval</text>
+</svg>

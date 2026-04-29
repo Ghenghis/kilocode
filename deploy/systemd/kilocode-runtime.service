@@ -1,0 +1,41 @@
+[Unit]
+Description=KiloCode Runtime API
+Documentation=https://daveai.tech/docs
+After=network.target
+Wants=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/opt/kilocode
+EnvironmentFile=-/opt/kilocode/.env
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONPATH=/opt/kilocode
+
+ExecStart=/opt/kilocode/venv/bin/python -m uvicorn src.runtime.core:app \
+    --host 0.0.0.0 \
+    --port 8081 \
+    --workers 2 \
+    --log-level info \
+    --access-log
+
+Restart=on-failure
+RestartSec=5s
+TimeoutStartSec=60
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=kilocode-runtime
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/kilocode/data /opt/kilocode/logs
+
+[Install]
+WantedBy=multi-user.target

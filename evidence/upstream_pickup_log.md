@@ -13,9 +13,9 @@
 **Status:** Blocked — prerequisites missing.
 
 **Scripts:**
-- `scripts/classify_upstream_commits.ps1` — NOT FOUND
+- `scripts/classify_upstream_commits.ps1` — NOT FOUND (note: repo uses `script/` singular, not `scripts/`)
 - `scripts/cherry_pick_upstream.ps1` — NOT FOUND
-- `scripts/` directory does not exist
+- `script/upstream/` EXISTS — contains TypeScript upstream automation (`analyze.ts`, `merge.ts`, `index.ts`); this is the established stack
 
 **Upstream remote:**
 - No `upstream` remote was configured. Added `upstream` pointing to `http://local_proxy@127.0.0.1:35999/git/Kilo-Org/kilocode` per proxy pattern.
@@ -34,6 +34,6 @@
 **Commits ahead of upstream/main:** Cannot determine — upstream unreachable.
 
 **Action required:**
-1. Create `scripts/classify_upstream_commits.ps1` and `scripts/cherry_pick_upstream.ps1`.
+1. Create `script/upstream/classify.ts` and `script/upstream/cherry-pick.ts` (or extend existing `analyze.ts`/`merge.ts`) to implement classifier and cherry-pick logic in the established TypeScript/Bun stack under `script/upstream/`.
 2. Provision a PAT or configure proxy access to `Kilo-Org/kilocode` so `git fetch upstream` succeeds.
 3. Re-run this weekly task once prerequisites are in place.

@@ -14,12 +14,19 @@
 
 ### Notes
 
-- `scripts/classify_upstream_commits.ps1` — **NOT FOUND**
-- `scripts/cherry_pick_upstream.ps1` — **NOT FOUND**
+- `scripts/classify_upstream_commits.ps1` — **NOT FOUND** (PowerShell scripts do not exist)
+- `scripts/cherry_pick_upstream.ps1` — **NOT FOUND** (PowerShell scripts do not exist)
 - No upstream-pickup GitHub Actions workflow found in `.github/workflows/`
 - No `upstream-bot-tracking` issue found on Ghenghis/kilocode
 - The fork's `main` branch has 0 unique commits and is 1715 commits behind `upstream/main`.
 - Classification, cherry-pick, and PR creation were skipped — scripts must be created first.
+
+**Existing infrastructure note:** `script/upstream/` contains a full Bun/TypeScript merge automation
+suite (`analyze.ts`, `merge.ts`, transforms, codemods). Those scripts are designed to merge
+*opencode (anomalyco/opencode) → Kilo-Org/kilocode*. Any future automation for syncing
+*Kilo-Org/kilocode → Ghenghis/kilocode* (this fork) should follow the same language and directory
+conventions (`script/`, Bun/TypeScript) rather than introducing a parallel PowerShell `scripts/`
+directory.
 
 ### Top 20 upstream commits not in fork (newest first)
 
